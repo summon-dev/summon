@@ -226,7 +226,7 @@ Append findings to the sprint retro document:
 
 If any page fails to render or has JavaScript errors, this is a **blocking finding**. Grace creates a P0 work item for the next sprint. Visual issues (broken layout, missing content) are P1.
 
-**Why this exists:** The portfolio-manager project shipped 3 sprints of Dash UI code without anyone opening a browser. All code-centric gates passed. This step catches the "Invisible UI" anti-pattern — see `docs/process/gotchas.md`.
+**Why this exists:** Teams have shipped multiple sprints of UI code without anyone opening a browser. All code-centric gates passed. This step catches the "Invisible UI" anti-pattern — see `docs/process/gotchas.md`.
 
 ---
 

@@ -27,7 +27,6 @@ rm -rf samples/ 2>/dev/null
 # Remove template-specific ADRs and research docs
 rm -rf docs/adrs/template/ 2>/dev/null
 rm -f docs/research/how-we-compare-*.md docs/research/agent-teams-comparison.md 2>/dev/null
-rm -f docs/research/rebrand-and-relaunch.md 2>/dev/null
 rm -f docs/research/what-*-can-learn-from-*.md docs/research/what-we-learn-from-*.md 2>/dev/null
 ```
 

@@ -149,8 +149,7 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 │   ├── process/              # Governance, done gate, gotchas, doc ownership
 │   ├── integrations/         # Tracking adapters (GitHub Projects, Jira)
 │   ├── scaffolds/            # Project stubs (moved to docs/ during scaffold/kickoff)
-│   ├── adrs/                 # Architecture Decision Records
-│   └── research/             # Strategic research and roadmap
+│   └── adrs/                 # Architecture Decision Records
 ├── .claude/
 │   ├── agents/               # Subagent persona definitions (16 agent files)
 │   └── commands/             # Custom slash commands (23, auto-discovered)
