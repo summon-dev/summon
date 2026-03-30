@@ -4,7 +4,7 @@
 
 **Project Name:** Summon
 **Description:** An AI-powered virtual team framework for Claude Code. Gives solo developers a full engineering team of specialized agents with real methodology — architecture reviews, TDD, code review, sprint management.
-**Tech Stack:** Claude Code agents (Markdown), Astro + Tailwind (site), Node.js (CLI)
+**Tech Stack:** Claude Code agents (Markdown) · Astro + Tailwind (site — planned) · Node.js (CLI — planned)
 
 **Codebase map:** `docs/code-map.md` — read this first to understand the package structure, public APIs, and data flow.
 
@@ -154,7 +154,7 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 ├── .claude/
 │   ├── agents/               # Subagent persona definitions (16 agent files)
 │   └── commands/             # Custom slash commands (23, auto-discovered)
-├── site/                     # Marketing site (Astro + Tailwind)
+├── site/                     # Marketing site (Astro + Tailwind) — planned
 └── packages/
-    └── create-summon/        # CLI scaffolder (npx create-summon)
+    └── create-summon/        # CLI scaffolder (npx create-summon) — planned
 ```

@@ -30,17 +30,11 @@ Plus 9 more specialists: cloud ops, SRE, data science, UX, security compliance, 
 
 ## Quick Start
 
-```bash
-npx create-summon my-project
-cd my-project
-claude
-```
-
-Or use the GitHub template directly:
-
 1. Click **[Use this template](https://github.com/summon-dev/summon/generate)** on GitHub
 2. Clone your new repo
 3. Open it in Claude Code — it will detect the fresh project and guide you through setup
+
+**Coming soon:** `npx create-summon my-project` — a one-liner that does the above automatically.
 
 ## Two Ways to Start
 

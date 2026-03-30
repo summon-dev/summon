@@ -32,7 +32,7 @@ If the topic is clear, proceed directly.
 
 ### Step 2: Check for Existing Page
 
-Check `docs/whatsit/` for an existing file matching the topic (use Glob). If one exists, tell the user: "I already have a page on **[topic]** at `docs/whatsit/[file]`. Want me to update it instead?"
+Ensure `docs/whatsit/` exists (`mkdir -p docs/whatsit`), then check for an existing file matching the topic (use Glob). If one exists, tell the user: "I already have a page on **[topic]** at `docs/whatsit/[file]`. Want me to update it instead?"
 
 ### Step 3: Research
 
