@@ -1,4 +1,4 @@
-<!-- agent-notes: { ctx: "guided human review session", deps: [docs/methodology/personas.md, .claude/agents/cam.md], state: active, last: "cam@2026-02-12" } -->
+<!-- agent-notes: { ctx: "guided human review session", deps: [docs/methodology/personas.md, .claude/agents/cam.md], state: active, last: "coordinator@2026-03-31" } -->
 Run a guided review session for completed work.
 
 This follows Coach Cam's post-build mode (see `docs/methodology/personas.md`). The goal is to help the human evaluate what was built and turn their reactions into actionable next steps.

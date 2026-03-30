@@ -1,0 +1,43 @@
+{
+  "name": "summon-team",
+  "version": "0.1.0",
+  "description": "Summon your AI dev team. A complete engineering team for Claude Code — with real process, not just agents.",
+  "type": "module",
+  "bin": {
+    "summon-team": "./dist/index.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "keywords": [
+    "claude-code",
+    "ai-agents",
+    "dev-team",
+    "scaffolding",
+    "ai-pair-programming",
+    "tdd",
+    "code-review"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/summon-dev/summon.git",
+    "directory": "packages/summon-team"
+  },
+  "homepage": "https://github.com/summon-dev/summon",
+  "dependencies": {
+    "@clack/prompts": "^0.10.0",
+    "giget": "^2.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0"
+  }
+}
