@@ -13,9 +13,9 @@ Determine the target cloud platform:
 
 - Check existing IaC files: Bicep/ARM = Azure, CDK/CloudFormation = AWS, Terraform providers = check which.
 - Check `CLAUDE.md` and `docs/adrs/` for documented cloud decisions.
-- Check `docs/research/{aws,azure,gcp}-landscape.md` for which is populated.
+- If present, check `docs/research/{aws,azure,gcp}-landscape.md` for which is populated.
 - If `$ARGUMENTS` specifies a cloud, use that.
-- If ambiguous, ask the user.
+- If ambiguous or no landscape files exist, ask the user.
 
 Summarize: what cloud resources are defined or planned?
 

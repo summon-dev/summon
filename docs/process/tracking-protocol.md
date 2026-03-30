@@ -12,7 +12,7 @@ This directory holds lightweight tracking artifacts that capture decisions and s
 YYYY-MM-DD-<topic>-<phase>.md
 ```
 
-**Phases:** `discovery`, `architecture`, `plan`, `implementation`, `review`, `debug`
+**Phases:** `discovery`, `architecture`, `debate`, `plan`, `implementation`, `review`, `debug`
 
 **Examples:**
 - `2026-02-16-auth-system-discovery.md`

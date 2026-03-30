@@ -15,9 +15,36 @@ This command refreshes the cloud knowledge files that the cloud specialist agent
 
 ## Process
 
-### 1. Read the Current Landscape
+### 1. Read or Create the Landscape File
 
-Read the target cloud's landscape file. Note the "Last updated" date to understand how stale it might be.
+Check whether the target cloud's landscape file exists under `docs/research/`. If it does not exist, create it with this stub structure (including agent-notes):
+
+```markdown
+---
+agent-notes: { ctx: "<cloud> service landscape reference", deps: [.claude/agents/cloud.md], state: active, last: "cloud@<today>" }
+---
+
+# <Cloud> Service Landscape
+
+**Last updated:** <today's date>
+
+## Overview
+<!-- High-level summary of this cloud's positioning and strengths -->
+
+## Core Services
+<!-- Key compute, storage, networking, database, and identity services -->
+
+## Recent Changes and New Services
+<!-- Dated entries for GA launches, pricing changes, deprecations -->
+
+## Known Enterprise Patterns
+<!-- Common architecture patterns, landing zone conventions, policy defaults -->
+
+## Cost Traps
+<!-- Non-obvious charges: data transfer, NAT, logging ingestion, idle resources -->
+```
+
+If the file exists, read it and note the "Last updated" date to understand how stale it might be.
 
 ### 2. Research Current State
 

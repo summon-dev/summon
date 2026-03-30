@@ -20,10 +20,10 @@ Determine the target cloud in this priority order:
 
 1. **Explicit user instruction** — "We're deploying to AWS."
 2. **Existing IaC in repo** — Bicep/ARM = Azure, CDK/CloudFormation = AWS, Terraform with google provider = GCP, Terraform with aws/azurerm provider = AWS/Azure.
-3. **Landscape file** — Check `docs/research/{aws,azure,gcp}-landscape.md` for which is populated.
-4. **Ask** — If ambiguous, ask the human before proceeding.
+3. **Landscape file (if present)** — Check `docs/research/{aws,azure,gcp}-landscape.md` for which is populated.
+4. **Ask** — If ambiguous or no signals found, ask the human before proceeding.
 
-Once determined, read the corresponding landscape file in `docs/research/` to calibrate your knowledge against current service offerings and pricing.
+Once determined, if the corresponding landscape file exists in `docs/research/`, read it to calibrate against current service offerings and pricing. If it doesn't exist, use WebSearch for current pricing and service information.
 
 ## Three Lenses
 
