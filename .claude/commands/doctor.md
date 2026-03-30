@@ -1,5 +1,5 @@
 <!-- agent-notes: { ctx: "read-only project health check, 8 diagnostics", deps: [CLAUDE.md, .claude/agents/, .claude/commands/, docs/methodology/agent-notes.md], state: active, last: "sato@2026-03-21" } -->
-Run a health check on the vteam-hybrid project setup. This command is **read-only** — it inspects but never modifies files, config, or state.
+Run a health check on the Summon project setup. This command is **read-only** — it inspects but never modifies files, config, or state.
 
 ---
 
@@ -20,17 +20,17 @@ After all checks, print a summary line: **"N passed, N warnings, N failures"**.
 
 Verify that all expected agent definition files exist in `.claude/agents/`.
 
-Expected files (19):
-`archie.md`, `cam.md`, `cloud-architect.md`, `cloud-costguard.md`, `cloud-netdiag.md`, `code-reviewer.md`, `dani.md`, `debra.md`, `diego.md`, `grace.md`, `ines.md`, `pat.md`, `pierrot.md`, `prof.md`, `sato.md`, `tara.md`, `user-chorus.md`, `vik.md`, `wei.md`
+Expected files (16):
+`archie.md`, `cam.md`, `cloud.md`, `code-reviewer.md`, `dani.md`, `debra.md`, `diego.md`, `grace.md`, `ines.md`, `pat.md`, `pierrot.md`, `prof.md`, `sato.md`, `tara.md`, `vik.md`, `wei.md`
 
 ```bash
 # List .claude/agents/*.md and compare against expected list
 ls .claude/agents/*.md 2>/dev/null
 ```
 
-- PASS if all 19 are present.
-- WARN if extra files exist beyond the 19 (list them — they may be intentional project additions).
-- FAIL if any of the 19 are missing (list which ones).
+- PASS if all 16 are present.
+- WARN if extra files exist beyond the 16 (list them — they may be intentional project additions).
+- FAIL if any of the 16 are missing (list which ones).
 
 ---
 
@@ -38,17 +38,17 @@ ls .claude/agents/*.md 2>/dev/null
 
 Verify that all expected command files exist in `.claude/commands/`.
 
-Expected files (27):
-`adr.md`, `aws-review.md`, `azure-review.md`, `cloud-update.md`, `code-review.md`, `design.md`, `devcontainer.md`, `doctor.md`, `gcp-review.md`, `handoff.md`, `kickoff.md`, `pin-versions.md`, `plan.md`, `quickstart.md`, `restack.md`, `resume.md`, `retro.md`, `review.md`, `scaffold-ai-tool.md`, `scaffold-cli.md`, `scaffold-static-site.md`, `scaffold-web-monorepo.md`, `sprint-boundary.md`, `sync-ghcp.md`, `sync-template.md`, `tdd.md`, `whatsit.md`
+Expected files (23):
+`adr.md`, `cloud-review.md`, `cloud-update.md`, `code-review.md`, `design.md`, `devcontainer.md`, `doctor.md`, `handoff.md`, `kickoff.md`, `pin-versions.md`, `plan.md`, `quickstart.md`, `restack.md`, `resume.md`, `retro.md`, `review.md`, `scaffold-ai-tool.md`, `scaffold-cli.md`, `scaffold-static-site.md`, `scaffold-web-monorepo.md`, `sprint-boundary.md`, `tdd.md`, `whatsit.md`
 
 ```bash
 # List .claude/commands/*.md and compare against expected list
 ls .claude/commands/*.md 2>/dev/null
 ```
 
-- PASS if all 27 are present.
-- WARN if extra files exist beyond the 27 (list them).
-- FAIL if any of the 27 are missing (list which ones).
+- PASS if all 23 are present.
+- WARN if extra files exist beyond the 23 (list them).
+- FAIL if any of the 23 are missing (list which ones).
 
 ---
 
@@ -170,7 +170,7 @@ head -5 <file> | grep -c 'agent-notes:'
 Print the report using this exact structure:
 
 ```
-vteam-hybrid Doctor Report
+Summon Doctor Report
 ==========================
 
 [STATUS]  Check 1 description

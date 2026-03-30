@@ -6,7 +6,7 @@ Reflect on the work done in this sprint/session. Consider:
 3. Were there any recurring patterns or friction points?
 4. What would have made the work easier or faster?
 5. Are there any new conventions, gotchas, or patterns to document?
-6. Which v-team personas (see `docs/methodology/personas.md`) were effectively engaged during this session? Which were missing?
+6. Which Summon agents (see `docs/methodology/personas.md`) were effectively engaged during this session? Which were missing?
 7. Were there moments where a persona's perspective would have caught an issue earlier?
 8. Should any persona definitions in `docs/methodology/personas.md` be updated based on this experience?
 9. **Were any process issues identified in a previous retro still recurring?** If so, the previous fix was insufficient — escalate.

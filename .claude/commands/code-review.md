@@ -1,7 +1,7 @@
 <!-- agent-notes: { ctx: "multi-lens code review + migration + API compat + perf", deps: [docs/methodology/personas.md, .claude/agents/code-reviewer.md, docs/performance-budget.md, docs/security/threat-model.md], state: active, last: "grace@2026-02-15" } -->
 Run a multi-perspective code review on the current changes.
 
-This combines three persona lenses from the v-team (see `docs/methodology/personas.md`), plus situational checks for migrations, API changes, and performance. Review the staged/unstaged changes or the most recent commits and apply each lens.
+This combines three persona lenses from the Summon team (see `docs/methodology/personas.md`), plus situational checks for migrations, API changes, and performance. Review the staged/unstaged changes or the most recent commits and apply each lens.
 
 ---
 

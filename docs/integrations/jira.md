@@ -6,7 +6,7 @@ agent-notes: { ctx: "Jira board adapter -- untested draft", deps: [CLAUDE.md, do
 
 > **STATUS: DRAFT -- UNTESTED.** This adapter has not been validated against a live Jira instance. Commands and API paths are based on Jira Cloud REST API v3 documentation. Expect adjustments when first used in production.
 
-Maps vteam-hybrid board operations to Jira Cloud. Covers both the `jira` CLI (Atlassian's official Go CLI) and raw `curl` commands against the REST API.
+Maps Summon board operations to Jira Cloud. Covers both the `jira` CLI (Atlassian's official Go CLI) and raw `curl` commands against the REST API.
 
 ## Prerequisites
 

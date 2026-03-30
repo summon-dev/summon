@@ -20,7 +20,7 @@ Create or update a plan document in `docs/plans/`. The plan should include:
 2. **Constraints** — Any relevant ADRs, conventions, or technical limitations.
 3. **Architecture Gate Items** — Items requiring ADR + Wei debate before implementation. For each: what decision needs an ADR, and why it's architectural (not just implementation detail).
 4. **Approach** — Step-by-step implementation plan following TDD. Gated items must show Architecture phase before Implementation phase.
-5. **Personas involved** — Which v-team personas should be consulted during implementation? (See `docs/methodology/personas.md`.) Include Wei for any gated items.
+5. **Personas involved** — Which Summon agents should be consulted during implementation? (See `docs/methodology/personas.md`.) Include Wei for any gated items.
 6. **Open Questions** — Anything that needs clarification before starting.
 7. **Acceptance Criteria** — How we'll know the work is done.
 

@@ -4,7 +4,7 @@ agent-notes: { ctx: "tracking adapter switchboard and registry", deps: [CLAUDE.m
 
 # Tracking Integrations
 
-This directory contains adapter files that define how the vteam-hybrid methodology interacts with external tracking systems. Each adapter maps the methodology's board operations (status transitions, issue CRUD, sprint labeling) to a specific tool's CLI or API.
+This directory contains adapter files that define how the Summon methodology interacts with external tracking systems. Each adapter maps the methodology's board operations (status transitions, issue CRUD, sprint labeling) to a specific tool's CLI or API.
 
 ## Active Adapter
 

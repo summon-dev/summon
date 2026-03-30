@@ -127,7 +127,7 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 |-----|---------|
 | `docs/code-map.md` | Package structure, public APIs, data flow — **read first** |
 | `docs/methodology/phases.md` | 7-phase team methodology |
-| `docs/methodology/personas.md` | 19-agent persona catalog |
+| `docs/methodology/personas.md` | 16-agent persona catalog |
 | `docs/methodology/agent-notes.md` | Agent-notes protocol spec |
 | `docs/process/team-governance.md` | Triggers, debate protocol, architecture gate, voice rules |
 | `docs/process/done-gate.md` | 15-item Done Gate checklist |
@@ -152,8 +152,8 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 │   ├── adrs/                 # Architecture Decision Records
 │   └── research/             # Strategic research and roadmap
 ├── .claude/
-│   ├── agents/               # Subagent persona definitions (19 agent files)
-│   └── commands/             # Custom slash commands (27, auto-discovered)
+│   ├── agents/               # Subagent persona definitions (16 agent files)
+│   └── commands/             # Custom slash commands (23, auto-discovered)
 ├── site/                     # Marketing site (Astro + Tailwind)
 └── packages/
     └── create-summon/        # CLI scaffolder (npx create-summon)

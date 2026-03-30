@@ -1,12 +1,12 @@
 ---
-agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md], state: canonical, last: "coordinator@2026-03-12" }
+agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md], state: canonical, last: "sato@2026-03-30" }
 ---
 
 # Hybrid Team Methodology
 
 ## TL;DR
 
-vteam-hybrid organizes AI-assisted development into **7 phases**, each with a different team structure. You don't need to memorize this — the coordinator picks the right team automatically.
+Summon organizes AI-assisted development into **7 phases**, each with a different team structure. You don't need to memorize this — the coordinator picks the right team automatically.
 
 | Phase | When | Lead | Model |
 |-------|------|------|-------|
@@ -46,7 +46,6 @@ The coordinator's job is to recognize phase transitions and assemble the right t
 | Contribute | **Pat** | Business value, priorities |
 | Contribute | **Dani** | Sacrificial concepts, user needs |
 | Contribute | **Wei** | Challenge assumptions |
-| Contribute | **User Chorus** | User perspective validation |
 | Optional | **Debra** | Data/ML feasibility |
 
 **How it works:** Cam leads elicitation. All contributing agents can add ideas to the "blackboard" (plan document). No hierarchy — the best idea wins regardless of source. Cam synthesizes and confirms with the human.
@@ -237,10 +236,7 @@ The coordinator manages the phase stack — knowing which phase is active and wh
 | **Diego** | | | | Worker | | | |
 | **Wei** | Contribute | Challenger | | | | | |
 | **Debra** | Optional | | | | | Optional | |
-| **User Chorus** | Contribute | | | | | | |
-| **Cloud Architect** | | Optional | | | | | |
-| **Cloud CostGuard** | | | | | | | |
-| **Cloud NetDiag** | | | | | | | |
+| **Cloud** | | Optional | | | | | |
 
 **Table annotations:**
 - **+1b**: Pat leads Discovery Phase 1b (Human Model Elicitation) after Cam's vision elicitation.

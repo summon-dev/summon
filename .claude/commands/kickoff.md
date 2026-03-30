@@ -23,7 +23,7 @@ rm -rf docs/adrs/template/ 2>/dev/null
 
 # Remove template research/comparison docs
 rm -f docs/research/how-we-compare-*.md docs/research/agent-teams-comparison.md 2>/dev/null
-rm -f docs/research/squad-vs-vteam-*.md docs/research/ux-gap-analysis-*.md 2>/dev/null
+rm -f docs/research/rebrand-and-relaunch.md 2>/dev/null
 rm -f docs/research/what-*-can-learn-from-*.md docs/research/what-we-learn-from-*.md 2>/dev/null
 ```
 
@@ -124,7 +124,7 @@ Create the implementation plan:
 
 - Create a plan document in `docs/plans/` using `/plan`.
 - Identify the first sprint's work.
-- Note which v-team personas should be actively engaged during implementation.
+- Note which Summon agents should be actively engaged during implementation.
 - Flag any remaining open questions or risks.
 - **Test strategy:** Tara creates `docs/test-strategy.md` — what gets tested at which level, coverage targets, test data approach. This guides all future test writing.
 - **Tech debt register:** Grace initializes `docs/tech-debt.md` (it will be empty, but the structure is in place for tracking).

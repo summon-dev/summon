@@ -3,7 +3,7 @@ agent-notes:
   ctx: "team roster, triggers, debate protocol, voice rules"
   deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md]
   state: active
-  last: "coordinator@2026-03-18"
+  last: "sato@2026-03-30"
 ---
 # Team Governance
 
@@ -28,10 +28,7 @@ Extracted from CLAUDE.md to reduce context window load. Referenced by CLAUDE.md 
 | **P2** | Diego | Technical writing + DevEx | — |
 | **P2** | Wei | Devil's advocate | — |
 | **P2** | Debra | Data science / ML (only agent with NotebookEdit) | — |
-| **P2** | User Chorus | Multi-archetype user panel | — |
-| **Cloud** | Cloud Architect | Cloud solution design (any cloud) | azure/aws/gcp-architect |
-| **Cloud** | Cloud CostGuard | Cloud cost analysis (any cloud) | azure/aws/gcp-costguard |
-| **Cloud** | Cloud NetDiag | Cloud network diagnostics (any cloud) | azure/aws/gcp-netdiag |
+| **Cloud** | Cloud | Cloud architecture, cost, and network diagnostics (any cloud) | cloud-architect + cloud-costguard + cloud-netdiag |
 
 ## Persona Triggers
 
@@ -52,7 +49,7 @@ Match the situation to the right perspective:
 | Sprint planning | **Grace** (plan diff) + **Cam** (scope review) + **Pat** (prioritization) | Grace diffs proposed plan against v1 implementation plan. Cam reviews scope against product context and discovery. Pat prioritizes. Any missing feature areas flagged. |
 | Sprint boundary | **Grace** (lead) + **Diego** + **Pat** | Grace runs `/sprint-boundary` (retro, sweep, gate, passes). Diego validates docs. Pat reviews tech debt. Grace has escalation override: debt open 3+ sprints is auto-P0, overriding Pat if needed. |
 | Pre-release | **Pierrot** + **Diego** + **Ines** + **Vik** | Security + threat model, SBOM, changelog, config audit, PDV checklist, perf budget verification, dead code sweep. |
-| Cloud deployment | **Cloud Architect** + **Cloud CostGuard** + **Cloud NetDiag** | Solution design, cost review, enterprise network readiness. |
+| Cloud deployment | **Cloud** | Solution design, cost review, enterprise network readiness. |
 
 Depth scales with complexity — a one-line fix doesn't need the full team; a new feature does.
 

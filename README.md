@@ -24,7 +24,7 @@ Summon installs a complete engineering team into your Claude Code project:
 - **Pat** owns the backlog, writes acceptance criteria, prioritizes ruthlessly
 - **Wei** plays devil's advocate when the team converges too quickly
 
-Plus 12 more specialists: cloud architects, SRE, data science, UX, security compliance, documentation, cost optimization, and network diagnostics.
+Plus 9 more specialists: cloud ops, SRE, data science, UX, security compliance, documentation, and pedagogy.
 
 **Every agent knows its role, its boundaries, and when to invoke the others.** The team self-organizes around your work using a 7-phase methodology — from discovery through sprint boundary.
 
@@ -58,7 +58,7 @@ For developers new to AI-assisted workflows. Light process, good habits:
 
 Simplified governance — one question before coding instead of three mandatory gates. Graduate to the full tier when you're ready.
 
-### Full Tier (19 agents)
+### Full Tier (16 agents)
 
 The complete engineering team with full governance:
 
@@ -72,8 +72,8 @@ The complete engineering team with full governance:
 
 ```
 .claude/
-  agents/       19 specialized agent personas
-  commands/     27 slash commands (/kickoff, /tdd, /review, /handoff, ...)
+  agents/       16 specialized agent personas
+  commands/     23 slash commands (/kickoff, /tdd, /review, /handoff, ...)
 
 docs/
   methodology/  7-phase team methodology, persona catalog
@@ -112,13 +112,13 @@ You're the product owner and the final decision-maker. The team handles the engi
 | `/design` | Sacrificial concept exploration |
 | `/adr` | Create an Architecture Decision Record |
 
-Plus 15 more for cloud reviews, scaffolding, devcontainers, dependency pinning, and more.
+Plus 11 more for cloud reviews, scaffolding, devcontainers, dependency pinning, and more.
 
 ## Why Not Just Use an Agent Marketplace?
 
 | | Agent Marketplaces | Summon |
 |---|---|---|
-| **Agents** | 100-1000+ independent tools | 19 agents that know each other |
+| **Agents** | 100-1000+ independent tools | 16 agents that know each other |
 | **Process** | None — install and figure it out | 7-phase methodology with gates |
 | **Architecture** | No guardrails | Mandatory ADRs before implementation |
 | **Testing** | Optional | TDD enforced — tests before code |

@@ -25,7 +25,7 @@ rm -rf docs/adrs/template/
 
 # Remove template research/comparison docs
 rm -f docs/research/how-we-compare-*.md docs/research/agent-teams-comparison.md
-rm -f docs/research/squad-vs-vteam-*.md docs/research/ux-gap-analysis-*.md
+rm -f docs/research/rebrand-and-relaunch.md
 rm -f docs/research/what-*-can-learn-from-*.md docs/research/what-we-learn-from-*.md
 ```
 

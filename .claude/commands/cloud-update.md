@@ -1,4 +1,4 @@
-<!-- agent-notes: { ctx: "refresh cloud landscape research files", deps: [docs/research/aws-landscape.md, docs/research/azure-landscape.md, docs/research/gcp-landscape.md], state: active, last: "cloud-architect@2026-02-12" } -->
+<!-- agent-notes: { ctx: "refresh cloud landscape research files", deps: [docs/research/aws-landscape.md, docs/research/azure-landscape.md, docs/research/gcp-landscape.md, .claude/agents/cloud.md], state: active, last: "sato@2026-03-30" } -->
 Research and update the cloud service landscape for: $ARGUMENTS
 
 This command refreshes the cloud knowledge files that the cloud specialist agents depend on. Run it when you suspect the landscape has changed — new services, pricing changes, deprecated features, or before a major architecture decision.
@@ -52,7 +52,7 @@ Update the target cloud's landscape file:
 
 ### 5. Review Impact on Agents
 
-After updating, briefly check whether any agent system prompts in `.claude/agents/` (specifically `cloud-architect.md`, `cloud-costguard.md`, `cloud-netdiag.md`) contain hardcoded recommendations that are now wrong. Flag but don't modify agent prompts — those are structural.
+After updating, briefly check whether any agent system prompts in `.claude/agents/` (specifically `cloud.md`) contain hardcoded recommendations that are now wrong. Flag but don't modify agent prompts — those are structural.
 
 ### 6. Summary
 

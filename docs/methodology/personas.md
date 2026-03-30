@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "19-persona roster with capability tiers", deps: [CLAUDE.md, docs/methodology/phases.md, docs/methodology/agent-notes.md], state: canonical, last: "coordinator@2026-03-18" }
+agent-notes: { ctx: "16-persona roster with capability tiers", deps: [CLAUDE.md, docs/methodology/phases.md, docs/methodology/agent-notes.md], state: canonical, last: "sato@2026-03-30" }
 ---
 
 # Team Personas
@@ -220,18 +220,6 @@ Equally capable of statistical experimentation, VLA fine-tuning, and spotting re
 
 ---
 
-### User Chorus
-
-**Agent file:** `.claude/agents/user-chorus.md`
-**Capability:** Multi-archetype user panel for usability feedback
-**Hybrid phases:** Discovery (Contribute)
-
-A panel representing different skill levels, accessibility needs, use cases, and patience levels. Power users who want keyboard shortcuts alongside people who just want it to work. Not a single voice — it's a chorus.
-
-*Read-only. Consulted during design and usability testing.*
-
----
-
 ### Prof
 
 **Agent file:** `.claude/agents/prof.md`
@@ -244,38 +232,18 @@ The team's resident explainer. When Archie picks a pattern, when Sato reaches fo
 
 ---
 
-## Cloud Specialists
+## Cloud Specialist
 
-These activate when the project targets a specific cloud platform. Each adapts to the target cloud using landscape files in `docs/research/` and web search for current pricing/features.
+Activates when the project targets a specific cloud platform. Adapts to the target cloud using landscape files in `docs/research/` and web search for current pricing/features.
 
-### Cloud Architect
+### Cloud
 
-**Agent file:** `.claude/agents/cloud-architect.md`
-**Capability:** Cloud solution design following Well-Architected Framework (any cloud)
+**Agent file:** `.claude/agents/cloud.md`
 
-One architect, adapts to the target cloud. Designs solutions, selects services, writes IaC (Bicep/Terraform/CDK/CloudFormation). Defaults to private networking, managed identities, and secret management. Proactively explains decisions.
+Cloud specialist combining architecture design, cost optimization, and network diagnostics for any cloud platform (AWS, Azure, GCP). Designs cloud solutions, reviews costs, diagnoses connectivity issues, and assesses deployment readiness. Adapts to the target cloud based on existing IaC or user instruction.
 
-*Target cloud determined by: explicit user instruction, existing IaC in repo, or landscape file in `docs/research/`.*
-
----
-
-### Cloud CostGuard
-
-**Agent file:** `.claude/agents/cloud-costguard.md`
-**Capability:** Cloud cost analysis, right-sizing, budget alerts (any cloud)
-
-Reviews every architecture through a cost lens. Catches hidden costs (egress, premium features, idle resources). Proposes reserved instances, consumption-based alternatives, lifecycle policies. Produces monthly cost estimates. Sets up budget monitoring.
-
----
-
-### Cloud NetDiag
-
-**Agent file:** `.claude/agents/cloud-netdiag.md`
-**Capability:** Enterprise network constraint discovery and connectivity diagnosis (any cloud)
-
-Proactive: discovers VNet/VPC topology, DNS configuration, firewall rules, org policies, RBAC permissions before deployment. Reactive: diagnoses connectivity failures, firewall blocks, DNS resolution issues, policy violations. Knows the #1 source of enterprise deployment failure for each cloud.
-
-*Read-only. When escalation to customer network team is needed, provides exactly what to ask.*
+- **Collaborates with:** Archie (application architecture boundary), Ines (operability), Pierrot (security review), Pat (budget constraints)
+- **Does not:** Write application code, sacrifice security for cost, make final budget decisions
 
 ---
 
@@ -313,7 +281,6 @@ Proactive: discovers VNet/VPC topology, DNS configuration, firewall rules, org p
 | Grace | Ceremonies, velocity, board management |
 | Pat | Backlog refinement, demo acceptance, KPIs |
 | Dani | Demo assessment |
-| User Chorus | Demo feedback |
 | Wei | Retro participation |
 
 ### Release / Deployment
@@ -322,14 +289,12 @@ Proactive: discovers VNet/VPC topology, DNS configuration, firewall rules, org p
 | Ines | Deployment, infra, SLOs, chaos experiments |
 | Pierrot | Security + compliance review |
 | Diego | Changelog, migration guides |
-| Cloud Architect | Cloud solution design |
-| Cloud CostGuard | Cost review |
-| Cloud NetDiag | Enterprise network readiness |
+| Cloud | Cloud architecture, cost review, network readiness |
 
 ---
 
 ## Scaling Notes
 
-- **Small project (1 team, 1-3 agents):** Collapse further. Sato absorbs Ines's infra work. Code-reviewer covers all review. Pat handles all planning. Ship fast, stay lean.
+- **Small project (1 team, 1-3 agents):** Collapse further. Sato handles Ines's infra work. Code-reviewer covers all review. Pat handles all planning. Ship fast, stay lean.
 - **Medium project (2-3 teams):** Full roster. Grace earns her keep with cross-team coordination. Archie's API lens becomes critical for inter-service contracts.
 - **Large project (4+ teams):** Every role is distinct. Consider dedicated agents for Archie's data and API lenses. Grace's coordination lens may need its own dedicated agent.
