@@ -1,4 +1,4 @@
-<!-- agent-notes: { ctx: "resume from previous session handoff", deps: [.claude/handoff.md, CLAUDE.md, docs/plans/], state: active, last: "grace@2026-02-12" } -->
+<!-- agent-notes: { ctx: "resume from previous session handoff", deps: [.claude/handoff.md, CLAUDE.md, docs/sprints/], state: active, last: "coordinator@2026-03-31" } -->
 Resume from a previous session's handoff.
 
 ## Steps
@@ -8,7 +8,7 @@ Resume from a previous session's handoff.
 2. **Read project context.** In parallel, read:
    - `CLAUDE.md` (already loaded, but review for any recent changes)
    - `docs/product-context.md` (if it exists — the human's product philosophy)
-   - The current plan in `docs/plans/` (if referenced in the handoff)
+   - The current sprint plan in `docs/sprints/` (if referenced in the handoff)
    - The auto-memory file at the path shown in your system prompt (if it exists)
 
 3. **Verify state.** Run these checks:

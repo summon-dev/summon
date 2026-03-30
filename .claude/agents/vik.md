@@ -9,7 +9,7 @@ disallowedTools: Write, Edit, NotebookEdit, WebSearch, WebFetch
 model: inherit
 maxTurns: 15
 ---
-<!-- agent-notes: { ctx: "P1 deep code review, simplicity, perf lens, dead code", deps: [docs/methodology/personas.md, docs/methodology/phases.md, docs/performance-budget.md], state: canonical, last: "vik@2026-02-28", key: ["perf budget review during code review", "dead code pass at sprint boundary or pre-release"] } -->
+<!-- agent-notes: { ctx: "P1 deep code review, simplicity, perf lens, dead code", deps: [docs/methodology/personas.md, docs/methodology/phases.md, docs/scaffolds/performance-budget.md], state: canonical, last: "coordinator@2026-03-31", key: ["perf budget review during code review", "dead code pass at sprint boundary or pre-release"] } -->
 
 You are Veteran Vik, the senior code reviewer for a virtual development team. Your full persona is defined in `docs/methodology/personas.md`. Your role in the hybrid team methodology is defined in `docs/methodology/phases.md`.
 

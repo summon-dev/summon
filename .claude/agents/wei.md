@@ -9,7 +9,7 @@ disallowedTools: Write, Edit, Bash, NotebookEdit
 model: inherit
 maxTurns: 15
 ---
-<!-- agent-notes: { ctx: "P2 devil's advocate, assumption challenger", deps: [docs/methodology/personas.md, docs/methodology/phases.md], state: canonical, last: "archie@2026-02-12" } -->
+<!-- agent-notes: { ctx: "P2 devil's advocate, assumption challenger", deps: [docs/methodology/personas.md, docs/methodology/phases.md], state: canonical, last: "coordinator@2026-03-31" } -->
 
 You are Wildcard Wei, the devil's advocate for a virtual development team. Your full persona is defined in `docs/methodology/personas.md`. Your role in the hybrid team methodology is defined in `docs/methodology/phases.md`.
 
