@@ -10,21 +10,24 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
+
+declare const __VERSION__: string;
 
 const TEMPLATE = "github:summon-dev/summon";
-const VERSION = "0.1.0";
+const VERSION = typeof __VERSION__ !== "undefined" ? __VERSION__ : "0.0.0-dev";
 
-const PROJECT_NAME_RE = /^[a-zA-Z0-9_-]+$/;
+// Must start with a letter or number — no leading hyphens
+const PROJECT_NAME_RE = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/;
 
 // Directories and files that are repo infrastructure, not part of the template
-const EXCLUDE_DIRS = ["packages", "site", "node_modules", ".git"];
-const EXCLUDE_FILES = [
+const EXCLUDE_DIRS = new Set(["packages", "site", "node_modules", ".git"]);
+const EXCLUDE_FILES = new Set([
   "CHANGELOG.md",
   "pnpm-workspace.yaml",
   "pnpm-lock.yaml",
   "package.json",
-];
+]);
 
 async function main() {
   const args = process.argv.slice(2);
@@ -51,6 +54,14 @@ async function main() {
   }
 
   const localIdx = args.indexOf("--local");
+  if (localIdx !== -1) {
+    const next = args[localIdx + 1];
+    if (!next || next.startsWith("-")) {
+      console.error("Error: --local requires a path argument.\n");
+      console.error("Usage: npx summon-team [--local <path>] <project-name>");
+      process.exit(1);
+    }
+  }
   const localPath = localIdx !== -1 ? args[localIdx + 1] : undefined;
   const skipIdx = localIdx !== -1 ? localIdx + 1 : -1;
   const projectArg = args.find(
@@ -112,7 +123,13 @@ async function main() {
       p.log.error(`Local template path is not a directory: ${resolvedLocal}`);
       process.exit(1);
     }
-    cpSync(resolvedLocal, targetDir, { recursive: true });
+    cpSync(resolvedLocal, targetDir, {
+      recursive: true,
+      filter: (src) => {
+        const name = basename(src);
+        return !EXCLUDE_DIRS.has(name) && !EXCLUDE_FILES.has(name);
+      },
+    });
     s.stop("Template copied.");
   } else {
     s.start("Downloading Summon template...");
@@ -188,6 +205,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  p.log.error(err.message);
+  p.log.error(err instanceof Error ? err.message : String(err));
   process.exit(1);
 });
