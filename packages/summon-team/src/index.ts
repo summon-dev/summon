@@ -158,7 +158,7 @@ async function main() {
 
   for (const file of EXCLUDE_FILES) {
     const fullPath = resolve(targetDir, file);
-    if (existsSync(fullPath)) rmSync(fullPath);
+    if (existsSync(fullPath)) rmSync(fullPath, { force: true });
   }
 
   // Reset CLAUDE.md to template state so /quickstart detects a fresh project

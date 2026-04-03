@@ -10,11 +10,17 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const CLI = resolve(__dirname, "..", "dist", "index.js");
 const REPO_ROOT = resolve(__dirname, "..", "..", "..");
+const PKG = JSON.parse(
+  readFileSync(resolve(__dirname, "..", "package.json"), "utf-8")
+);
 
 function run(
   args: string[],
@@ -55,7 +61,7 @@ describe("summon-team CLI", () => {
   it("--version prints version and exits 0", async () => {
     const result = await run(["--version"]);
     expect(result.code).toBe(0);
-    expect(result.stdout.trim()).toBe("summon-team v0.1.0");
+    expect(result.stdout.trim()).toBe(`summon-team v${PKG.version}`);
   });
 
   it("--help prints usage and exits 0", async () => {
