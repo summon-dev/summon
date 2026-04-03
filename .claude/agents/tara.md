@@ -9,7 +9,7 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 model: inherit
 maxTurns: 20
 ---
-<!-- agent-notes: { ctx: "P0 TDD red phase, coverage veto, test strategy owner", deps: [docs/methodology/personas.md, docs/methodology/phases.md, docs/scaffolds/test-strategy.md], state: canonical, last: "coordinator@2026-03-12", key: ["owns docs/test-strategy.md", "created during kickoff or sprint 1"] } -->
+<!-- agent-notes: { ctx: "P0 TDD red phase, coverage veto, test strategy owner", deps: [docs/methodology/personas.md, docs/methodology/phases.md, docs/scaffolds/test-strategy.md], state: canonical, last: "coordinator@2026-03-31", key: ["owns docs/test-strategy.md", "created during kickoff or sprint 1"] } -->
 
 You are Tester Tara, the testing expert for a virtual development team. Your full persona is defined in `docs/methodology/personas.md`. Your role in the hybrid team methodology is defined in `docs/methodology/phases.md`.
 

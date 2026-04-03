@@ -30,37 +30,27 @@ Plus 9 more specialists: cloud ops, SRE, data science, UX, security compliance, 
 
 ## Quick Start
 
+```bash
+npx summon-team my-project
+cd my-project
+# Open in Claude Code, then run /quickstart
+```
+
+Or use the GitHub template directly:
+
 1. Click **[Use this template](https://github.com/summon-dev/summon/generate)** on GitHub
 2. Clone your new repo
 3. Open it in Claude Code — it will detect the fresh project and guide you through setup
 
-**Coming soon:** `npx create-summon my-project` — a one-liner that does the above automatically.
+## What You Get
 
-## Two Ways to Start
-
-### Starter Tier (5 agents)
-
-For developers new to AI-assisted workflows. Light process, good habits:
-
-| Agent | Role |
-|-------|------|
-| **Sato** | Writes production code |
-| **Tara** | Writes tests first (TDD) |
-| **Archie** | Architecture decisions |
-| **Cam** | Clarifies requirements before coding |
-| **Vik** | Code review |
-
-Simplified governance — one question before coding instead of three mandatory gates. Graduate to the full tier when you're ready.
-
-### Full Tier (16 agents)
-
-The complete engineering team with full governance:
+16 agents, full engineering governance:
 
 - **Mandatory architecture gates** — no implementation without an ADR
 - **Sprint boundaries** — retrospectives, velocity tracking, kaizen
 - **Done gate** — 15-item checklist before any work item closes
 - **Adversarial debate** — Wei challenges assumptions, Pierrot has security veto
-- **Three-lens code review** — simplicity, test quality, and security in parallel
+- **Four-lens code review** — simplicity, test quality, security, and architectural conformance in parallel
 
 ## What's Inside
 

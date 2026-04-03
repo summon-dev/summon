@@ -1,4 +1,4 @@
-<!-- agent-notes: { ctx: "strict TDD implementation workflow", deps: [docs/adrs/0002-tdd-workflow.md], state: active, last: "tara@2026-02-12" } -->
+<!-- agent-notes: { ctx: "strict TDD implementation workflow", deps: [docs/adrs/0002-tdd-workflow.md], state: active, last: "coordinator@2026-03-31" } -->
 Implement the following using strict TDD: $ARGUMENTS
 
 Follow this cycle for each piece of behavior:

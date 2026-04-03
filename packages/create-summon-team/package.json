@@ -1,0 +1,29 @@
+{
+  "name": "create-summon-team",
+  "version": "0.1.0",
+  "description": "npm create summon-team — alias for summon-team. Summon your AI dev team.",
+  "type": "module",
+  "bin": {
+    "create-summon-team": "./src/index.mjs"
+  },
+  "files": [
+    "src"
+  ],
+  "keywords": [
+    "claude-code",
+    "ai-agents",
+    "dev-team",
+    "scaffolding",
+    "create"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/summon-dev/summon.git",
+    "directory": "packages/create-summon-team"
+  },
+  "homepage": "https://github.com/summon-dev/summon",
+  "dependencies": {
+    "summon-team": "workspace:^"
+  }
+}
