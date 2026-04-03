@@ -24,6 +24,6 @@
   },
   "homepage": "https://github.com/summon-dev/summon",
   "dependencies": {
-    "summon-team": "workspace:*"
+    "summon-team": "workspace:^"
   }
 }
