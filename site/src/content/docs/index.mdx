@@ -1,0 +1,82 @@
+---
+title: Summon
+description: Ship like a team of 10. You're the only human.
+template: splash
+hero:
+  tagline: "They give you agents. We give you a team. There's a difference."
+  actions:
+    - text: Get Started
+      link: /summon/getting-started/quick-start/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/summon-dev/summon
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## The Problem
+
+Agent marketplaces offer hundreds of AI agents. Install them, and you get... a pile of tools.
+No one decides what to build first. No one catches the bad architecture before you've built on top of it.
+No one says "wait, we need tests."
+
+**You don't need more agents. You need a team that works like a team.**
+
+---
+
+## What You Get
+
+<CardGrid>
+  <Card title="16 Specialized Agents" icon="group">
+    Architects, testers, reviewers, SREs, security auditors — each knows its role, its boundaries, and when to invoke the others.
+  </Card>
+  <Card title="23 Slash Commands" icon="terminal">
+    From /kickoff to /handoff — discovery, planning, TDD, code review, sprint management, all built in.
+  </Card>
+  <Card title="7-Phase Methodology" icon="list-format">
+    Discovery through sprint boundary. Architecture gates, TDD, three-lens code review, and retrospectives.
+  </Card>
+  <Card title="Real Accountability" icon="approve-check-circle">
+    Mandatory ADRs. 15-item done gate. Security veto. Test coverage veto. The team says no when it should.
+  </Card>
+</CardGrid>
+
+---
+
+## Quick Start
+
+```bash
+npx summon-team my-project
+cd my-project
+# Open in Claude Code, then run /quickstart
+```
+
+That's it. Three commands and you have a full engineering team.
+
+---
+
+## How It Works
+
+1. **You describe what you want to build.** Cam interviews you until the vision is sharp.
+2. **The team plans.** Archie designs architecture. Pat writes work items. Grace organizes the sprint.
+3. **The team builds.** Tara writes failing tests. Sato makes them pass. One commit per issue.
+4. **The team reviews.** Vik checks simplicity. Tara checks coverage. Pierrot checks security. Three parallel lenses.
+5. **The team ships.** Done gate passes. Sprint boundary runs. Retrospective captures learnings.
+
+You're the product owner and the final decision-maker. The team handles the engineering discipline.
+
+---
+
+## Why Not Just Use an Agent Marketplace?
+
+| | Agent Marketplaces | Summon |
+|---|---|---|
+| **Agents** | 100-1000+ independent tools | 16 agents that know each other |
+| **Process** | None | 7-phase methodology with gates |
+| **Architecture** | No guardrails | Mandatory ADRs before code |
+| **Testing** | Optional | TDD enforced — tests before code |
+| **Code Review** | Single-pass or none | Three parallel lenses |
+| **Sprint Management** | None | Velocity tracking, retros, handoffs |
+| **Accountability** | Agents don't say no | Veto authority on security + tests |

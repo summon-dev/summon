@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Custom overrides for Starlight's landing page */
+.hero {
+	--sl-color-white: #fff;
+}
+
+/* Make feature cards pop */
+.sl-card-grid .sl-link-card {
+	transition: transform 0.15s ease;
+}
+.sl-card-grid .sl-link-card:hover {
+	transform: translateY(-2px);
+}
