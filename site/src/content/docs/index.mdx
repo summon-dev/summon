@@ -1,9 +1,30 @@
 ---
 title: Summon
-description: Ship like a team of 10. You're the only human.
+description: "Ship like a team of 10. You're the only human. Summon is a drop-in AI engineering team for Claude Code — 16 agents, 23 commands, real methodology."
 template: splash
+head:
+  - tag: meta
+    attrs:
+      property: og:image
+      content: https://summon-dev.github.io/summon/og.png
+  - tag: meta
+    attrs:
+      property: og:image:width
+      content: "1200"
+  - tag: meta
+    attrs:
+      property: og:image:height
+      content: "630"
+  - tag: meta
+    attrs:
+      name: twitter:card
+      content: summary_large_image
+  - tag: meta
+    attrs:
+      name: twitter:image
+      content: https://summon-dev.github.io/summon/og.png
 hero:
-  tagline: "They give you agents. We give you a team. There's a difference."
+  tagline: "Ship like a team of 10. You're the <strong>only human</strong>."
   actions:
     - text: Get Started
       link: /summon/getting-started/quick-start/
@@ -16,11 +37,13 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
+<p class="what-is">Summon is a drop-in framework for <a href="https://claude.ai/code">Claude Code</a>. It installs agent definitions, slash commands, and process docs into your project. No runtime. No dependencies. Just markdown.</p>
+
+---
+
 ## The Problem
 
-Agent marketplaces offer hundreds of AI agents. Install them, and you get... a pile of tools.
-No one decides what to build first. No one catches the bad architecture before you've built on top of it.
-No one says "wait, we need tests."
+Agent marketplaces offer hundreds of AI agents. Install them, and you get... a pile of tools. No one decides what to build first. No one catches the bad architecture before you've built on top of it.
 
 **You don't need more agents. You need a team that works like a team.**
 
@@ -30,30 +53,18 @@ No one says "wait, we need tests."
 
 <CardGrid>
   <Card title="16 Specialized Agents" icon="group">
-    Architects, testers, reviewers, SREs, security auditors — each knows its role, its boundaries, and when to invoke the others.
+    Architects, testers, reviewers, SREs, and security auditors — a team that self-organizes around your work.
   </Card>
   <Card title="23 Slash Commands" icon="terminal">
-    From /kickoff to /handoff — discovery, planning, TDD, code review, sprint management, all built in.
+    From /kickoff to /handoff — every phase of development has a command that drives it.
   </Card>
   <Card title="7-Phase Methodology" icon="list-format">
-    Discovery through sprint boundary. Architecture gates, TDD, three-lens code review, and retrospectives.
+    Not just agents — a complete workflow with enforced gates, reviews, and sprint boundaries.
   </Card>
   <Card title="Real Accountability" icon="approve-check-circle">
-    Mandatory ADRs. 15-item done gate. Security veto. Test coverage veto. The team says no when it should.
+    Security veto. Test coverage veto. 15-item done gate. The team says no when it should.
   </Card>
 </CardGrid>
-
----
-
-## Quick Start
-
-```bash
-npx summon-team my-project
-cd my-project
-# Open in Claude Code, then run /quickstart
-```
-
-That's it. Three commands and you have a full engineering team.
 
 ---
 
@@ -69,6 +80,20 @@ You're the product owner and the final decision-maker. The team handles the engi
 
 ---
 
+## Quick Start
+
+```bash
+npx summon-team my-project
+cd my-project
+# Open in Claude Code, then run /quickstart
+```
+
+Two commands to install. One command to launch your team.
+
+---
+
+<div class="comparison-section">
+
 ## Why Not Just Use an Agent Marketplace?
 
 | | Agent Marketplaces | Summon |
@@ -80,3 +105,22 @@ You're the product owner and the final decision-maker. The team handles the engi
 | **Code Review** | Single-pass or none | Three parallel lenses |
 | **Sprint Management** | None | Velocity tracking, retros, handoffs |
 | **Accountability** | Agents don't say no | Veto authority on security + tests |
+
+</div>
+
+---
+
+<div class="closing-cta">
+
+## Ready to summon your team?
+
+```bash
+npx summon-team my-project
+```
+
+<div class="cta-links">
+  <a href="/summon/getting-started/quick-start/" class="sl-flex">Get Started</a>
+  <a href="/summon/team/overview/">Meet the 16 agents</a>
+</div>
+
+</div>
