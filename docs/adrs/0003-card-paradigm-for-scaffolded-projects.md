@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "ADR for layered card UX paradigm in scaffolds", deps: [CLAUDE.md, docs/adrs/template.md], state: active, last: "dani@2026-04-08" }
+agent-notes: { ctx: "ADR for layered card UX paradigm in scaffolds", deps: [CLAUDE.md, docs/adrs/template.md], state: active, last: "dani@2026-04-08-r2" }
 ---
 
 # ADR-0003: Card Paradigm for Scaffolded Projects
@@ -21,7 +21,13 @@ We evaluated Microsoft Adaptive Cards as a declarative, cross-platform card form
 
 **Exception:** Adaptive Cards remain the correct choice when a project explicitly targets Microsoft surfaces (Teams bots, Outlook Actionable Messages, Copilot Studio). This ADR does not apply to those cases.
 
-We then evaluated alternatives across five categories: component libraries (shadcn/ui, Radix, Headless UI, Ark UI, Park UI), declarative form/card specs (JSON Forms, RJSF, Formily), design system approaches (Tailwind UI, design tokens), data-driven approaches (Builder.io, Block Protocol, Portable Text), and bespoke schemas.
+We then evaluated alternatives across five categories:
+
+- **Component libraries:** shadcn/ui (85K+ GitHub stars, dominant in React + Tailwind), shadcn-svelte (7.5K+ stars, actively maintained Svelte port using Bits UI), Radix UI, Headless UI, Ark UI (React/Svelte/Vue/Solid via Zag.js state machines), Park UI
+- **Declarative form/card specs:** JSON Forms (no Svelte support), RJSF (React-only, known a11y issues), Formily (no Svelte, Chinese-primary docs)
+- **Design system approaches:** Tailwind UI/Plus, design tokens (Style Dictionary, W3C Design Tokens v1), Storybook-driven patterns
+- **Data-driven approaches:** Builder.io, Block Protocol (stalled — last spec v0.3, Feb 2023), Portable Text (Sanity), Vercel json-render (13K+ stars since Jan 2026, cross-framework AI-generated UI rendering with shadcn/ui and shadcn-svelte renderers)
+- **Bespoke schemas:** custom Summon-specific card types with per-framework renderers
 
 No single library covers Summon's cross-framework needs while maintaining accessibility, developer experience, and data-driven rendering capability. A layered approach is required.
 
@@ -37,13 +43,15 @@ Summon scaffolds include Ark UI as the default dependency for interactive UI pri
 
 **For React projects:** shadcn/ui (which uses Radix under the hood) is also acceptable — both Radix and Ark UI are strong choices for React. The scaffold may use either. Ark UI is required for SvelteKit and other non-React scaffolds.
 
+**Accessibility note on Radix:** A [Publicis Sapient audit](https://github.com/radix-ui/primitives/discussions/2232) identified 35 accessibility issues in Radix primitives. The copy-paste ownership model means developers can fix these issues in their own code, but must be aware they exist. Ark UI's Zag.js state machine architecture tests accessibility logic once in framework-agnostic JS, reducing the surface area for per-framework a11y bugs.
+
 ### Layer 2: Card Components — Framework-native, Tailwind-styled
 
 Cards are layout, not interaction. Each scaffold ships framework-native card components styled with Tailwind:
 
 - `Card`, `CardHeader`, `CardContent`, `CardFooter`, `CardActions`
-- React scaffolds: `.tsx` components (shadcn/ui's Card or equivalent)
-- SvelteKit scaffolds: `.svelte` components
+- React scaffolds: `.tsx` components (shadcn/ui's Card)
+- SvelteKit scaffolds: `.svelte` components (shadcn-svelte's Card, backed by Bits UI)
 - Astro scaffolds: `.astro` components
 
 These follow the shadcn/ui copy-paste ownership model — the developer owns the code and customizes freely. Interactive elements within cards compose Layer 1 primitives.
@@ -55,6 +63,8 @@ For projects that need cards defined as data (CMS-driven dashboards, notificatio
 - A JSON schema defining 6-8 card types: `StatusCard`, `ChoiceCard`, `MetricCard`, `NotificationCard`, `DataTableCard`, `MediaCard`, `FormCard`, `CompositeCard`
 - Per-framework serializer packages that render card JSON using Layer 2 components
 - Inspired by Sanity's [Portable Text](https://github.com/portabletext/portabletext) architecture: schema -> serializers -> native components
+
+**For AI-driven dynamic UI:** [Vercel json-render](https://github.com/vercel-labs/json-render) is the recommended implementation path. It defines a component catalog (Zod schemas), constrains LLMs to generate JSON specs against that catalog, and renders progressively across React, Svelte, Vue, and Solid. It ships shadcn/ui and shadcn-svelte renderers, aligning with Layers 1 and 2. json-render is young (Jan 2026, Vercel Labs) so treat it as the preferred direction, not a locked dependency.
 
 This layer is opt-in. Most projects use Layers 1 + 2 only.
 
@@ -78,3 +88,15 @@ This layer is opt-in. Most projects use Layers 1 + 2 only.
 
 - Adaptive Cards remain available as a documented option for Microsoft ecosystem integration. This ADR does not prohibit their use in that narrow context.
 - The specific card types in the Layer 3 schema will be defined when the first project requires data-driven cards. The types listed above are indicative, not final.
+- Streamlit and Gradio have their own component models that are fundamentally different from web component architectures. This card paradigm applies to web projects only; AI tool scaffolds should document idiomatic patterns for their respective frameworks.
+
+## Accessibility Non-Negotiables
+
+Regardless of which layer or library is used, all card implementations must meet these requirements:
+
+- Semantic HTML — cards use `article` or `section` with appropriate heading hierarchy
+- Keyboard operability — all interactive elements within cards are keyboard-accessible with logical focus order
+- Color contrast — WCAG AA minimums (4.5:1 normal text, 3:1 large text)
+- Accessible names — cards used as links or interactive regions must have accessible names
+- Live regions — dynamic card content (loading states, live data) must use `aria-live` regions
+- Reduced motion — motion within cards must respect `prefers-reduced-motion`
