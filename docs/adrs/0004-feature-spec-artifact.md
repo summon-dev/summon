@@ -1,12 +1,18 @@
 ---
-agent-notes: { ctx: "feature-spec artifact between ADR and TDD", deps: [docs/adrs/0003-research-driven-restructure-2026.md, docs/adrs/0002-tdd-workflow.md, docs/methodology/phases.md, docs/process/done-gate.md, docs/tracking/2026-05-02-adr0004-feature-spec-debate.md], state: proposed, last: "archie@2026-05-02" }
+agent-notes: { ctx: "feature-spec artifact between ADR and TDD", deps: [docs/adrs/0003-research-driven-restructure-2026.md, docs/adrs/0002-tdd-workflow.md, docs/methodology/phases.md, docs/process/done-gate.md, docs/tracking/2026-05-02-adr0004-feature-spec-debate.md, docs/tracking/2026-05-02-adr0004-feature-spec-debate-round2.md], state: proposed, last: "claude@2026-05-02" }
 ---
 
 # ADR-0004: Feature-Spec Artifact Between ADR and TDD
 
 ## Status
 
-**Proposed** 2026-05-02. Rework following Wei's REWORK verdict ([debate](../tracking/2026-05-02-adr0004-feature-spec-debate.md)). On acceptance, this ADR is **Accepted, broad rollout gated on W1.1 (Done Gate amendment for "spec link present for M+ items") landing**. Until W1.1 lands, the ADR is in *shadow-pilot only* state per the Pilot Plan section; the size carve-out is not enforced for general M+ work. As a hard backstop independent of the Done Gate amendment, **Tara MUST refuse to author tests for any M+ item that has no spec link**; this rule is added to the Tara workflow on acceptance and survives any slip in W1.1.
+**Proposed (Shadow-Pilot phase)** 2026-05-02. Rework following Wei's REWORK verdict ([round 1 debate](../tracking/2026-05-02-adr0004-feature-spec-debate.md)); Wei round 2 verdict ACCEPT WITH AMENDMENTS ([round 2 debate](../tracking/2026-05-02-adr0004-feature-spec-debate-round2.md)) with six wording amendments folded in.
+
+**Transition to Accepted requires both:** (a) W1.3 shadow-pilot success criteria pass (see § Pilot Plan), AND (b) W1.1 (Done Gate amendment for "spec link present for M+ items") lands. Until both conditions hold, the size carve-out is not enforced for general M+ work; only the named shadow-pilot item is bound.
+
+**Hard backstop (active on this ADR's acceptance, independent of W1.1):** Tara MUST refuse to author tests for any M+ item that has no spec link. This rule is added to the Tara workflow on acceptance and survives any slip in W1.1.
+
+**Honor-system mitigation during the Shadow-Pilot phase:** the Tara backstop assumes Tara is invoked. During the pre-W1.1 window, the human (or the coordinator in proxy mode) is responsible for confirming Tara is invoked on M+ items, starting with the W1.3 shadow-pilot. The honor-system gap closes when W1.1's Done Gate amendment lands.
 
 ## Context
 
@@ -25,7 +31,7 @@ The feature spec contains exactly six sections; no more, no fewer.
 | **Outcomes** | User-observable end state in 1-3 sentences. "When this ships, X will be true." | ADR's *direction*. |
 | **Scope (in/out)** | Explicit in-scope items; explicit out-of-scope items the reader might assume are included. **Each Scope bullet MUST cite the specific acceptance criterion (by ID or quoted phrase) it bounds.** A Scope bullet that cannot cite an AC is a signal the AC is missing or the bullet is paraphrase, and Tara returns the spec. | Acceptance criteria. |
 | **Constraints** | Non-negotiable limits: performance, compatibility, dependencies, deadlines, sequencing rules with other items. | ADRs (cross-item architectural constraints). |
-| **Key Decisions** | Item-local choices not warranting an ADR. One line each, with rationale. **Each Key Decision MUST cite the ADR it sits below (by number), OR explicitly declare "no ADR applies because…" with a one-sentence rationale.** A Key Decision with neither citation nor declaration is non-conformant and Tara returns the spec. | ADRs (cross-cutting direction). |
+| **Key Decisions** | Item-local choices not warranting an ADR. One line each, with rationale. **Each Key Decision MUST cite the ADR it sits below (by number), OR explicitly declare "no ADR applies because…" with a one-sentence rationale.** A Key Decision with neither citation nor declaration is non-conformant and Tara returns the spec. Citations MAY reference Proposed (not-yet-Accepted) ADRs with the suffix `(Proposed as of YYYY-MM-DD)`; if the cited ADR is amended at Acceptance, the spec author MUST revisit the citation and amend if the change affects the Key Decision. | ADRs (cross-cutting direction). |
 | **Task Breakdown** | Ordered list of concrete steps to implement, sized so each maps to one TDD red-green-refactor cycle. | Tests (behavior, not work order). |
 | **Verification Plan** | How we will know each outcome holds: which tests, which manual check, which metric, which user flow. References the test files Tara will author. | Acceptance criteria (the spec proves them; it does not restate them). |
 
@@ -34,7 +40,7 @@ The citation requirements convert the Scope-vs-AC and Key-Decisions-vs-ADRs dist
 ### 2. Lifecycle
 
 1. **Authored** at the start of Phase 3 (Implementation) for items requiring a spec, after Architecture but before Tara's red phase.
-2. **Coherence-reviewed** by Cam at the discovery handoff, before Tara's verifiability gate. Cam pressure-tests spec-vs-AC drift: do Outcomes and Scope reflect the same intent the AC captured, or have they silently shifted? Cam returns the spec for redraft if drift is present. Single review pass; no new agent.
+2. **Coherence-reviewed** by Cam *after* the spec is authored and *before* Tara's verifiability gate — i.e., between Lifecycle step 1 and Tara's red-phase entry. **This is a second touch from Cam at the Architecture→Implementation seam, not the earlier Phase 1→2 Discovery handoff.** Cam pressure-tests spec-vs-AC drift: do Outcomes and Scope reflect the same intent the AC captured, or have they silently shifted? Cam returns the spec for redraft if drift is present. Single review pass; no new agent.
 3. **Becomes canonical** when the human (or Pat in proxy mode for non-architectural items) confirms it. Tara's tests reference the canonical spec.
 4. **Amended** by appending a dated `## Amendment YYYY-MM-DD` section, never by silent edit. Amendments require the same approval as authoring.
 5. **Retired** when the work item closes. Spec preserved in-repo for traceability; agent-notes `state` flips to `canonical`.
@@ -108,8 +114,9 @@ ADR-0003 § Rollout requires pilot-before-broad-rollout; ADR-0003 § Halt-Points
 3. Tara accepts the Verification Plan without a return-for-sharpening cycle.
 4. Implementation closes without a spec amendment.
 5. Post-mortem confirms the spec did not paraphrase ADR-C or W1.3's acceptance criteria; every Scope bullet's AC citation is verifiable; every Key Decision's ADR citation or "no ADR applies" declaration holds up.
+6. **Archie reviews any Key Decision flagged as touching cross-component interfaces — which the W1.3 harness/progress-note shape will be by construction.** If Archie escalates per § Ownership, the spec stalls and ADR-C absorbs the decision rather than the spec. This criterion exists specifically to prevent the W1.3 spec from absorbing ADR-C decisions before ADR-C is debated (the same pre-commitment anti-pattern this ADR's rework eliminated for itself).
 
-Failure on (2)–(5) reopens this ADR per ADR-0003 § Rollback.
+Failure on (2)–(6) reopens this ADR per ADR-0003 § Rollback.
 
 **Boundary coverage caveat:** a single M item cannot test whether the M-vs-L boundary is correctly placed. **If a Wave 1 L item becomes available before broad rollout, it is added to the pilot.** Wave 1 contains no L item today, so this cannot be guaranteed; the post-mortem MUST log "boundary fitness not yet tested at L; deferred to first L item under broad rollout" as an explicit follow-up question, and that item's spec is treated as continuing-pilot evidence.
 
@@ -162,10 +169,13 @@ Failure on (2)–(5) reopens this ADR per ADR-0003 § Rollback.
 - The phase model is unchanged in shape; the spec sits at the Architecture→Implementation seam.
 - The spec template itself is a downstream deliverable.
 - Pilot results may amend any of the six decisions above; structure is stable, parameters are not.
+- **First L item under broad rollout is treated as continuing-pilot evidence for the M-vs-L boundary fitness question (see § Pilot Plan).** Failure on that item — defined as the spec being unable to satisfy citation requirements without paraphrase, OR Tara rejecting Verification Plan, OR the spec needing amendment mid-implementation — reopens § Size Carve-Out per ADR-0003 § Rollback. The post-mortem of this first L item is the named consumer of the deferred boundary-fitness signal.
 
-## Rework Notes (2026-05-02)
+## Rework Notes
 
-This ADR was reworked following Wei's REWORK verdict. Each finding addressed:
+### Round 1 Rework (2026-05-02, Archie)
+
+Reworked following Wei's Round 1 REWORK verdict. Each finding addressed:
 
 1. **Challenge 6 (planner/generator/evaluator pre-commitment)** — the parenthetical in § Ownership is deleted. Pat-authors / Tara-validates / Sato-implements is now justified on three standalone merits (Pat owns AC, Tara owns verification, Sato owns implementation). Alternative D's rejection is re-justified on standalone grounds: Sato authoring collapses authorship and implementation, weakening spec-as-contract. The harness mapping is not mentioned anywhere in the ADR.
 2. **Challenge 7 (W2.2 pilot impossibility)** — the W2.2 pilot is replaced with a shadow-pilot on **W1.3 (Harness Contract)**. W1.3 is selected with named criteria (M-sized, cross-component, has ADR above, not self-referential, not S). The shadow runs alongside the existing process; pilot success criteria are explicit.
@@ -175,3 +185,14 @@ This ADR was reworked following Wei's REWORK verdict. Each finding addressed:
 6. **Challenge 5 (Archie soft gate)** — § Ownership names the objective trigger list (cross-component interfaces, persistence, security, external dependencies) and adds the escalation: Archie deeming a Key Decision architectural stalls the spec, opens an ADR, halts the work item.
 7. **Challenge 1 (M boundary inherited)** — § Pilot Plan adds L-item coverage when one becomes available; the post-mortem MUST log boundary-fitness-at-L as a follow-up if no L item exists in Wave 1.
 8. **Challenge 2 (XS-forbidden vs S-optional asymmetry)** — § Size Carve-Out defines "explicit justification" for opt-in S specs: one-line rationale in the work item description, plus Pat + Tara recorded sign-off. Without both, non-conformant.
+
+### Round 2 Amendments (2026-05-02, applied inline post-Wei round 2 ACCEPT WITH AMENDMENTS verdict)
+
+Six wording-grade amendments folded in without spawning Archie again (Wei explicitly noted no further full Wei round required):
+
+1. **§ Status** rephrased as "Proposed (Shadow-Pilot phase)" with explicit Accept-transition conditions, replacing the compound "Accepted, broad rollout gated on…" status that didn't fit the standard taxonomy.
+2. **§ Status** gained the honor-system enforcer paragraph: human or coordinator confirms Tara is invoked on M+ items during the pre-W1.1 window.
+3. **§ Lifecycle step 2** rewrote Cam timing to "after the spec is authored and before Tara's verifiability gate" with explicit note that this is a *second* Cam touch, not the Phase 1→2 Discovery handoff.
+4. **§ Schema (Key Decisions row)** added that citations may reference Proposed (not-yet-Accepted) ADRs with a follow-up obligation if the cited ADR is amended at Acceptance.
+5. **§ Pilot Plan** added a sixth pilot success criterion: Archie reviews W1.3 cross-component Key Decisions to prevent the spec from absorbing ADR-C decisions before ADR-C is debated.
+6. **§ Consequences (Neutral)** added the continuing-pilot trigger: first L item under broad rollout is the named consumer of the deferred boundary-fitness signal; failure on that item reopens § Size Carve-Out.
