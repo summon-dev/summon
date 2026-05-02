@@ -1,9 +1,9 @@
 ---
 agent-notes:
   ctx: "implementation gotchas and established patterns"
-  deps: [CLAUDE.md, docs/adrs/0005-single-threaded-default.md]
+  deps: [CLAUDE.md, docs/adrs/0005-single-threaded-default.md, docs/adrs/0007-owned-partition.md]
   state: active
-  last: "coordinator@2026-05-02"
+  last: "claude@2026-05-02"
 ---
 # Known Patterns and Gotchas
 
@@ -73,6 +73,8 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 - **"Invoke the team" means spawn subagents (Solo-Coordinator anti-pattern).** When the human uses language like "invoke the team", "use the team", "have Cam look at this", or names any persona, the coordinator MUST spawn those agents via the Task tool. The coordinator doing the work inline — even if the output is good — violates the explicit human request. **Detection signal:** the human asked for a named persona or "the team" but no Task tool calls with `subagent_type` matching a persona appear in the response. **Fix:** parse the request for persona names or team-level language, then spawn the appropriate agents before doing any work.
 
 - **Premature Parallelism anti-pattern.** The coordinator (or Grace) launches parallel writers without a measured single-thread ceiling, often because parallelism *feels* faster or because a plan listed multiple items. The result is partition collisions, duplicated work, and merge contention that costs more than the serial run would have. **Detection signal:** more than one Task call with `subagent_type: sato` (or any writer role) for overlapping code areas in a single message, with no parallelization proposal in the handoff or sprint artifacts and no Grace sign-off recorded. **Fix:** stop, run the single-thread version to establish the throughput baseline, then re-evaluate against [ADR-0005](../adrs/0005-single-threaded-default.md)'s three escalation criteria — measured ceiling, clean ownership per ADR-B, ≤5 streams — before parallelizing.
+
+- **Plan-Encoded Partition anti-pattern.** A plan (from plan mode, a prior session, a human-provided spec, or a sprint document) lists multiple parallel work items, and the coordinator launches writers per the plan's structure WITHOUT first invoking Grace to author an ownership-map entry. Per [ADR-0007](../adrs/0007-owned-partition.md) § 5, partition creation goes through Grace and only Grace; a plan's structure does not bind Grace's decision (Grace MAY collapse, decompose, or reject parallelism). **Detection signal:** more than one writer-role `Task` call for distinct file paths in a single message, with no corresponding ownership-map entries authored that session. **Fix:** stop. Invoke Grace to author the ownership-map entries. If Grace's mechanical checks reject (overlap, malformed scope, cap exceedance), the plan needs reshaping before any writer launches. **Distinction from Plan-as-Bypass:** Plan-as-Bypass skips the ADR/TDD/review process; Plan-Encoded Partition skips the Grace gate specifically. Both can fire on the same plan.
 
 - **Use scripts for stable logic, commands for evolving knowledge.** Static scripts are ideal when the rules are well-defined and unlikely to change. But when automation requires understanding things that change externally — evolving formats, shifting best practices, new API conventions — prefer a Claude Code command over a script. Commands bring current understanding (and can web-search) on every run.
 

@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "16-persona roster with capability tiers", deps: [CLAUDE.md, docs/methodology/phases.md, docs/methodology/agent-notes.md], state: canonical, last: "sato@2026-03-30" }
+agent-notes: { ctx: "16-persona roster with capability tiers", deps: [CLAUDE.md, docs/methodology/phases.md, docs/methodology/agent-notes.md, docs/adrs/0007-owned-partition.md], state: canonical, last: "claude@2026-05-02" }
 ---
 
 # Team Personas
@@ -93,6 +93,7 @@ Pat owns "what to build and why." Writes acceptance criteria, prioritizes ruthle
 **Agent file:** `.claude/agents/grace.md`
 **Capability:** Sprint tracking, work distribution, cross-team coordination, project board management
 **Hybrid phases:** Parallel Work (Coordinator), Human Interaction (Support)
+**Harness role:** Ownership-map author per [ADR-0007](../adrs/0007-owned-partition.md) § 5 — the *only* authoring path for partition creation, transfer, and dissolution. Mechanical at map-authoring time (refuses malformed entries: missing fields, scope overlap, cap exceedance); writer-launch enforcement remains post-hoc Vik review per ADR-0007 § 5. Sprint-boundary retirement of the active map is a Grace responsibility.
 
 Grace is "where are we." Maintains the project board, tracks velocity, flags anomalies, and plays scrum-master during ceremonies. She's the team's memory — she remembers that the last three "simple" estimates were off by 3x.
 

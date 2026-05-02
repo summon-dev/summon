@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md, docs/adrs/0004-feature-spec-artifact.md, docs/adrs/0005-single-threaded-default.md, docs/adrs/0006-harness-contract.md], state: canonical, last: "sato@2026-05-02" }
+agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md, docs/adrs/0004-feature-spec-artifact.md, docs/adrs/0005-single-threaded-default.md, docs/adrs/0006-harness-contract.md, docs/adrs/0007-owned-partition.md, docs/scaffolds/ownership-map.md], state: canonical, last: "claude@2026-05-02" }
 ---
 
 # Hybrid Team Methodology
@@ -14,7 +14,7 @@ Summon organizes AI-assisted development into **8 phases** (numbered 1–7 plus 
 | 2. Architecture | Design decisions, tech choices | Archie | Ensemble + Wei debate |
 | 2.5. Feature Spec | M+ item before TDD red phase | Pat → Cam → (Archie) → Tara | Pipeline (author → review → gate) |
 | 3. Implementation | Writing code | Tara → Sato | TDD pipeline (red-green-refactor) |
-| 4. Parallel Work | 3+ independent items meeting ADR-0005 escalation criteria | Grace | Single-threaded by default; market by exception |
+| 4. Parallel Work | 3+ independent items meeting ADR-0005 escalation criteria | Grace | Single-threaded by default; owned partition by exception |
 | 5. Code Review | Reviewing changes | Vik + Tara + Pierrot | Three parallel lenses |
 | 6. Debugging | Fixing bugs | Sato | Blackboard (shared investigation) |
 | 7. Human Interaction | Consulting the user | Cam | Single point of contact |
@@ -139,22 +139,42 @@ The coordinator's job is to recognize phase transitions and assemble the right t
 
 ### Phase 4: Parallel Work
 
-**Org Model:** Market / Self-claim
+**Org Model:** Owned partition (Grace-authored ownership map; single-thread default)
 
 | Role | Agent | Responsibility |
 |------|-------|---------------|
-| Coordinator | **Grace** | Work distribution, status tracking |
-| Workers | **Sato** (x N) | Parallel implementation streams |
-| Workers | **Tara** (x N) | Parallel test writing |
+| Map author | **Grace** | Sole authoring path for ownership-map entries (creation, transfer, dissolution) |
+| Workers | **Sato** (x N) | Parallel implementation streams, one writer-role-at-a-time per partition |
+| Workers | **Tara** (x N) | Parallel test writing within the TDD-pipeline carve-out |
 | Workers | **Dani** | UI/UX work (parallel to backend) |
 | Workers | **Ines** | Infrastructure work (parallel to app code) |
 | Workers | **Diego** | Documentation (parallel to implementation) |
 
-**How it works:** Grace identifies independent work items that may proceed in parallel. Agents are assigned non-overlapping work. Multiple Task tool calls launch parallel agent teams. Grace tracks progress and flags blockers.
+**Owned partition (definition).** A **partition** is a *named, time-bounded scope of write authority over a defined set of files or interfaces, owned by exactly one writer-role-at-a-time for the partition's lifetime* (per [ADR-0007 § 1](../adrs/0007-owned-partition.md#1-what-a-partition-is)). A partition exists if and only if it has an entry in the active ownership map. **The absence of an ownership-map entry is the steady state**; a partition is the artifact of an explicit decision to parallelize.
 
-**When to use:** Code-write work runs **single-threaded by default** per [ADR-0005](../adrs/0005-single-threaded-default.md). Parallel write streams are permitted only when **all three** escalation criteria are met — (1) measured single-thread ceiling, (2) clean ownership per ADR-B (once Accepted), (3) ≤5 streams — and Grace has authored a parallelization proposal approved by the human (or Pat in proxy mode). Parallelism is the exception, not the default. Read-side parallelism (multi-lens code review, parallel architecture debate, parallel specialist consultation) is **unaffected** by this rule and remains the model for those activities. The Phase 4 mechanics — ownership map artifact, partition lifecycle, market vs. assignment dynamics — are deferred to ADR-B / W2.1 and are subject to revision when that ADR lands.
+**Single-thread default.** Code-write work runs single-threaded by default per [ADR-0005](../adrs/0005-single-threaded-default.md). Owned partitions are the **legitimate path to parallelism** when [ADR-0005 § 4](../adrs/0005-single-threaded-default.md#4-escalation-criteria-from-single-thread-to-parallel)'s three escalation criteria are jointly satisfied: (1) measured single-thread ceiling, (2) clean ownership per [ADR-0007](../adrs/0007-owned-partition.md) (Grace has authored a conforming entry), (3) ≤5 concurrent streams. Read-side parallelism (multi-lens code review, parallel architecture debate, parallel specialist consultation) is **unaffected** and remains the model for those activities.
 
-**Transition to next phase:** When all parallel work items are complete.
+**Ownership map artifact.** The template lives at [`docs/scaffolds/ownership-map.md`](../scaffolds/ownership-map.md). Live maps for an active sprint live at `docs/sprints/<sprint-id>-ownership-map.md` (e.g., `docs/sprints/sprint-1-ownership-map.md`); Grace copies from the template and fills in entries per the nine-field schema in [ADR-0007 § 2](../adrs/0007-owned-partition.md#2-ownership-map-schema). The map accumulates dissolved entries within a sprint and is retired by Grace at sprint boundary alongside the progress note.
+
+**Grace is the only authoring path.** Per [ADR-0007 § 5](../adrs/0007-owned-partition.md#5-plan-as-bypass-mitigation), no agent other than Grace adds entries to the ownership map. A plan, sprint document, or human prompt that lists multiple parallel items is *input* to Grace's authoring decision — Grace MAY collapse, decompose, or reject the parallelism. The plan's structure does not bind Grace's decision. See the [Plan-Encoded Partition anti-pattern](../process/gotchas.md#process) for the cross-reference.
+
+**Concurrency cap: ≤5 partitions.** Inherited from [ADR-0005 § 4](../adrs/0005-single-threaded-default.md#4-escalation-criteria-from-single-thread-to-parallel) criterion 3 and confirmed in [ADR-0007 § 6](../adrs/0007-owned-partition.md#6-concurrency-cap). Five is the hard cap, not a target. Most waves have zero or one open partitions. Grace counts open entries (those with no `dissolution-event` annotation) before authoring a new entry and rejects the sixth.
+
+**Lifecycle (summary; full spec in [ADR-0007 § 3](../adrs/0007-owned-partition.md#3-lifecycle-creation-transfer-dissolution)).**
+
+- **Creation** (4-step gate): (1) ADR-0005's three escalation criteria jointly satisfied; (2) Grace authors the entry; (3) human (or Pat in proxy mode for non-architectural items) approves; (4) the writer launches only after steps 1–3 are recorded in-repo.
+- **Transfer:** ownership moves between agents via a `superseded-by` exit-condition. The original entry closes with `superseded-by: P<new>`, a new entry opens with the new owner, and the new entry's `entry-condition` cites the prior partition ID. Mid-flight transfer is a Grace-authored act.
+- **TDD-pipeline carve-out (NOT a transfer).** Sequential agent occupancy of one partition through the [ADR-0002](../adrs/0002-tdd-workflow.md) TDD pipeline (Tara red → Sato green → Sato refactor → Tara verify) is the canonical pipeline execution for a single owner-role and does **not** require `superseded-by` ceremony. The `owner` field names the role-at-a-time, not the specific agent invocation.
+- **Dissolution:** the writer's commits land on the integration branch with no conflicts and the work item's tests pass. Grace records `dissolution-event:<commit>` on the entry.
+- **`time-bound` exceedance fires a Blocker.** If a partition's `time-bound` is exceeded without `merge-clean` or `superseded-by` firing, Grace creates a Blocker per [ADR-0006 § 1](../adrs/0006-harness-contract.md#1-progress-note-schema): `B<n>: partition P<id> exceeds time-bound; awaiting-human or Pat-in-proxy authorization to extend or dissolve.` The Blocker gates further writer-launch on the affected partition via `/handoff` `gates:`.
+
+**Renegotiation on cross-partition collision (summary; full spec in [ADR-0007 § 4](../adrs/0007-owned-partition.md#4-late-arriving-cross-partition-work)).** When work surfaces mid-flight that touches the scope of an open partition not its own, Grace applies the partition-renegotiation decision tree. For cross-partition collisions (work touches two or more open partitions' scope), the rule is **halt and renegotiate**: Grace stops both writers, records a Blocker in the progress note, and re-authors the partition map. The human (or Pat in proxy mode) approves the new layout before any writer resumes. **Tiebreaker:** the partition with the **earlier `partition-id`** (lower numerical sequence within the same wave) keeps its scope; the later one is reshaped or dissolved. There is no "we'll figure it out at merge" path.
+
+**Plan-as-Bypass and Plan-Encoded Partition cross-references.** A plan is *input* to the Phase 4 decision, not a bypass of it. See [`gotchas.md` § Process — Plan-as-Bypass anti-pattern](../process/gotchas.md#process) (line 67 sibling) and the [Plan-Encoded Partition anti-pattern](../process/gotchas.md#process) for the detection signals and fixes. The two anti-patterns are siblings, not duplicates: Plan-as-Bypass skips the ADR/TDD/review process; Plan-Encoded Partition skips the Grace-authoring gate specifically.
+
+**Honor-system disclosure (per [ADR-0007 § 5](../adrs/0007-owned-partition.md#5-plan-as-bypass-mitigation)).** Grace's refusal-on-malformed-entry is *mechanical at map-authoring time* — it catches missing fields, overlap, and cap exceedance at the moment Grace is asked to author. **What is not mechanical is the act of *invoking Grace* in the first place.** Writer-launch enforcement is post-hoc Vik review under the four-lens code review (identical pattern to [ADR-0005 § 4](../adrs/0005-single-threaded-default.md#4-escalation-criteria-from-single-thread-to-parallel)). A future `create-summon` CLI gate (Sprint-N+ work) is the natural home for a real-time writer-launch refusal that fires when no ownership-map entry exists for the launched scope; that tooling is explicitly out of scope for this ADR. Until then, the three layered enforcements (Grace-only authoring path, four-lens detection signal, plan-input rule) are the achievable defense.
+
+**Transition to next phase:** When all open partitions reach `merge-clean` exit-conditions (or are dissolved by `superseded-by` transfer), and no Blocker remains on the active map.
 
 ---
 
