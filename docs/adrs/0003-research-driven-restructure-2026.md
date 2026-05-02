@@ -6,7 +6,7 @@ agent-notes: { ctx: "umbrella ADR setting direction for 2026 research-driven res
 
 ## Status
 
-Proposed — amendments applied per Wei challenge ([debate](../tracking/2026-05-02-adr0003-restructure-debate.md)); pending human approval.
+**Accepted** 2026-05-02. Wei challenge complete ([debate](../tracking/2026-05-02-adr0003-restructure-debate.md)), three must-change amendments applied, human approved. Split-persona pattern added per human review of Dani migration risk.
 
 ## Context
 

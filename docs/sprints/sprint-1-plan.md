@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "sprint 1 plan: align Summon with 2026 agentic consensus", deps: [CLAUDE.md, docs/methodology/phases.md, docs/process/team-governance.md, docs/methodology/personas.md], state: active, last: "pat@2026-05-02", key: ["3 waves, 8 items", "no board: track in-repo", "6 ADRs gated"] }
+agent-notes: { ctx: "sprint 1 plan: align Summon with 2026 agentic consensus", deps: [CLAUDE.md, docs/methodology/phases.md, docs/process/team-governance.md, docs/methodology/personas.md], state: active, last: "claude@2026-05-02", key: ["3 waves, 8 items", "no board: track in-repo", "6 ADRs gated"] }
 ---
 
 # Sprint 1 Plan — Align with 2026 Agentic Coding Consensus
@@ -160,7 +160,7 @@ Surfaced by the research pass but not in Sprint 1:
 
 | ID | Title | Size | Status |
 |----|-------|------|--------|
-| W1.1 | Feature-spec artifact | M | Planned |
+| W1.1 | Feature-spec artifact | M | In Progress (ADR drafting) |
 | W1.2 | Single-threaded default | S | Planned |
 | W1.3 | Harness contract + progress note | M | Planned |
 | W2.1 | Owned partition | M | Planned |
