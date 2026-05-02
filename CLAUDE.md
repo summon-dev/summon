@@ -48,10 +48,11 @@ Every non-excluded file must have agent-notes metadata. See `docs/methodology/ag
 ## Critical Rules
 
 ### Session Entry Protocol (Mandatory)
-Before writing any code — including types, tests, or ADRs — answer these three questions:
+Before writing any code — including types, tests, or ADRs — answer these four questions:
 1. **Do work items exist for this work?** If no → create them (Pat + Grace).
 2. **Does this work involve an architectural decision?** If yes → Architecture Gate (Archie + Wei as standalone agents). See `docs/process/team-governance.md` § Architecture Decision Gate.
-3. **Am I about to write implementation code?** If yes → Tara writes tests first.
+3. **Does this work item have a feature spec?** If the item is M+ size (or S with opt-in), a canonical spec at `docs/specs/<work-item-id>-<slug>.md` MUST exist before red phase begins. If not → Phase 2.5 (Pat authors, Cam coherence-reviews, Tara verifiability-gates) before Tara writes tests. XS items are forbidden specs; the commit + test diff is the contract. See `docs/adrs/0004-feature-spec-artifact.md`.
+4. **Am I about to write implementation code?** If yes → Tara writes tests first. **Tara MUST refuse to author tests for any M+ item that has no spec link** per ADR-0004 § Status (hard backstop).
 
 If you received a detailed plan, the plan is **input to this protocol**, not a bypass of it. See `docs/process/gotchas.md` § Process.
 

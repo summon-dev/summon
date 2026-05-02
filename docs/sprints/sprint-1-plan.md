@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "sprint 1 plan: align Summon with 2026 agentic consensus", deps: [CLAUDE.md, docs/methodology/phases.md, docs/process/team-governance.md, docs/methodology/personas.md, docs/adrs/0005-single-threaded-default.md], state: active, last: "claude@2026-05-02", key: ["3 waves, 8 items", "no board: track in-repo", "6 ADRs gated", "W1.2 Done"] }
+agent-notes: { ctx: "sprint 1 plan: align Summon with 2026 agentic consensus", deps: [CLAUDE.md, docs/methodology/phases.md, docs/process/team-governance.md, docs/methodology/personas.md, docs/adrs/0004-feature-spec-artifact.md, docs/adrs/0005-single-threaded-default.md, docs/adrs/0006-harness-contract.md], state: active, last: "claude@2026-05-02", key: ["3 waves, 8 items", "no board: track in-repo", "6 ADRs gated", "Wave 1 implementation Done; pilot post-mortem pending"] }
 ---
 
 # Sprint 1 Plan — Align with 2026 Agentic Coding Consensus
@@ -163,9 +163,9 @@ Surfaced by the research pass but not in Sprint 1:
 
 | ID | Title | Size | Status |
 |----|-------|------|--------|
-| W1.1 | Feature-spec artifact | M | ADR human-Accepted (Shadow-Pilot phase); doc edits pending |
+| W1.1 | Feature-spec artifact | M | Done (template, /feature-spec command, Phase 2.5 in phases.md, 4th SEP question in CLAUDE.md, Done Gate item 6b, Tara backstop documented in CLAUDE.md SEP §4 + phases.md Phase 2.5) — closes ADR-0004 Shadow-Pilot transition condition (b) |
 | W1.2 | Single-threaded default | S | Done (CLAUDE.md, phases.md Phase 4, gotchas.md updated) |
-| W1.3 | Harness contract + progress note | M | In Progress: template, /handoff, /resume, phases.md done; redirect cutover + first canonical progress note pending; pilot post-mortem after W1.1 |
+| W1.3 | Harness contract + progress note | M | Done (template, /handoff, /resume, phases.md Phase 7, redirect cutover at .claude/handoff.md); first canonical progress note will be written by /handoff at session end (the dual-purpose pilot output); pilot post-mortem in next session |
 | W2.1 | Owned partition | M | Planned |
 | W2.2 | Single-writer hierarchy | M | Planned |
 | W2.3 | Judge stack | M | Planned |

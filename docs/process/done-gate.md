@@ -1,9 +1,9 @@
 ---
 agent-notes:
-  ctx: "15-item Done Gate checklist for work items"
-  deps: [CLAUDE.md]
+  ctx: "16-item Done Gate checklist for work items (incl. spec-link gate)"
+  deps: [CLAUDE.md, docs/adrs/0004-feature-spec-artifact.md]
   state: active
-  last: "coordinator@2026-02-28"
+  last: "coordinator@2026-05-02"
 ---
 # Done Gate — Detailed Checklist
 
@@ -17,6 +17,7 @@ Every work item must pass this gate before closing:
 4. **Linted** with zero warnings.
 5. **Code reviewed** — the code-reviewer agent (or at minimum one review lens) has been invoked.
 6. **Acceptance criteria met** — the feature works as specified, not just "tests pass."
+6b. **Spec link present** — for M+ items (and S items with documented opt-in), a canonical feature spec exists at `docs/specs/<work-item-id>-<slug>.md` per [ADR-0004 § 6](../adrs/0004-feature-spec-artifact.md#6-storage-and-naming). The work-item closing commit message links to the spec. Verify the spec's `state` is `canonical` and its citations (Scope→AC, Key Decisions→ADR or "no ADR applies") still hold. _Not applicable to XS items (specs are forbidden) or S items without opt-in (specs are optional, default off)._ This gate item activating is the closing condition for ADR-0004's transition from Shadow-Pilot phase to fully Accepted.
 7. **Docs current** — if the change affects user-facing behavior, Diego has updated docs.
 8. **Accessibility reviewed** — if any frontend/UI file was changed, Dani (accessibility lens) has reviewed. Dani must be spawned as a standalone agent, not reviewed inline by the coordinator.
 8b. **Visual verification** — if this item changes UI files (`ui/`, `pages/`, `components/`, templates, CSS, layouts), open the affected page(s) in a browser (via Playwright `browser_navigate` + `browser_take_screenshot`, or manual check) and verify they render correctly without console errors. Screenshot evidence is sufficient. This is not a full E2E suite — it's "does it render." _Not applicable to CLIs, libraries, or backend-only services._

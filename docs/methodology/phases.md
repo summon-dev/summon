@@ -1,19 +1,20 @@
 ---
-agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md, docs/adrs/0005-single-threaded-default.md], state: canonical, last: "sato@2026-05-02" }
+agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md, docs/adrs/0004-feature-spec-artifact.md, docs/adrs/0005-single-threaded-default.md, docs/adrs/0006-harness-contract.md], state: canonical, last: "sato@2026-05-02" }
 ---
 
 # Hybrid Team Methodology
 
 ## TL;DR
 
-Summon organizes AI-assisted development into **7 phases**, each with a different team structure. You don't need to memorize this — the coordinator picks the right team automatically.
+Summon organizes AI-assisted development into **8 phases** (numbered 1–7 plus Phase 2.5), each with a different team structure. You don't need to memorize this — the coordinator picks the right team automatically.
 
 | Phase | When | Lead | Model |
 |-------|------|------|-------|
 | 1. Discovery | New idea or vague request | Cam | Blackboard (open brainstorm) |
 | 2. Architecture | Design decisions, tech choices | Archie | Ensemble + Wei debate |
+| 2.5. Feature Spec | M+ item before TDD red phase | Pat → Cam → (Archie) → Tara | Pipeline (author → review → gate) |
 | 3. Implementation | Writing code | Tara → Sato | TDD pipeline (red-green-refactor) |
-| 4. Parallel Work | 3+ independent items | Grace | Market (self-claim) |
+| 4. Parallel Work | 3+ independent items meeting ADR-0005 escalation criteria | Grace | Single-threaded by default; market by exception |
 | 5. Code Review | Reviewing changes | Vik + Tara + Pierrot | Three parallel lenses |
 | 6. Debugging | Fixing bugs | Sato | Blackboard (shared investigation) |
 | 7. Human Interaction | Consulting the user | Cam | Single point of contact |
@@ -81,6 +82,41 @@ The coordinator's job is to recognize phase transitions and assemble the right t
 - The human approves the architecture.
 
 **If this phase is skipped:** The coordinator must check at Implementation entry: "Is there an architectural decision embedded in this work item?" If yes, **stop** — return to Phase 2 before proceeding. An architectural decision made during implementation without Wei's challenge is a process failure that will be flagged in the sprint retro.
+
+---
+
+### Phase 2.5: Feature Spec
+
+**Org Model:** Pipeline (author → coherence-review → verifiability gate)
+
+| Stage | Agent | Responsibility |
+|------|-------|---------------|
+| Author | **Pat** (or human / coordinator in proxy mode) | Drafts the six-section spec at `docs/specs/<work-item-id>-<slug>.md` |
+| Coherence review | **Cam** | Pressure-tests spec-vs-AC drift between authoring and Tara's gate |
+| Architecture review (conditional) | **Archie** | Reviews any Key Decision touching cross-component interfaces, persistence, security, or external dependencies — escalates to a new ADR if the decision is architectural |
+| Verifiability gate | **Tara** | Confirms the Verification Plan is sufficient before red phase begins |
+
+**How it works:** For items requiring a spec (M+ by default; S by opt-in with audit trail; XS forbidden), Pat authors the six-section spec per [ADR-0004 § 1](../adrs/0004-feature-spec-artifact.md#1-schema): Outcomes, Scope, Constraints, Key Decisions, Task Breakdown, Verification Plan. Cam pressure-tests for spec-vs-AC drift. Archie reviews when objective triggers fire (cross-component, persistence, security, external deps). Tara confirms the Verification Plan supports the red phase. The spec becomes canonical when the human (or Pat in proxy mode for non-architectural items) confirms it.
+
+**Citation requirements (mechanical):** Each Scope bullet MUST cite the AC it bounds. Each Key Decision MUST cite the governing ADR or declare "no ADR applies because <one-sentence rationale>". A spec failing either check is non-conformant; Tara returns it before red phase.
+
+**Size carve-out** (per [ADR-0004 § 4](../adrs/0004-feature-spec-artifact.md#4-size-carve-out)):
+
+| Size | Spec status |
+|---|---|
+| XS | Forbidden — commit + tests are the contract |
+| S | Optional, default off; opt-in requires one-line rationale + Pat + Tara sign-off |
+| M | Required |
+| L | Required |
+| XL | Required + decomposition review (Pat + Archie + Grace) |
+
+**Tara hard-backstop:** Tara MUST refuse to author tests for any M+ item that has no spec link. This rule is active independent of the Done Gate amendment and survives any pre-W1.1-landing window.
+
+**Architectural escalation:** If Archie deems any Key Decision architectural rather than item-local, the spec stalls and a new ADR is opened. The work item halts until that ADR is Accepted. There is no "Archie noted this and we proceeded" path.
+
+**Template:** [`docs/scaffolds/feature-spec.md`](../scaffolds/feature-spec.md). Slash command stub: `/feature-spec`.
+
+**Transition to next phase:** When the spec is canonical, citations verify, and Tara has accepted the Verification Plan.
 
 ---
 
@@ -201,7 +237,10 @@ flowchart TD
     B -->|No| C{"Code to write?"}
     C -->|Yes| D{"Embeds an arch<br/>decision?"}
     D -->|Yes| STOP["STOP — Route to<br/>Phase 2 first"]
-    D -->|No| E{"3+ independent<br/>items?"}
+    D -->|No| SPEC{"Item is M+ size<br/>or S-with-opt-in?"}
+    SPEC -->|Yes| P25["Phase 2.5: Feature Spec<br/><em>Pat authors, Cam coherence,<br/>Tara verifiability gate</em>"]
+    SPEC -->|No| E{"Parallel work<br/>(ADR-0005 escalation<br/>criteria met)?"}
+    P25 --> E
     E -->|Yes| P4["Phase 4: Parallel Work<br/><em>each item uses Phase 3</em>"]
     E -->|No| P3["Phase 3: Implementation<br/><em>TDD pipeline</em>"]
     C -->|No| F{"Code to review?"}
@@ -213,6 +252,7 @@ flowchart TD
     style STOP fill:#ffcdd2,stroke:#c62828
     style P1 fill:#e1f5fe
     style P2 fill:#fff3e0
+    style P25 fill:#fff3e0
     style P3 fill:#e8f5e9
     style P4 fill:#e8f5e9
     style P5 fill:#fce4ec
