@@ -162,7 +162,7 @@ Surfaced by the research pass but not in Sprint 1:
 |----|-------|------|--------|
 | W1.1 | Feature-spec artifact | M | In Review (Wei round 2 ACCEPT WITH AMENDMENTS, 6 amendments folded; awaiting human Accept) |
 | W1.2 | Single-threaded default | S | ADR Accepted; doc edits pending (CLAUDE.md, phases.md, gotchas.md) |
-| W1.3 | Harness contract + progress note | M | In Progress (ADR drafting) |
+| W1.3 | Harness contract + progress note | M | In Review (Wei ACCEPT WITH AMENDMENTS, 12 amendments folded; awaiting human Accept) |
 | W2.1 | Owned partition | M | Planned |
 | W2.2 | Single-writer hierarchy | M | Planned |
 | W2.3 | Judge stack | M | Planned |

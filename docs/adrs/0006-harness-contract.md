@@ -1,12 +1,12 @@
 ---
-agent-notes: { ctx: "explicit harness contract: progress-note schema and persona-to-role mapping", deps: [docs/adrs/0003-research-driven-restructure-2026.md, docs/adrs/0004-feature-spec-artifact.md, docs/adrs/0005-single-threaded-default.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/process/gotchas.md, .claude/commands/handoff.md, docs/sprints/sprint-1-plan.md], state: proposed, last: "archie@2026-05-02" }
+agent-notes: { ctx: "explicit harness contract: progress-note schema and persona-to-role mapping", deps: [docs/adrs/0003-research-driven-restructure-2026.md, docs/adrs/0004-feature-spec-artifact.md, docs/adrs/0005-single-threaded-default.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/process/gotchas.md, .claude/commands/handoff.md, docs/sprints/sprint-1-plan.md, docs/tracking/2026-05-02-adr0006-harness-debate.md], state: proposed, last: "claude@2026-05-02" }
 ---
 
 # ADR-0006: Harness Contract — Progress-Note Schema and Persona-Role Mapping
 
 ## Status
 
-**Proposed** 2026-05-02. Wei challenge mandatory per `docs/sprints/sprint-1-plan.md` W1.3 ("Harness role mapping is a structural claim about how Summon maps to the Anthropic three-agent harness; Wei must challenge"). Transition to Accepted requires (a) Wei round complete and verdict logged, (b) human approval of the persona-role mapping in § Persona-Role Mapping Debate, (c) shadow-pilot evidence per § Pilot Plan.
+**Proposed (Shadow-Pilot phase)** 2026-05-02. Wei challenge complete per `docs/sprints/sprint-1-plan.md` W1.3 ([round 1 debate](../tracking/2026-05-02-adr0006-harness-debate.md), verdict ACCEPT WITH AMENDMENTS); twelve amendments folded inline. **Transition to Accepted** requires both (a) human approval of the persona-role mapping in § Persona-Role Mapping Debate, AND (b) shadow-pilot success criteria in § Pilot Plan pass on W1.3. Until both conditions hold, the schema is binding only on the named shadow-pilot work item; general session handoffs continue to use the prior `handoff.md` convention.
 
 ## Context
 
@@ -20,15 +20,27 @@ This ADR decides six things and only those things: (1) the progress-note schema;
 
 ### 1. Progress-Note Schema
 
-The cross-session progress note contains exactly five sections; no more, no fewer. The fifth ("Open Questions") is the binding addition over the umbrella's four-field candidate ("state, next step, learnings, open questions") — Wei's pre-empt note on disclosed-but-unmitigated risk applies here: the four-field draft did not have a place for *blocking decisions awaiting the human*, which is the failure mode the schema must prevent.
+The cross-session progress note contains a fixed header followed by exactly five sections; the fifth ("Blockers") is the binding addition over the umbrella's four-field candidate ("state, next step, learnings, open questions") — the four-field draft did not have a place for *blocking decisions awaiting the human*, which is the failure mode the schema must prevent.
+
+**Header (mandatory).** A YAML-style header at the top of the file, separate from the body sections:
+
+```
+session-date: YYYY-MM-DD
+author: <coordinator | cam | <agent-name-in-proxy-mode>>
+prior-note-commit: <git-commit-hash-of-prior-progress-note, or "none" for first session>
+```
+
+The header carries session metadata that does not fit any body section. Adding the header explicitly resolves the Lifecycle "Learnings carry forward with their original session date" requirement, which has no body-section home.
+
+**Body sections (exactly five, no more, no fewer):**
 
 | Section | Content | Distinct from |
 |---|---|---|
 | **State** | What is true *right now* in the workspace: branch, last commit, working-tree status, which work item is in flight, which phase, which wave. **Each state claim MUST cite the artifact it was read from** (commit hash, file path, board item ID), or the line is non-conformant. This converts state-as-narration into state-as-citation. | `git status` raw output (state is *interpreted*, not dumped). Sprint plan (sprint plan is *intent*, state is *now*). |
-| **Next Step** | The single next action the resuming session takes, expressed as one sentence. **MUST cite the work-item ID and the file path the action operates on.** No "next steps" plural — multiple next actions are a sign the session ended in an undecidable state, which is itself a Blocker. | Sprint plan task list (plan is the *menu*, next step is the *first dish*). |
-| **Learnings** | Project-specific operational knowledge discovered this session that would save time in a future session. **Each learning MUST be either** (a) promoted to its destination — a specific gotcha, ADR amendment, or `code-map.md` entry — with a citation, **OR** (b) flagged as `pending-promotion: <destination>` with a one-sentence rationale for why it is not yet promoted. A learning that is neither promoted nor flagged-with-destination is non-conformant. | Agent-notes (per-file). Gotchas (already-promoted). |
+| **Next Step** | The single next action the resuming session takes, expressed as one sentence. **MUST cite the work-item ID and the file path the action operates on.** No "next steps" plural — multiple next actions are a sign the session ended in an undecidable state, which is itself a Blocker. **MUST include a `gates:` list naming any Blocker IDs that gate this action.** An empty `gates: []` is permitted and means the Next Step is unblocked. The `/handoff` gate (see § /handoff Command Contract) operates on this list, not on path-string heuristics. | Sprint plan task list (plan is the *menu*, next step is the *first dish*). |
+| **Learnings** | Project-specific operational knowledge discovered this session that would save time in a future session. **Each learning MUST be either** (a) promoted to its destination — a specific gotcha, ADR amendment, or `code-map.md` entry — with a citation, **OR** (b) flagged as `pending-promotion: <destination>` with a one-sentence rationale for why it is not yet promoted. A learning that is neither promoted nor flagged-with-destination is non-conformant. **A Learning MAY reference an Open Question by its addressee** (e.g., "see OQ for human") when the same fact is both a finding and an unanswered question; the same fact is not duplicated, only linked. | Agent-notes (per-file). Gotchas (already-promoted). |
 | **Open Questions** | Questions that need answering before progress can resume. Each MUST cite *who* must answer (human / Pat-in-proxy / a specific agent) and *why* it blocks. A question with no addressee is non-conformant. | Sprint plan deferrals (deferral is decided; an open question is *undecided*). |
-| **Blockers** | Decisions awaiting the human (or Pat in proxy mode) that prevent the Next Step from executing. **A blocker is structurally distinct from an open question:** an open question may be answerable by the team; a blocker requires explicit human input. Each blocker MUST cite the decision required and the proxy authority's verdict if Pat answered, or `awaiting-human` if not. The `/handoff` command refuses to write if Next Step references a path under an active Blocker. | Open Questions (open questions don't gate Next Step; blockers do). Proxy Decisions (proxy decisions are *recorded*; blockers are *unanswered*). |
+| **Blockers** | Decisions awaiting the human (or Pat in proxy mode) that prevent the Next Step from executing. **A blocker is structurally distinct from an open question:** an open question may be answerable by the team; a blocker requires explicit human input. **Each Blocker MUST have a stable ID** (`B1`, `B2`, … in order of appearance, never reused across sessions for unresolved blockers) and MUST cite the decision required and the proxy authority's verdict if Pat answered, or `awaiting-human` if not. Blocker IDs are the binding mechanism for the `/handoff` refusal gate (see § /handoff Command Contract). | Open Questions (open questions don't gate Next Step; blockers do). Proxy Decisions (proxy decisions are *recorded*; blockers are *unanswered*). |
 
 The citation requirements convert each section from prose-vibe-check into mechanical inspection, mirroring ADR-0004's Schema citation pattern. A progress note that fails any citation rule is rejected by the resuming session before any code is touched.
 
@@ -36,21 +48,41 @@ The citation requirements convert each section from prose-vibe-check into mechan
 
 **Summon adopts the *functional separation* of plan / generate / evaluate but rejects the *structural triad* of three persona-agents.** The decision in one sentence: **plan = the feature-spec artifact (multi-author, per ADR-0004); generate = Sato; evaluate = Tara.** Full debate in § Persona-Role Mapping Debate. The cargo-cult risk identified by ADR-0003 is mitigated by *not* mapping a Summon persona one-to-one onto an Anthropic role; instead, the role that most resembled cargo-culting (planner) is bound to an artifact Summon already defined for standalone reasons.
 
-This mapping has three operational consequences for the harness:
+This mapping has five operational consequences for the harness:
 
 1. **The progress note's Next Step section names the spec it is operating against** (or "no spec applies" with the same one-sentence rationale rule ADR-0004's Key Decisions use). Resuming sessions read the spec, not just the progress note.
+
 2. **The harness "evaluator" role at session-resume time is Tara's verifiability gate from ADR-0004**, applied to whatever the resuming session is about to write. No new agent is introduced.
-3. **The harness "planner" role at session-resume time is the spec author and the in-flight progress note jointly.** No agent assumes the title "planner" in `personas.md`; the title belongs to the artifact pair.
+
+3. **The harness "planner" function is distributed across multiple agents at the spec's authorship and review time.** The plan-quality function is *not* un-owned — it is owned jointly: **Pat** decomposes (spec authorship), **Cam** coherence-checks (spec-vs-AC drift, ADR-0004 § Lifecycle step 2), **Archie** architecture-gates (objective triggers in ADR-0004 § Ownership; Archie is the agent whose absence would let architecturally-flawed plans through, and whose escalation halts the work item if a Key Decision should have been an ADR), and **Tara** verifies (Verification Plan check before red phase). The artifact (the spec) carries the planner *title*; the function (plan quality) is owned by the four-agent review chain. The functional separation Anthropic's harness paper relies on is preserved by this distribution, not by a single named planner.
+
+4. **For below-spec items (XS, and S without opt-in), the planner is the in-flight progress note's Next Step field, with the resuming session as planner-of-last-resort.** The harness model is operative on M+ items where cross-session continuity is a real risk; for XS/S items, the Next Step's "no spec applies" rationale stands in for the spec, and the resuming session decides the immediate next action from State + Next Step alone.
+
+5. **For mid-session plan amendments, Sato escalates to Pat per ADR-0004 § Lifecycle step 4; the progress-note Next Step is updated only after the spec is amended.** A discovery during green phase that requires changing the plan does not silently rewrite Next Step — it triggers spec amendment first, and the progress note's next write reflects the amended spec. This binds the cross-ADR composition explicitly so the planner role is not silently captured by the implementer.
 
 ### 3. Relationship to `handoff.md`
 
-The structured progress note **replaces** `.claude/handoff.md` as the canonical cross-session artifact. `handoff.md` is retired in three steps over the post-acceptance implementation work item:
+The structured progress note **replaces** `.claude/handoff.md` as the canonical cross-session artifact. The retirement is a **redirect-line cutover at W1.3 close** (single triggering event — not "next sprint boundary," which contradicted itself with "W1.3 close" in an earlier draft). Three concrete steps:
 
-1. **W1.3 implementation lands the new schema** at `.claude/progress-note.md` (location chosen to avoid collision during transition; final location reviewed at W1.3 post-mortem).
+1. **W1.3 implementation lands the new schema** at `.claude/progress-note.md`.
 2. **The `/handoff` command writes to the new location** and stops writing to `.claude/handoff.md`.
-3. **The legacy `.claude/handoff.md`** is preserved read-only as a transitional artifact for one sprint, then deleted at the next sprint boundary by Grace as part of the W1.3 close. The `## Proxy Decisions (Review Required)` section is migrated into a new top-level `Blockers / Proxy Decisions` block in the progress note (Blockers covers the unmet case; Proxy Decisions records the answered case).
+3. **The legacy `.claude/handoff.md` is overwritten with a single-line redirect at W1.3 close**, replacing all prior content. The redirect line is exactly:
 
-Coexistence is rejected (see § Considered and Rejected, Alternative C). Supplement is rejected (Alternative D). The migration path is a hard cutover at W1.3 implementation, not a parallel run.
+   ```
+   ## REDIRECTED → .claude/progress-note.md (per ADR-0006, W1.3 close YYYY-MM-DD)
+   ```
+
+   Any session that reads non-redirect content from `handoff.md` is reading a stale checkout and MUST stop and re-read from `.claude/progress-note.md`. The redirect file remains at `.claude/handoff.md` for git history continuity; the prior content is preserved in git history alone, not in the working tree.
+
+**Proxy Decisions migration (concrete).** Existing `## Proxy Decisions (Review Required)` entries follow the four-field template (question, decision, rationale, reversibility). The new Blockers schema requires (decision required + verdict). The migration is **schema-mapping, not lossy**:
+- **`question`** → maps to Blocker's "decision required" field.
+- **`decision`** → maps to Blocker's "verdict" field (or `awaiting-human` if unanswered).
+- **`rationale`** → preserved as a sub-field `verdict-rationale:` on the Blocker (one line, optional but recommended when Pat has applied a proxy verdict).
+- **`reversibility`** → preserved as a sub-field `reversibility:` on the Blocker (one of: `reversible`, `costly-to-reverse`, `irreversible`). This was load-bearing in the prior convention and is retained.
+
+The migration is a one-time rewrite at W1.3 close; no entries are dropped. After migration, the Blockers schema canonically holds proxy-decision history.
+
+Coexistence is rejected (see § Considered and Rejected, Alternative C). Supplement is rejected (Alternative D). The migration path is a redirect-line cutover at W1.3 close, not a parallel run.
 
 ### 4. `/handoff` Command Contract
 
@@ -66,10 +98,12 @@ The `/handoff` command is updated by W1.3 implementation to satisfy the followin
 **Output (written):** `.claude/progress-note.md`, conforming to § Schema. The command emits the schema as five named sections in order; section headers and citation rules are mechanically checkable.
 
 **Refusal conditions:** the command refuses to write — and exits with a message naming the refusal — if any of the following hold:
-- A Blocker references a path the Next Step depends on. (Caller must resolve the blocker, demote it to an Open Question, or change the Next Step.)
+- **Next Step's `gates:` list contains a Blocker ID whose status is `awaiting-human`** (or any non-resolved status). The check is **mechanical and explicit**: the command reads Next Step's `gates:` list, looks up each cited Blocker ID in the Blockers section, and refuses if any is unresolved. There is no semantic-dependency reasoning — if Next Step is gated by an unresolved Blocker, Next Step lists it; if Next Step does not list it, the gate does not fire. (Caller must resolve the blocker, remove it from the gates list with explicit justification recorded in Learnings, or change the Next Step.)
 - A Learning is neither promoted nor flagged with `pending-promotion: <destination>`. (Caller must annotate.)
 - An Open Question lacks an addressee. (Caller must name who answers.)
 - More than one Next Step is supplied. (Caller must pick one.)
+- The header is missing `session-date`, `author`, or `prior-note-commit`.
+- A Blocker is missing a stable ID, or two unresolved Blockers share an ID.
 
 **Preserved from prior progress note:** Learnings flagged `pending-promotion` carry forward verbatim (with their original session date) until promoted. Blockers carry forward until resolved. State is rewritten from scratch each session.
 
@@ -97,7 +131,9 @@ ADR-0004's shadow-pilot is W1.3 — *which is this ADR's implementation work*. A
 4. The next session that resumes from the W1.3 progress note completes its Session Entry Protocol read in under five minutes (rough; calibrated by post-mortem) — proving the schema is faster than reading prose `handoff.md`.
 5. The `/handoff` command's refusal conditions fire at least once during W1.3 (any of them) — proving the mechanical checks aren't decorative. If none fire, the post-mortem must show the conditions are reachable but the session simply never violated them; if they're not reachable in normal use, the schema is over-constrained and this ADR reopens.
 
-**Failure handling:** failure on any criterion reopens this ADR per ADR-0003 § Rollback. Failure does not block ADR-0004's pilot evaluation, which is scored on its own criteria.
+**Failure handling:** failure on any ADR-0006 criterion reopens this ADR per ADR-0003 § Rollback. Failure does not block ADR-0004's pilot evaluation, which is scored on its own criteria.
+
+**Joint-reopen rule (binding).** The two ADRs (0004 and 0006) test orthogonal questions on the same work item, but root causes can flow across the boundary (e.g., a bad spec might be caused by a progress-note schema that failed to surface a Blocker that would have informed the spec). **If the post-mortem cannot cleanly attribute a failure to one ADR or the other, both ADRs reopen jointly** — the umbrella's rollback path applies to both, and they re-debate together until attribution is achievable. This binds the dual-purpose pilot's failure mode without requiring a separate non-shadow pilot for ADR-0006: ambiguity is treated as a shared failure, not as a deferred question. The post-mortem template that scores criteria independently is W1.3 implementation work; this binding rule survives the template's specifics.
 
 ## Persona-Role Mapping Debate
 
@@ -194,6 +230,36 @@ Nothing — by intent. No persona's role is rewritten. The harness mapping is a 
 ### Residual Risks
 
 - **Refusal-condition reachability.** If the refusal conditions never fire in normal use (because sessions naturally satisfy them), the mechanical-check claim is unfalsified. Pilot success criterion 5 forces the question; if no condition fires during W1.3, the post-mortem must demonstrate reachability or the schema is over-constrained and this ADR reopens.
-- **Plan-as-artifact and the evaluator split.** This ADR binds evaluator to Tara. If a future ADR (D or G) reshapes Tara's surface, the evaluator binding may need re-examination. The progress-note schema does not depend on the agent identity of Tara, only on Tara's verifiability gate from ADR-0004 — so the binding is loose, but not zero.
-- **The dual-purpose pilot risks confounding.** If W1.3 fails for spec-related reasons (ADR-0004) the post-mortem may attribute the failure to the progress-note schema by proximity. Mitigation: each ADR's success criteria are scored independently and the post-mortem template separates the two scorings; this template work is W1.3 implementation, not decided here.
-- **Handoff-of-handoffs.** During the one-sprint read-only retention of `handoff.md`, if a session resumes from the old artifact instead of the new one (because the resuming agent reads the wrong path), the migration silently fails. The W1.3 implementation must address this — likely by making `handoff.md` contain only a redirect line during the retention window — but the contract is not finalized here, only the requirement.
+- **Open-Question / Blocker boundary is judgment-loaded.** The structural distinction (team-answerable vs human-required) collapses when Pat-in-proxy can answer questions the team alone could not — the same question may be classified either way depending on whether the author thinks Pat can clear it. The schema forces a choice at write time, accepting drift cost. **A recurring pattern of mis-classification in pilots reopens the schema.**
+- **Plan-as-artifact and the evaluator split.** This ADR binds the evaluator role to Tara. If a future ADR (D or G) reshapes Tara's surface, the evaluator binding may need re-examination. The progress-note schema does not depend on the agent identity of Tara, only on Tara's verifiability gate from ADR-0004 — so the binding is loose, but not zero.
+- **Persona bindings inherited by ADR-D / ADR-G.** This ADR binds the following personas to harness-related functions: **Sato** (generator), **Tara** (evaluator), **Pat** (Blocker proxy resolution), **Cam** (alternative authoring path; coherence reviewer for the spec-as-planner artifact via ADR-0004), **Grace** (sprint-boundary retirement of the progress note), **coordinator** (default progress-note author), **Archie** (architecture-gate component of the distributed plan-quality function). When ADR-D and ADR-G reshape personas, this list is the inheritance contract — any reshaping of these personas MUST verify that the harness binding survives or amend ADR-0006 accordingly.
+- **The dual-purpose pilot risks confounding.** If W1.3 fails for spec-related reasons (ADR-0004) the post-mortem may attribute the failure to the progress-note schema by proximity. Mitigation: each ADR's success criteria are scored independently AND the joint-reopen rule (§ Pilot Plan) applies whenever attribution is ambiguous — both ADRs reopen jointly rather than risking false attribution.
+- **Redirect-line risk during transition.** If a session is started from a stale checkout that still contains the old `handoff.md` content (pre-redirect), the session may read prose instead of structured. The redirect-line mechanism makes this a *visible* failure (a prose-only read produces no structured fields and the resuming session detects the format mismatch); it cannot make the failure *impossible*. Sessions that detect the mismatch MUST stop and re-fetch from origin before proceeding.
+
+## Rework Notes (2026-05-02)
+
+This ADR was amended following Wei's round-1 verdict (ACCEPT WITH AMENDMENTS, [debate](../tracking/2026-05-02-adr0006-harness-debate.md)). Twelve amendments folded inline; no second Wei round per Wei's own gate-fatigue concern.
+
+**Must-change (4):**
+
+1. **(Challenge 3)** `/handoff` "depends on" gate is now mechanically defined: Next Step carries an explicit `gates:` list of Blocker IDs; the gate fires iff any cited Blocker is unresolved. No semantic-dependency reasoning.
+2. **(Challenge 4)** Dual-purpose pilot bound by joint-reopen rule: if attribution is ambiguous, both ADRs (0004 and 0006) reopen jointly. Survives the absence of a pre-authored post-mortem template.
+3. **(Challenge 5)** `handoff.md` retirement bound: redirect-line cutover at W1.3 close (single triggering event, "next sprint boundary" contradiction resolved). Proxy Decisions migration specified field-by-field as schema-mapping (not lossy).
+4. **(Challenge 1)** § Persona-Role Mapping operational consequence 3 rewritten: plan-quality function explicitly distributed across Pat/Cam/Archie/Tara at spec authorship and review time. Plan-quality is owned, not dissolved into the artifact.
+
+**Should-amend (4):**
+
+5. **(Challenge 6)** Schema header added with `session-date`, `author`, `prior-note-commit`. Resolves the Lifecycle "Learnings carry forward with original session date" contradiction.
+6. **(Challenge 2)** § Persona-Role Mapping operational consequence 4 added: below-spec items (XS, S without opt-in) use the in-flight progress note as planner.
+7. **(Challenge 2)** § Persona-Role Mapping operational consequence 5 added: mid-session pivots escalate to Pat per ADR-0004 § Lifecycle step 4 before Next Step is updated.
+8. **(Challenge 5)** Proxy Decisions migration concretized field-by-field; `rationale` and `reversibility` preserved as Blocker sub-fields.
+
+**Conceded after rebuttal (3):**
+
+9. **(Challenge 3)** Open-Question / Blocker drift acknowledged in § Residual Risks; recurring mis-classification reopens the schema.
+10. **(Challenge 7)** Wave-gate consistency: no change.
+11. **(Challenge 8)** § Status reformulated as "Proposed (Shadow-Pilot phase)" matching ADR-0004's pattern; multi-condition Accept transition surfaced explicitly.
+
+**Disclosure (1):**
+
+12. **(Challenge 8)** § Residual Risks now lists the personas this ADR binds (Sato / Tara / Pat / Cam / Grace / coordinator / Archie) as the inheritance contract for ADR-D and ADR-G.
