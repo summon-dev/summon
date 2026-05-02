@@ -223,7 +223,7 @@ The coordinator's job is to recognize phase transitions and assemble the right t
 | **Generate** | **Sato.** |
 | **Evaluate** | **Tara**, applying the Verifiability gate from ADR-0004. |
 
-This is a documentation overlay on existing personas — no persona file is rewritten by the mapping. For below-spec items (XS, S without opt-in), the in-flight progress note's Next Step stands in for the spec.
+This mapping is documented in three places: this phase doc, [ADR-0006](../adrs/0006-harness-contract.md), and a per-persona `**Harness role:**` annotation in [`personas.md`](./personas.md) (Cam / Pat / Archie / Sato / Tara). The `.claude/agents/` agent files are NOT edited. For below-spec items (XS, S without opt-in), the in-flight progress note's Next Step stands in for the spec.
 
 ---
 

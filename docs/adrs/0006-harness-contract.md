@@ -169,7 +169,11 @@ This answer accepts the human's stated willingness to risk the cargo-cult factor
 
 ### What this means for `personas.md` and the agent files
 
-Nothing — by intent. No persona's role is rewritten. The harness mapping is a documentation overlay (added to ADR-0004's spec section and to this ADR), not a persona-file edit. ADR-D and ADR-G remain free to reshape persona definitions for their own reasons; the harness mapping does not pre-commit any of that work.
+**Original position (rejected by human override 2026-05-02):** "Nothing — by intent. No persona's role is rewritten. The harness mapping is a documentation overlay (added to ADR-0004's spec section and to this ADR), not a persona-file edit."
+
+**Current position (post-override 2026-05-02):** `personas.md` annotates each affected persona with its harness role as a one-line `**Harness role:**` field directly under `**Hybrid phases:**`. Five personas are annotated: **Cam** (planner-quality co-owner — coherence review), **Pat** (planner-quality co-owner — spec authorship), **Archie** (planner-quality co-owner — architecture gate), **Sato** (generator), **Tara** (evaluator). The agent file definitions in `.claude/agents/` are NOT edited — only the methodology doc. The annotation makes the harness binding visible at the persona-roster level so a session reading `personas.md` cold sees the role binding alongside the capability statement.
+
+The original "no persona-file edit" stance was the structural-honesty answer: it kept persona identities clean and avoided pre-empting ADR-D / ADR-G persona reshaping. The human override accepted the surface-area cost for the reader-orientation benefit. Persona reshaping in ADR-D / ADR-G remains free to redefine these annotations — the inheritance contract in § Residual Risks is unaffected. The override does NOT change the underlying mapping (Plan = artifact, Generate = Sato, Evaluate = Tara) or any of the five operational consequences; it only changes where the mapping is *also* documented.
 
 ## Considered and Rejected
 
@@ -263,3 +267,7 @@ This ADR was amended following Wei's round-1 verdict (ACCEPT WITH AMENDMENTS, [d
 **Disclosure (1):**
 
 12. **(Challenge 8)** § Residual Risks now lists the personas this ADR binds (Sato / Tara / Pat / Cam / Grace / coordinator / Archie) as the inheritance contract for ADR-D and ADR-G.
+
+**Human override (1, 2026-05-02 post-rollout):**
+
+13. § "What this means for `personas.md` and the agent files" reversed: the original "no persona-file edit" position is replaced by a per-persona `**Harness role:**` annotation on Cam / Pat / Archie / Sato / Tara in `personas.md` (methodology doc only — `.claude/agents/` files unchanged). Override applied directly by the human after Wave 1 implementation surfaced the conflict between this ADR and sprint-1-plan.md W1.3 AC ("Phase doc and personas.md annotate the planner/generator/evaluator mapping"). The override accepts the surface-area-for-confusion cost identified in § Negative Consequences in exchange for reader-orientation benefit at persona-roster read time. Underlying mapping unchanged; ADR-D / ADR-G inheritance contract unchanged.

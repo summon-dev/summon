@@ -48,7 +48,7 @@ These are the upstream changes the rest depend on. Each rewrites a core mental m
   - `/resume` command updated to consume this schema.
   - Phase doc annotates the planner/generator/evaluator mapping.
   - Legacy `.claude/handoff.md` overwritten with single-line redirect at W1.3 close (per ADR-0006 § 3).
-  - **Note (2026-05-02):** ADR-0006 § Persona-Role Mapping → "What this means for personas.md" explicitly says **no persona file is edited** — the harness mapping is a documentation overlay (added to `phases.md` and ADR-0006 only). This supersedes the prior AC bullet "Phase doc and personas.md annotate the mapping" per the gotchas rule "Sprint plan must not contradict accepted ADRs."
+  - **Note (2026-05-02, post-rollout human override):** Originally reconciled by deferring to ADR-0006's "no persona-file edit" stance and recording the conflict as L3 in the W1.3 progress note. Human reviewed the W1.3 close-out and explicitly overruled ADR-0006 on this point ("I'd overrule adr6"). ADR-0006 § "What this means for personas.md" amended (amendment 13, Rework Notes) to require per-persona `**Harness role:**` annotations on Cam / Pat / Archie / Sato / Tara in `personas.md`. The original sprint-plan AC ("Phase doc and personas.md annotate the planner/generator/evaluator mapping") now stands as written; reconciliation is via ADR amendment, not AC reduction.
 
 **Wave 1 exit criteria:** Three ADRs accepted; `phases.md`, `CLAUDE.md`, `gotchas.md` updated; templates exist. Commit, handoff.
 
