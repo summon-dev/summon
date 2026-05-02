@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "Wei challenge of ADR-0007 owned partition", deps: [docs/adrs/0007-owned-partition.md, docs/adrs/0003-research-driven-restructure-2026.md, docs/adrs/0005-single-threaded-default.md, docs/adrs/0006-harness-contract.md, docs/adrs/0004-feature-spec-artifact.md, docs/tracking/2026-05-02-w1.3-pilot-postmortem.md, docs/sprints/sprint-1-plan.md], state: round-1-complete, last: "wei@2026-05-02" }
+agent-notes: { ctx: "Wei challenge of ADR-0007 owned partition (rounds 1 + 2)", deps: [docs/adrs/0007-owned-partition.md, docs/adrs/0003-research-driven-restructure-2026.md, docs/adrs/0005-single-threaded-default.md, docs/adrs/0006-harness-contract.md, docs/adrs/0004-feature-spec-artifact.md, docs/tracking/2026-05-02-w1.3-pilot-postmortem.md, docs/sprints/sprint-1-plan.md], state: complete, last: "wei@2026-05-02" }
 ---
 
 # Debate: ADR-0007 Owned Partition Replaces Self-Claim Market
@@ -151,3 +151,67 @@ Wei's expected concession on the rebuttal: the three-enforcement framing is genu
 ## Round 2 Plan
 
 Archie reworks ADR-0007 inline, addressing all four REWORK items + seven amendments + cosmetic. A light Wei round-2 verification pass confirms the rework. If round 2 = ACCEPT WITH AMENDMENTS, the ADR transitions out of Proposed-pre-Wei status; remaining Accept-transition conditions are (b) human approval, (c) pilot pass, (d) W2.1 rollout work landing.
+
+---
+
+## Round 2 — Wei Verification
+
+**Mode:** Read-only verification pass on the rework. Round 1 verdict was REWORK; round-2 expected outcome (per round-1 anticipated rebuttal) was ACCEPT WITH AMENDMENTS pending honest folding. **Confirmed.**
+
+### Per-Amendment Verification Summary
+
+| # | Type | Round-1 Challenge | Folded? | Wording Satisfies R1? |
+|---|---|---|---|---|
+| 1 | must-change | Ch.3 — § 5 "mechanical" overpromise | **Yes** | **Yes** — per-enforcement layer-modality breakdown is exactly what R1 alternative (ii) demanded; honest naming throughout. |
+| 2 | must-change | Ch.4 — TDD carve-out | **Yes** | **Yes** — TDD pipeline (Tara red → Sato green → Sato refactor → Tara verify) explicitly carved out from `superseded-by` ceremony at § 1, § 2 owner row, § 3 new paragraph, and § Residual Risks. |
+| 3 | must-change | Ch.7 — `time-bound` firing | **Yes** | **Yes** — bound to ADR-0006 § 1 Blocker creation with reversibility annotation; gates further writer-launch via `/handoff` `gates:`. Composes correctly. |
+| 4 | must-change | Ch.6 — Entry-condition cites non-existent artifact | **Yes** | **Yes** — downgraded to "evidence of ADR-0005 § 4 criterion 1 satisfaction" per R1 option (a); pending-future-ADR clause cites ADR-0005 § Residual Risks. |
+| 5 | should-amend | Ch.2 — Renegotiation rule (time-bound + tiebreaker) | **Yes** | **Yes** — same-session resolution OR escalates as `awaiting-human-or-pat-authority-extension` per ADR-0006; tiebreaker "earlier `partition-id`" with secondary chronological. |
+| 6 | should-amend | Ch.8 — Pilot positive-failure-evidence | **Yes** | **Yes** — 7th criterion mirrors ADR-0006 § 6 criterion 5; reachability of all three Grace refusal mechanisms must be demonstrated. |
+| 7 | should-amend | Ch.10 — Alternative F | **Yes** | **Yes** — Alt F (consolidate map into progress note) added; rejected on lifecycle-scope grounds with steel-manning. |
+| 8 | should-amend | Ch.12 — Scope schema named-interface restriction | **Yes** | **Yes** — restricted to file paths/glob; named-interface deferred to future ADR; explicit glob overlap rule added. |
+| 9 | should-amend | Ch.5 — § 7 two-layer enforcement | **Yes** | **Yes** — softened to "two honor-system checkpoints"; commit-message lint named as candidate genuinely-independent third layer. |
+| 10 | should-amend | Ch.11 — Compose with W1.3 F4 | **Yes** | **Yes** — `partition: P<id>` annotation honor-system pending `/handoff` extension paired with W1.3 F4; both can land in single amendment. |
+| 11 | should-amend | Ch.1 — Pilot rebalance | **Yes** | **Yes** — third partition replaced with cross-references-to-Phase-1 in `team-governance.md` (coordination-required interface); criterion 3 explicitly counts correctly-fired renegotiation as PASS. |
+| 12 | cosmetic | Ch.9 — Status taxonomy | **Yes** | "Proposed (pre-Wei)" → "Proposed (Pilot-pending)" matching ADR-0006 pattern. |
+
+**Score: 4/4 must-change satisfied; 7/7 should-amend satisfied; 1/1 cosmetic satisfied. No new must-change or should-amend items raised in round 2.**
+
+### Archie's Open Questions for Wei Round 2
+
+**Q1 — `owner` field strength (TDD-pipeline annotation vs `role-rotation:`):** **Accept Archie's choice.** Current formulation (`owner` names role-at-a-time + § 3 carve-out) is sufficient and cheaper. A `role-rotation:` annotation would add schema field whose values are entirely predictable for the canonical pipeline. If a future workflow surfaces non-TDD multi-role rotation, that triggers a future ADR amendment. **No change requested.**
+
+**Q2 — Partition-priority tiebreaker semantics (lower-numeric vs chronological):** **Accept Archie's choice (lower-numeric primary, chronological secondary).** Lower-numeric is mechanically inspectable from the partition-id alone. My R1 challenge ("earlier `partition-id`") intended the mechanical reading. **No change requested.**
+
+**Q3 — Named-interface registry (defer vs inline):** **Accept Archie's choice (defer).** Defining a registry inline adds schema surface area for a case Summon has not yet encountered; the path/glob restriction will catch ~95% of real cases. Wait for the case to surface. **No change requested. This is correctly a future-ADR question, not a round-2 blocker.**
+
+### Compliance Recheck vs Umbrella Binding Constraints (Round 2)
+
+| # | Constraint | R1 Status | R2 Status |
+|---|---|---|---|
+| 1 | Partition lifecycle (creation, transfer, dissolution) | Met | **Met in spirit.** Now also handles TDD-pipeline rotation correctly and `time-bound` firing. |
+| 2 | Late-arriving cross-partition renegotiation | Met with gaps | **Met in spirit.** Time-bound + tiebreaker added. |
+| 3 | **Plan-as-Bypass head-on** | Met in letter, weak in spirit | **Met in letter and spirit.** Per-layer modality breakdown names what is and isn't mechanical; future tooling path (`create-summon` CLI) named with appropriate sprint-scope. R1's binding spirit-of-rule weakness — resolved. |
+| 4 | "Considered and Rejected" subsection | Met with one missing | **Met in spirit.** Alt F added with steel-manned rejection. |
+| 5 | **Pilot-before-broad-rollout** | Met with structural concern | **Met in letter and spirit.** Pilot rebalance gives partitions 1+2 a real coordination interface; criterion 3 counts correctly-fired renegotiation as PASS. R1's second binding spirit-of-rule weakness — resolved. |
+
+All five constraints now met in letter and in spirit. Both R1-flagged spirit-of-rule weaknesses (constraints 3 and 5) are resolved.
+
+---
+
+## Final Verdict (Round 2)
+
+**ACCEPT WITH AMENDMENTS.** All twelve amendments are already inline. There are no new must-change items, no new should-amend items, and no remaining round-2 blockers. The ADR is verification-clean.
+
+**Condition (a) of ADR-0007 § Status Accept transition is now satisfied.** Remaining transition conditions:
+- (b) Human approval — pending.
+- (c) Named pilot work item passes the success criteria in § 8 — pending pilot execution during W2.2 implementation.
+- (d) W2.1 rollout work (Phase 4 rewrite, ownership-map scaffold, Grace persona annotation) lands in-repo — pending W2.1.
+
+Reopen conditions unchanged (per § Status): pilot failure on any criterion, OR Plan-as-Bypass detection signal firing in normal use during the first three post-acceptance work items.
+
+---
+
+## One-Paragraph Round-2 Briefing
+
+ADR-0007 (Owned Partition Replaces Self-Claim Market) has passed Wei round-2 verification with verdict ACCEPT WITH AMENDMENTS — and all twelve amendments from round 1 are folded inline at the locations Archie cited in the Rework Notes. All four must-change items, seven should-amend items, and one cosmetic item satisfy what round 1 demanded; the two binding-constraint spirit-of-rule weaknesses (Plan-as-Bypass head-on, pilot-before-broad-rollout) are now met in spirit. Archie's three open questions for Wei (TDD-pipeline annotation strength, partition-priority tiebreaker semantics, named-interface registry deferral) are all resolved in Archie's favor. Condition (a) of ADR-0007's Accept transition is satisfied; conditions (b) human approval, (c) pilot success on W2.2 implementation, and (d) W2.1 rollout work landing remain. Next steps: route to human for approval; then proceed with W2.1 rollout (Phase 4 rewrite, ownership-map scaffold at `docs/scaffolds/ownership-map.md`, Grace persona-file annotation), with the pilot scheduled to execute during W2.2 implementation after W2.2's ADR is accepted.
