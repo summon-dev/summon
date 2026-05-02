@@ -10,6 +10,10 @@ agent-notes: { ctx: "sprint 1 plan: align Summon with 2026 agentic consensus", d
 
 **Wave strategy:** Three waves grouped by dependency and context cost. Each wave is one session; commit + `/handoff` between waves. ADR-gated items must clear the Architecture Gate (Archie + Wei) before any prose/persona/process changes ship.
 
+**Authoritative rollout source:** Wave order, halt-points, rollback rules, and intermediate-state behavior are governed by [ADR-0003 § Rollout](../adrs/0003-research-driven-restructure-2026.md). If this plan and ADR-0003 conflict, ADR-0003 wins.
+
+**Per-ADR binding constraints:** Each follow-on ADR (W1.1, W1.3, W2.1–W2.3, W3.1–W3.2) inherits binding constraints from ADR-0003's follow-on table — including a mandatory "Considered and Rejected" subsection. Acceptance criteria below are the *delivery* criteria; ADR-0003's constraints are the *content* criteria.
+
 ---
 
 ## Wave 1 — Foundational Doctrine (3 items)
