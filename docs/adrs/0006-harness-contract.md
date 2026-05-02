@@ -1,12 +1,14 @@
 ---
-agent-notes: { ctx: "explicit harness contract: progress-note schema and persona-to-role mapping", deps: [docs/adrs/0003-research-driven-restructure-2026.md, docs/adrs/0004-feature-spec-artifact.md, docs/adrs/0005-single-threaded-default.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/process/gotchas.md, .claude/commands/handoff.md, docs/sprints/sprint-1-plan.md, docs/tracking/2026-05-02-adr0006-harness-debate.md], state: proposed, last: "claude@2026-05-02" }
+agent-notes: { ctx: "explicit harness contract: progress-note schema and persona-to-role mapping", deps: [docs/adrs/0003-research-driven-restructure-2026.md, docs/adrs/0004-feature-spec-artifact.md, docs/adrs/0005-single-threaded-default.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/process/gotchas.md, .claude/commands/handoff.md, docs/sprints/sprint-1-plan.md, docs/tracking/2026-05-02-adr0006-harness-debate.md, docs/tracking/2026-05-02-w1.3-pilot-postmortem.md], state: accepted-conditional, last: "claude@2026-05-02" }
 ---
 
 # ADR-0006: Harness Contract — Progress-Note Schema and Persona-Role Mapping
 
 ## Status
 
-**Proposed (Shadow-Pilot phase)** 2026-05-02. Wei challenge complete per `docs/sprints/sprint-1-plan.md` W1.3 ([round 1 debate](../tracking/2026-05-02-adr0006-harness-debate.md), verdict ACCEPT WITH AMENDMENTS); twelve amendments folded inline. **Transition to Accepted** requires both (a) human approval of the persona-role mapping in § Persona-Role Mapping Debate, AND (b) shadow-pilot success criteria in § Pilot Plan pass on W1.3. Until both conditions hold, the schema is binding only on the named shadow-pilot work item; general session handoffs continue to use the prior `handoff.md` convention.
+**Accepted (Conditional)** 2026-05-02, per [W1.3 pilot post-mortem](../tracking/2026-05-02-w1.3-pilot-postmortem.md). Both Accept transition conditions are satisfied: (a) human approval of the persona-role mapping was given originally and re-affirmed by the post-rollout override (Rework Notes amendment 13); (b) the W1.3 pilot scored three of five success criteria as unconditional PASS, one as PASS-on-reachability-demonstration, and one (criterion 4: resume <5min) as DEFERRED to the first true `/resume` (post-mortem follow-up F1). The schema is binding for general use as of this transition. **Reopen condition:** if F1 fails (resume takes >5min) or follow-up F4 surfaces a real op-consequence-1 violation in production, this ADR reopens per § 6 failure handling.
+
+*Prior status:* Proposed (Shadow-Pilot phase), 2026-05-02. Wei challenge complete per `docs/sprints/sprint-1-plan.md` W1.3 ([round 1 debate](../tracking/2026-05-02-adr0006-harness-debate.md), verdict ACCEPT WITH AMENDMENTS); twelve amendments folded inline.
 
 ## Context
 
@@ -271,3 +273,7 @@ This ADR was amended following Wei's round-1 verdict (ACCEPT WITH AMENDMENTS, [d
 **Human override (1, 2026-05-02 post-rollout):**
 
 13. § "What this means for `personas.md` and the agent files" reversed: the original "no persona-file edit" position is replaced by a per-persona `**Harness role:**` annotation on Cam / Pat / Archie / Sato / Tara in `personas.md` (methodology doc only — `.claude/agents/` files unchanged). Override applied directly by the human after Wave 1 implementation surfaced the conflict between this ADR and sprint-1-plan.md W1.3 AC ("Phase doc and personas.md annotate the planner/generator/evaluator mapping"). The override accepts the surface-area-for-confusion cost identified in § Negative Consequences in exchange for reader-orientation benefit at persona-roster read time. Underlying mapping unchanged; ADR-D / ADR-G inheritance contract unchanged.
+
+**Post-pilot transition (1, 2026-05-02):**
+
+14. **Status flipped to Accepted (Conditional)** per the [W1.3 pilot post-mortem](../tracking/2026-05-02-w1.3-pilot-postmortem.md). Pilot scored: criteria 1, 2, 3 — unconditional PASS; criterion 5 — PASS on reachability demonstration (no condition fired in W1.3, but all six are mechanically reachable per § 5 of the post-mortem); criterion 4 — DEFERRED to first true `/resume` (post-mortem F1). § 6 joint-reopen rule did NOT fire (attribution to ADR-0006 is clean: ADR-0004's missing pilot evidence is attributable to dual-purpose-pilot scheduling, not to ADR-0006 design). Three follow-ups carry forward (F1 = resume-time scoring; F3 = paranoid refusal-condition reachability check; F4 = optional 7th refusal condition for spec citation in Next Step). None block the transition. The reopen condition is named in § Status.

@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "sprint 1 plan: align Summon with 2026 agentic consensus", deps: [CLAUDE.md, docs/methodology/phases.md, docs/process/team-governance.md, docs/methodology/personas.md, docs/adrs/0004-feature-spec-artifact.md, docs/adrs/0005-single-threaded-default.md, docs/adrs/0006-harness-contract.md], state: active, last: "claude@2026-05-02", key: ["3 waves, 8 items", "no board: track in-repo", "6 ADRs gated", "Wave 1 implementation Done; pilot post-mortem pending"] }
+agent-notes: { ctx: "sprint 1 plan: align Summon with 2026 agentic consensus", deps: [CLAUDE.md, docs/methodology/phases.md, docs/process/team-governance.md, docs/methodology/personas.md, docs/adrs/0004-feature-spec-artifact.md, docs/adrs/0005-single-threaded-default.md, docs/adrs/0006-harness-contract.md, docs/tracking/2026-05-02-w1.3-pilot-postmortem.md], state: active, last: "claude@2026-05-02", key: ["3 waves, 8 items", "no board: track in-repo", "6 ADRs gated", "Wave 1 Done; W1.3 post-mortem complete; ADR-0006 Accepted (Conditional); ADR-0004 stays Shadow-Pilot"] }
 ---
 
 # Sprint 1 Plan — Align with 2026 Agentic Coding Consensus
@@ -165,7 +165,7 @@ Surfaced by the research pass but not in Sprint 1:
 |----|-------|------|--------|
 | W1.1 | Feature-spec artifact | M | Done (template, /feature-spec command, Phase 2.5 in phases.md, 4th SEP question in CLAUDE.md, Done Gate item 6b, Tara backstop documented in CLAUDE.md SEP §4 + phases.md Phase 2.5) — closes ADR-0004 Shadow-Pilot transition condition (b) |
 | W1.2 | Single-threaded default | S | Done (CLAUDE.md, phases.md Phase 4, gotchas.md updated) |
-| W1.3 | Harness contract + progress note | M | Done (template, /handoff, /resume, phases.md Phase 7, redirect cutover at .claude/handoff.md); first canonical progress note will be written by /handoff at session end (the dual-purpose pilot output); pilot post-mortem in next session |
+| W1.3 | Harness contract + progress note | M | Done. Pilot post-mortem complete at `docs/tracking/2026-05-02-w1.3-pilot-postmortem.md`. ADR-0006 transitioned to Accepted (Conditional on F1: resume <5min at next /resume). ADR-0004 stays Proposed (Shadow-Pilot); condition (b) met, pilot deferred to human's independent pilot per OQ1 resolution. |
 | W2.1 | Owned partition | M | Planned |
 | W2.2 | Single-writer hierarchy | M | Planned |
 | W2.3 | Judge stack | M | Planned |

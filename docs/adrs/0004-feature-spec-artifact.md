@@ -1,18 +1,18 @@
 ---
-agent-notes: { ctx: "feature-spec artifact between ADR and TDD", deps: [docs/adrs/0003-research-driven-restructure-2026.md, docs/adrs/0002-tdd-workflow.md, docs/methodology/phases.md, docs/process/done-gate.md, docs/tracking/2026-05-02-adr0004-feature-spec-debate.md, docs/tracking/2026-05-02-adr0004-feature-spec-debate-round2.md], state: proposed, last: "claude@2026-05-02" }
+agent-notes: { ctx: "feature-spec artifact between ADR and TDD", deps: [docs/adrs/0003-research-driven-restructure-2026.md, docs/adrs/0002-tdd-workflow.md, docs/methodology/phases.md, docs/process/done-gate.md, docs/tracking/2026-05-02-adr0004-feature-spec-debate.md, docs/tracking/2026-05-02-adr0004-feature-spec-debate-round2.md, docs/tracking/2026-05-02-w1.3-pilot-postmortem.md], state: proposed, last: "claude@2026-05-02" }
 ---
 
 # ADR-0004: Feature-Spec Artifact Between ADR and TDD
 
 ## Status
 
-**Proposed (Shadow-Pilot phase)** 2026-05-02. Rework following Wei's REWORK verdict ([round 1 debate](../tracking/2026-05-02-adr0004-feature-spec-debate.md)); Wei round 2 verdict ACCEPT WITH AMENDMENTS ([round 2 debate](../tracking/2026-05-02-adr0004-feature-spec-debate-round2.md)) with six wording amendments folded in.
+**Proposed (Shadow-Pilot phase, condition (b) met; pilot deferred to human's independent pilot)** 2026-05-02. Rework following Wei's REWORK verdict ([round 1 debate](../tracking/2026-05-02-adr0004-feature-spec-debate.md)); Wei round 2 verdict ACCEPT WITH AMENDMENTS ([round 2 debate](../tracking/2026-05-02-adr0004-feature-spec-debate-round2.md)) with six wording amendments folded in. [W1.3 pilot post-mortem](../tracking/2026-05-02-w1.3-pilot-postmortem.md) records that the W1.3 shadow-pilot did NOT execute (no spec was authored — the dual-purpose-pilot scheduling made spec-precedes-implementation impossible in honest authorship); the pilot is deferred to a human-run independent pilot per the post-mortem § 3.
 
-**Transition to Accepted requires both:** (a) W1.3 shadow-pilot success criteria pass (see § Pilot Plan), AND (b) W1.1 (Done Gate amendment for "spec link present for M+ items") lands. Until both conditions hold, the size carve-out is not enforced for general M+ work; only the named shadow-pilot item is bound.
+**Transition to Accepted requires both:** (a) shadow-pilot success criteria pass — **deferred to the human's independent pilot** (post-mortem § 3 verdict; OQ1 resolution in `.claude/progress-note.md`), AND (b) W1.1 (Done Gate amendment for "spec link present for M+ items") lands — **MET as of commit `8a69a0f`** (sprint-1-plan.md Status Tracker line 166). Until condition (a) is satisfied by the independent pilot, the size carve-out is not enforced for general M+ work.
 
 **Hard backstop (active on this ADR's acceptance, independent of W1.1):** Tara MUST refuse to author tests for any M+ item that has no spec link. This rule is added to the Tara workflow on acceptance and survives any slip in W1.1.
 
-**Honor-system mitigation during the Shadow-Pilot phase:** the Tara backstop assumes Tara is invoked. During the pre-W1.1 window, the human (or the coordinator in proxy mode) is responsible for confirming Tara is invoked on M+ items, starting with the W1.3 shadow-pilot. The honor-system gap closes when W1.1's Done Gate amendment lands.
+**Honor-system mitigation during the Shadow-Pilot phase:** the Tara backstop assumes Tara is invoked. During the pre-W1.1 window, the human (or the coordinator in proxy mode) is responsible for confirming Tara is invoked on M+ items, starting with the W1.3 shadow-pilot. The honor-system gap closes when W1.1's Done Gate amendment lands. **As of the W1.3 post-mortem**, W1.1 has landed; the honor-system window for ADR-0004 is closed; the Done Gate amendment is the active enforcement.
 
 ## Context
 
@@ -196,3 +196,9 @@ Six wording-grade amendments folded in without spawning Archie again (Wei explic
 4. **§ Schema (Key Decisions row)** added that citations may reference Proposed (not-yet-Accepted) ADRs with a follow-up obligation if the cited ADR is amended at Acceptance.
 5. **§ Pilot Plan** added a sixth pilot success criterion: Archie reviews W1.3 cross-component Key Decisions to prevent the spec from absorbing ADR-C decisions before ADR-C is debated.
 6. **§ Consequences (Neutral)** added the continuing-pilot trigger: first L item under broad rollout is the named consumer of the deferred boundary-fitness signal; failure on that item reopens § Size Carve-Out.
+
+### Round 3 Notes (2026-05-02, post-W1.3 pilot post-mortem)
+
+7. **§ Status** updated to record the [W1.3 pilot post-mortem](../tracking/2026-05-02-w1.3-pilot-postmortem.md) outcome: the dual-purpose pilot did not execute (no spec was authored for W1.3); pilot evaluation is deferred to a human-run independent pilot per OQ1 resolution. Condition (b) is now met (W1.1 landed at commit `8a69a0f`). Condition (a) remains open. **Status taxonomy unchanged** — still Proposed (Shadow-Pilot phase) — but the parenthetical now records condition (b) met and pilot deferred. The honor-system window closes; the Done Gate amendment is the active enforcement for the spec-link requirement on M+ items.
+
+8. **Future-pilots refinement note (folded from progress note L2):** *Dual-purpose pilots have a structural retroactivity risk.* When a Wave authors both the artifact ADR (e.g., ADR-0004) and a contract ADR (e.g., ADR-0006) where the contract ADR's implementation is the artifact ADR's pilot vehicle, the spec cannot honestly precede the implementation in the same Wave. Future ADR-0004 pilots MUST either (a) be scheduled in a Wave that does not also author the artifact's own scaffold, OR (b) split the dual-purpose pilot into two separate pilots. This note refines § Pilot Plan; it is not a re-decision.
