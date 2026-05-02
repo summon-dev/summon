@@ -175,7 +175,19 @@ The coordinator's job is to recognize phase transitions and assemble the right t
 
 **When to use:** Any time the human needs to be consulted, informed, or asked for a decision. Cam is the default for all human interaction unless the human explicitly asks to speak to a specific agent.
 
-**Proxy mode:** When the human declares unavailability (e.g., "I'm going to bed"), Pat becomes Lead for product questions. The coordinator routes questions that would normally go to the human through Pat instead. Pat uses `docs/product-context.md` to answer within the human's known preferences, applying conservative defaults for uncovered areas. Pat cannot approve ADRs, change scope, make architectural choices, or override vetoes — those block until the human returns. All proxy decisions are logged in `.claude/handoff.md` under `## Proxy Decisions (Review Required)`. Proxy mode ends when the human sends any message.
+**Proxy mode:** When the human declares unavailability (e.g., "I'm going to bed"), Pat becomes Lead for product questions. The coordinator routes questions that would normally go to the human through Pat instead. Pat uses `docs/product-context.md` to answer within the human's known preferences, applying conservative defaults for uncovered areas. Pat cannot approve ADRs, change scope, make architectural choices, or override vetoes — those block until the human returns. All proxy decisions are recorded in the cross-session progress note's **Blockers** section per [ADR-0006](../adrs/0006-harness-contract.md) (canonical artifact at `.claude/progress-note.md`; written by `/handoff`). Proxy mode ends when the human sends any message.
+
+**Cross-session continuity (harness contract).** [ADR-0006](../adrs/0006-harness-contract.md) defines the canonical cross-session artifact: a structured progress note at `.claude/progress-note.md` with a fixed header (`session-date`, `author`, `prior-note-commit`) and five named sections (State, Next Step, Learnings, Open Questions, Blockers). The `/handoff` command writes it; the schema is binding and the command refuses to write a non-conforming note. The `/resume` command reads it in the order **State → Blockers → Open Questions → Next Step → Learnings**. The legacy `.claude/handoff.md` is a single-line redirect after W1.3 close.
+
+**Harness role mapping (planner / generator / evaluator overlay).** Per [ADR-0006 § 2 Persona-Role Mapping](../adrs/0006-harness-contract.md#2-persona-role-mapping), Summon adopts the *functional* separation of plan / generate / evaluate but rejects a one-to-one persona triad. The mapping:
+
+| Harness role | Summon binding |
+|---|---|
+| **Plan** | The feature-spec artifact (per [ADR-0004](../adrs/0004-feature-spec-artifact.md)). Plan-quality is jointly owned: Pat decomposes (authorship), Cam coherence-checks, Archie architecture-gates, Tara verifies. |
+| **Generate** | **Sato.** |
+| **Evaluate** | **Tara**, applying the Verifiability gate from ADR-0004. |
+
+This is a documentation overlay on existing personas — no persona file is rewritten by the mapping. For below-spec items (XS, S without opt-in), the in-flight progress note's Next Step stands in for the spec.
 
 ---
 

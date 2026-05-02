@@ -1,91 +1,113 @@
-<!-- agent-notes: { ctx: "session handoff for wave-based sprint execution", deps: [CLAUDE.md, docs/sprints/, docs/code-map.md], state: active, last: "coordinator@2026-03-31" } -->
-Create a session handoff document so the next session can pick up where this one left off.
+<!-- agent-notes: { ctx: "session handoff: emit ADR-0006 progress-note schema with mechanical refusal checks", deps: [docs/adrs/0006-harness-contract.md, docs/scaffolds/progress-note.md, docs/sprints/, docs/tracking/, .claude/progress-note.md], state: active, last: "claude@2026-05-02" } -->
+
+Write the cross-session progress note so the next session can pick up. The output is `.claude/progress-note.md`, conforming to the schema defined in [ADR-0006 § 1](../../docs/adrs/0006-harness-contract.md#1-progress-note-schema). Use [`docs/scaffolds/progress-note.md`](../../docs/scaffolds/progress-note.md) as the structural reference.
+
+> **Schema is binding.** This command refuses to write a non-conforming progress note. See § Refusal Conditions below.
+
+---
 
 ## Steps
 
-1. **Assess current state.** In parallel, run:
-   - `git log --oneline -10` — recent commits
-   - `git status` — working tree state
-   - `git diff --stat` — uncommitted changes summary
-   - **Board check (if configured):** If `CLAUDE.md` has `project-number` and `project-owner` set, verify access first with `gh auth status` and then `gh project item-list <NUMBER> --owner @me --format json`. If board access fails, warn the user: "Board access failed — handoff will be written without board status. Fix GitHub access before the next session resumes." Continue writing the handoff (it's still useful), but note the board gap in the handoff's Current State section.
+### 1. Read inputs (in parallel)
 
-2. **Summarize what was done.** Review the work completed in this session:
-   - What features/fixes were implemented
-   - What tests were written/updated
-   - What docs were created/updated
-   - What ADRs were created
-   - What's committed vs. uncommitted
+- `git log --oneline -10` — recent commits
+- `git status --porcelain` — working-tree state (interpret, don't dump)
+- `git diff --stat` — uncommitted summary
+- Active sprint plan in `docs/sprints/sprint-N-plan.md`
+- Active tracking artifacts in `docs/tracking/` (most recent N relevant to in-flight work)
+- Prior progress note at `.claude/progress-note.md` (if it exists). Preserve:
+  - Learnings flagged `pending-promotion: <destination>` — carry forward verbatim with original session date.
+  - Unresolved Blockers — carry forward with stable IDs preserved.
+  - State is rewritten from scratch (do NOT carry forward).
+- **Board check (if configured):** if `CLAUDE.md` has non-empty `project-number` and `project-owner`, run `gh auth status` then `gh project item-list <NUMBER> --owner <OWNER> --format json`. Board failure does NOT block the write — record `board: unavailable; reason: <reason>` in State.
 
-3. **Sprint wave context.** Check `docs/sprints/` for the current sprint wave plan:
-   - Which wave was this session executing?
-   - Which issues in the wave are Done vs. in-progress vs. not started?
-   - What's the next wave? List the issues with their titles and sizes.
+### 2. Author the progress note
 
-4. **Identify what's next.** Based on the wave plan and any in-flight work:
-   - What's the immediate next task (or next wave)?
-   - What's blocked and on what?
-   - What decisions are pending human input?
-   - What open questions remain?
+Write the file to `.claude/progress-note.md` using this exact structure (header + five named sections). Each section's content rules are below; see the [template](../../docs/scaffolds/progress-note.md) for filled-in examples.
 
-5. **Check tracking artifacts.** Read `docs/tracking/` for any active tracking artifacts from this session. Include the latest artifacts in the handoff so the next session can pick up phase context without re-discovering it. Also check if `docs/product-context.md` exists and note its last-updated date in the handoff.
+#### Header (mandatory)
 
-6. **Write the handoff file.** Create or update `.claude/handoff.md` with this structure:
-
-```markdown
-# Session Handoff
-
-**Created:** <today's date>
-**Sprint:** <sprint number>
-**Wave:** <wave number/name> of <total waves>
-**Session summary:** <1-2 sentence summary>
-
-## What Was Done
-- <bulleted list of accomplishments>
-
-## Current State
-- **Branch:** <current branch>
-- **Last commit:** <hash + message>
-- **Uncommitted changes:** <description or "none">
-- **Tests:** <total passing> across <N> test files
-- **Board status:** <summary>
-
-## Sprint Progress
-- **Wave plan:** `docs/sprints/sprint-<N>-plan.md`
-- **Current wave:** <wave number> — <status>
-- **Issues completed this session:** #X, #Y, #Z
-- **Issues remaining in wave:** #A, #B (with brief status)
-- **Next wave:** <wave number> — <issues and sizes>
-
-## What To Do Next (in order)
-1. Read `docs/code-map.md` to orient
-2. Read `docs/product-context.md` for human's product philosophy
-3. Read `docs/sprints/sprint-<N>-plan.md` for wave context
-4. <specific next task with file paths and enough context to execute>
-5. ...
-
-## Tracking Artifacts
-- <list any active tracking artifacts from `docs/tracking/` relevant to in-flight work>
-- <include the artifact file names so the next session can read them for phase context>
-
-## Proxy Decisions (Review Required)
-<!-- If Pat made proxy decisions while the human was unavailable, list them here -->
-<!-- Each entry: question asked, Pat's decision, rationale, reversibility -->
-
-## Key Context
-- <any non-obvious context the next session needs>
-- <files that were being actively worked on>
-- <gotchas discovered during this session>
+```yaml
+session-date: <YYYY-MM-DD>
+author: <coordinator | cam | <agent-name-in-proxy-mode>>
+prior-note-commit: <git-hash-of-prior-progress-note, or "none">
 ```
 
-7. **Update MEMORY.md.** Ensure the session memory file has current sprint status and any new patterns discovered.
+To find the prior-note commit: `git log -1 --format=%H -- .claude/progress-note.md` (returns empty for first session — write `none`).
 
-8. **Commit the handoff.** If there are uncommitted changes, ask the user if they want to commit before creating the handoff. Then commit the handoff file itself.
+#### Section 1: State
+
+What is true *right now*. Each claim **MUST** cite the artifact it was read from (commit hash, file path, board item ID). State is interpreted, not dumped.
+
+Suggested fields: branch, last commit, working tree, in-flight work item, current phase, sprint/wave, board status. Each line carries an inline citation: `*(cited: <source>)*`.
+
+#### Section 2: Next Step
+
+Exactly **one** sentence describing the single next action. **MUST** cite:
+- the work-item ID,
+- the file path the action operates on,
+- a `gates:` list of Blocker IDs that gate the action (`gates: []` if unblocked).
+
+If the session ended in an undecidable state with multiple candidate next steps, that is itself a Blocker — record it as `B<N>` and let the gate fire.
+
+#### Section 3: Learnings
+
+Each learning **MUST** be one of:
+- **(a) promoted** to its destination (gotcha, ADR amendment, code-map entry) with a citation showing where the promotion lives, OR
+- **(b) flagged** `pending-promotion: <destination>` with a one-sentence rationale for why it isn't promoted yet.
+
+A learning that is neither is non-conformant. A Learning MAY reference an Open Question by its addressee (e.g., "see OQ for human") to avoid duplication.
+
+#### Section 4: Open Questions
+
+Each MUST cite *who* answers (human / Pat-in-proxy / a specific agent) and *why* it blocks. A question with no addressee is non-conformant. Distinct from Blockers — Open Questions may be team-answerable; Blockers require explicit human input.
+
+#### Section 5: Blockers
+
+Decisions awaiting the human (or Pat in proxy mode). Each Blocker MUST have:
+- a stable ID: `B1`, `B2`, … in order of appearance, **never reused** across sessions for unresolved blockers.
+- the decision required.
+- `verdict:` either Pat's proxy verdict or `awaiting-human`.
+- (recommended) `verdict-rationale:` one line — required if Pat applied a verdict.
+- (required) `reversibility:` one of `reversible`, `costly-to-reverse`, `irreversible`.
+
+**Migrating legacy `## Proxy Decisions (Review Required)` entries** (one-time at W1.3 close, then never again):
+
+| Legacy field | Blocker target |
+|---|---|
+| `question` | decision required |
+| `decision` | `verdict` (or `awaiting-human` if unanswered) |
+| `rationale` | sub-field `verdict-rationale:` |
+| `reversibility` | sub-field `reversibility:` |
+
+### 3. Validate against refusal conditions
+
+Before writing, the command checks **all six** conditions below. Refuse to write — exit with the violating field named — if **any** hold:
+
+1. **Header missing** `session-date`, `author`, or `prior-note-commit`.
+2. **More than one Next Step** supplied.
+3. **Next Step's `gates:` list contains a Blocker ID whose status is non-resolved** (e.g., `awaiting-human`). The check is mechanical: read Next Step's `gates:` list, look up each cited Blocker ID in the Blockers section, refuse if any is unresolved. **No semantic-dependency reasoning** — if Next Step is gated, Next Step lists it; if not listed, the gate does not fire. (Caller resolves the blocker, removes it from the gates list with explicit justification recorded in Learnings, or changes the Next Step.)
+4. **A Learning is neither promoted nor flagged** with `pending-promotion: <destination>`.
+5. **An Open Question lacks an addressee.**
+6. **A Blocker is missing a stable ID, or two unresolved Blockers share an ID.**
+
+### 4. Write the file
+
+Write `.claude/progress-note.md` (overwriting the prior one — its content is preserved in git history).
+
+### 5. Commit (separately — confirm with user)
+
+Stage and commit only if the user wants the handoff committed in this session. Otherwise leave it staged. Use a conventional commit message like `docs(handoff): session N progress note`.
+
+---
 
 ## Important
 
-- Be specific in "What To Do Next" — include file paths, function names, and enough detail that the next session doesn't need to re-discover context.
-- The handoff's job is to make the next session's first 2 minutes productive, not its first 10 minutes.
-- "Read code-map.md" should always be step 1 in "What To Do Next" — it replaces codebase exploration.
-- Don't include sensitive information (tokens, credentials, personal data) in the handoff.
-- If the session discovered patterns or gotchas, update `docs/process/gotchas.md` (durable) not just the handoff (ephemeral).
-- Add agent-notes frontmatter to the handoff file per `docs/methodology/agent-notes.md`.
+- The schema is binding per ADR-0006. **Do not** silently downgrade refusal conditions to warnings.
+- The progress note **replaces** the legacy `.claude/handoff.md`. After W1.3 close, `handoff.md` is a single-line redirect — do not write to it.
+- "Read code-map.md first" was the prior-handoff convention but `code-map.md` is in `docs/scaffolds/` until a scaffold command moves it. If it doesn't exist, point the resuming session at `CLAUDE.md` § Project Structure instead.
+- The resume order at session start is: **State → Blockers → Open Questions → Next Step → Learnings**. Blockers can change Next Step, so they're read first.
+- The `/resume` command is the consumer; if you change the schema here, update `/resume` too.
+- Don't include sensitive information (tokens, credentials, personal data).
+- Add agent-notes frontmatter to the progress-note file per `docs/methodology/agent-notes.md`.
+- If a refusal condition fires, the failure mode is *user error caught early*, not *missing output*. Surface the violating field clearly so the caller can fix and re-run.

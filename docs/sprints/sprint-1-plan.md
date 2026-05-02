@@ -43,9 +43,12 @@ These are the upstream changes the rest depend on. Each rewrites a core mental m
 - **ADR required:** Yes — Archie + Wei. Harness role mapping (Pat=planner, Sato=generator, Tara=evaluator) is a structural claim about how Summon maps to the Anthropic three-agent harness; Wei must challenge.
 - **Acceptance criteria:**
   - ADR accepted, debate tracked, human approved.
-  - Structured progress-note schema documented (state, next step, learnings, open questions); template at `docs/scaffolds/progress-note.md`.
-  - `/handoff` command updated to emit this schema.
-  - Phase doc and `personas.md` annotate the planner/generator/evaluator mapping.
+  - Structured progress-note schema documented (header + State, Next Step, Learnings, Open Questions, Blockers per ADR-0006 § 1); template at `docs/scaffolds/progress-note.md`; canonical artifact at `.claude/progress-note.md`.
+  - `/handoff` command updated to emit this schema with mechanical refusal conditions.
+  - `/resume` command updated to consume this schema.
+  - Phase doc annotates the planner/generator/evaluator mapping.
+  - Legacy `.claude/handoff.md` overwritten with single-line redirect at W1.3 close (per ADR-0006 § 3).
+  - **Note (2026-05-02):** ADR-0006 § Persona-Role Mapping → "What this means for personas.md" explicitly says **no persona file is edited** — the harness mapping is a documentation overlay (added to `phases.md` and ADR-0006 only). This supersedes the prior AC bullet "Phase doc and personas.md annotate the mapping" per the gotchas rule "Sprint plan must not contradict accepted ADRs."
 
 **Wave 1 exit criteria:** Three ADRs accepted; `phases.md`, `CLAUDE.md`, `gotchas.md` updated; templates exist. Commit, handoff.
 
@@ -162,7 +165,7 @@ Surfaced by the research pass but not in Sprint 1:
 |----|-------|------|--------|
 | W1.1 | Feature-spec artifact | M | ADR human-Accepted (Shadow-Pilot phase); doc edits pending |
 | W1.2 | Single-threaded default | S | Done (CLAUDE.md, phases.md Phase 4, gotchas.md updated) |
-| W1.3 | Harness contract + progress note | M | ADR human-Accepted (Shadow-Pilot phase); doc edits pending (this is the dual-purpose pilot) |
+| W1.3 | Harness contract + progress note | M | In Progress: template, /handoff, /resume, phases.md done; redirect cutover + first canonical progress note pending; pilot post-mortem after W1.1 |
 | W2.1 | Owned partition | M | Planned |
 | W2.2 | Single-writer hierarchy | M | Planned |
 | W2.3 | Judge stack | M | Planned |
