@@ -1,9 +1,9 @@
 ---
 agent-notes:
   ctx: "implementation gotchas and established patterns"
-  deps: [CLAUDE.md]
+  deps: [CLAUDE.md, docs/adrs/0005-single-threaded-default.md]
   state: active
-  last: "coordinator@2026-03-28"
+  last: "coordinator@2026-05-02"
 ---
 # Known Patterns and Gotchas
 
@@ -71,6 +71,8 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 - **Quick-Test Bypass anti-pattern.** The coordinator writes tests directly "to save time" instead of invoking Tara. The tests look reasonable but miss text content assertions, edge cases, and structural invariants. They become the committed suite and the gaps become permanent. **Detection signal:** test code appears in the coordinator's response with no Tara agent invocation. **Fix:** always invoke Tara for test authoring. Even for exploratory/diagnostic tests, hand them to Tara for review before committing. See `docs/process/team-governance.md` § Quick-Test Bypass for the full pattern.
 
 - **"Invoke the team" means spawn subagents (Solo-Coordinator anti-pattern).** When the human uses language like "invoke the team", "use the team", "have Cam look at this", or names any persona, the coordinator MUST spawn those agents via the Task tool. The coordinator doing the work inline — even if the output is good — violates the explicit human request. **Detection signal:** the human asked for a named persona or "the team" but no Task tool calls with `subagent_type` matching a persona appear in the response. **Fix:** parse the request for persona names or team-level language, then spawn the appropriate agents before doing any work.
+
+- **Premature Parallelism anti-pattern.** The coordinator (or Grace) launches parallel writers without a measured single-thread ceiling, often because parallelism *feels* faster or because a plan listed multiple items. The result is partition collisions, duplicated work, and merge contention that costs more than the serial run would have. **Detection signal:** more than one Task call with `subagent_type: sato` (or any writer role) for overlapping code areas in a single message, with no parallelization proposal in the handoff or sprint artifacts and no Grace sign-off recorded. **Fix:** stop, run the single-thread version to establish the throughput baseline, then re-evaluate against [ADR-0005](../adrs/0005-single-threaded-default.md)'s three escalation criteria — measured ceiling, clean ownership per ADR-B, ≤5 streams — before parallelizing.
 
 - **Use scripts for stable logic, commands for evolving knowledge.** Static scripts are ideal when the rules are well-defined and unlikely to change. But when automation requires understanding things that change externally — evolving formats, shifting best practices, new API conventions — prefer a Claude Code command over a script. Commands bring current understanding (and can web-search) on every run.
 

@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md], state: canonical, last: "sato@2026-03-30" }
+agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md, docs/adrs/0005-single-threaded-default.md], state: canonical, last: "sato@2026-05-02" }
 ---
 
 # Hybrid Team Methodology
@@ -114,9 +114,9 @@ The coordinator's job is to recognize phase transitions and assemble the right t
 | Workers | **Ines** | Infrastructure work (parallel to app code) |
 | Workers | **Diego** | Documentation (parallel to implementation) |
 
-**How it works:** Grace identifies independent work items that can proceed in parallel. Agents self-claim or are assigned non-overlapping work. Multiple Task tool calls launch parallel agent teams. Grace tracks progress and flags blockers.
+**How it works:** Grace identifies independent work items that may proceed in parallel. Agents are assigned non-overlapping work. Multiple Task tool calls launch parallel agent teams. Grace tracks progress and flags blockers.
 
-**When to use:** When there are 3+ independent work items that don't share dependencies. Default to parallel unless there's a true data dependency between items.
+**When to use:** Code-write work runs **single-threaded by default** per [ADR-0005](../adrs/0005-single-threaded-default.md). Parallel write streams are permitted only when **all three** escalation criteria are met — (1) measured single-thread ceiling, (2) clean ownership per ADR-B (once Accepted), (3) ≤5 streams — and Grace has authored a parallelization proposal approved by the human (or Pat in proxy mode). Parallelism is the exception, not the default. Read-side parallelism (multi-lens code review, parallel architecture debate, parallel specialist consultation) is **unaffected** by this rule and remains the model for those activities. The Phase 4 mechanics — ownership map artifact, partition lifecycle, market vs. assignment dynamics — are deferred to ADR-B / W2.1 and are subject to revision when that ADR lands.
 
 **Transition to next phase:** When all parallel work items are complete.
 

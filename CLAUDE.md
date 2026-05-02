@@ -75,6 +75,9 @@ When a situation triggers multiple personas, invoke ALL of them. Overlapping cov
 ### ADR Before Implementation
 Never implement a feature with a pending ADR without writing the ADR first. Architecture Gate details: `docs/process/team-governance.md` § Architecture Decision Gate.
 
+### Single-Threaded by Default for Code Writes
+Code-writing work — any task whose output is committed source, schema, configuration, or migration code — runs as a single writer pipeline (one Tara→Sato→Tara cycle) at a time. Read-side parallelism (multi-lens code review, parallel architecture debate, parallel specialist consultation) is unaffected. Parallel write streams are permitted only when Grace has authored a parallelization proposal satisfying all three escalation criteria — measured single-thread ceiling, clean partitions per ADR-B, ≤5 streams — and the human (or Pat in proxy mode) has approved it. See `docs/adrs/0005-single-threaded-default.md`.
+
 ### Proxy Mode
 When the human declares unavailability, Pat answers product questions using `docs/product-context.md`. Guardrails and limits: `docs/process/gotchas.md` § Process.
 

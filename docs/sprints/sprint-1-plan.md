@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "sprint 1 plan: align Summon with 2026 agentic consensus", deps: [CLAUDE.md, docs/methodology/phases.md, docs/process/team-governance.md, docs/methodology/personas.md], state: active, last: "claude@2026-05-02", key: ["3 waves, 8 items", "no board: track in-repo", "6 ADRs gated"] }
+agent-notes: { ctx: "sprint 1 plan: align Summon with 2026 agentic consensus", deps: [CLAUDE.md, docs/methodology/phases.md, docs/process/team-governance.md, docs/methodology/personas.md, docs/adrs/0005-single-threaded-default.md], state: active, last: "claude@2026-05-02", key: ["3 waves, 8 items", "no board: track in-repo", "6 ADRs gated", "W1.2 Done"] }
 ---
 
 # Sprint 1 Plan — Align with 2026 Agentic Coding Consensus
@@ -160,9 +160,9 @@ Surfaced by the research pass but not in Sprint 1:
 
 | ID | Title | Size | Status |
 |----|-------|------|--------|
-| W1.1 | Feature-spec artifact | M | In Review (Wei round 2 ACCEPT WITH AMENDMENTS, 6 amendments folded; awaiting human Accept) |
-| W1.2 | Single-threaded default | S | ADR Accepted; doc edits pending (CLAUDE.md, phases.md, gotchas.md) |
-| W1.3 | Harness contract + progress note | M | In Review (Wei ACCEPT WITH AMENDMENTS, 12 amendments folded; awaiting human Accept) |
+| W1.1 | Feature-spec artifact | M | ADR human-Accepted (Shadow-Pilot phase); doc edits pending |
+| W1.2 | Single-threaded default | S | Done (CLAUDE.md, phases.md Phase 4, gotchas.md updated) |
+| W1.3 | Harness contract + progress note | M | ADR human-Accepted (Shadow-Pilot phase); doc edits pending (this is the dual-purpose pilot) |
 | W2.1 | Owned partition | M | Planned |
 | W2.2 | Single-writer hierarchy | M | Planned |
 | W2.3 | Judge stack | M | Planned |
