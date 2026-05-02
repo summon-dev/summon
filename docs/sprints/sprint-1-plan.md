@@ -166,7 +166,7 @@ Surfaced by the research pass but not in Sprint 1:
 | W1.1 | Feature-spec artifact | M | Done (template, /feature-spec command, Phase 2.5 in phases.md, 4th SEP question in CLAUDE.md, Done Gate item 6b, Tara backstop documented in CLAUDE.md SEP §4 + phases.md Phase 2.5) — closes ADR-0004 Shadow-Pilot transition condition (b) |
 | W1.2 | Single-threaded default | S | Done (CLAUDE.md, phases.md Phase 4, gotchas.md updated) |
 | W1.3 | Harness contract + progress note | M | Done. Pilot post-mortem complete at `docs/tracking/2026-05-02-w1.3-pilot-postmortem.md`. ADR-0006 transitioned to Accepted (Conditional on F1: resume <5min at next /resume). ADR-0004 stays Proposed (Shadow-Pilot); condition (b) met, pilot deferred to human's independent pilot per OQ1 resolution. |
-| W2.1 | Owned partition | M | In Progress — ADR-0007 architecture gate closed (Wei rounds 1+2 complete; round-2 verdict ACCEPT WITH AMENDMENTS); Status: Proposed (Pilot-pending). Awaiting (b) human approval, (c) pilot pass on W2.2 implementation, (d) W2.1 rollout work (Phase 4 rewrite + ownership-map scaffold + Grace persona annotation). |
+| W2.1 | Owned partition | M | In Progress — ADR-0007 Accepted (Conditional). Conditions (a) Wei + (b) human approval satisfied 2026-05-02; (c) pilot scheduled for W2.2 implementation, (d) W2.1 rollout work (Phase 4 rewrite + ownership-map scaffold + Grace persona annotation + Plan-Encoded Partition gotcha) is the next executable step. |
 | W2.2 | Single-writer hierarchy | M | Planned |
 | W2.3 | Judge stack | M | Planned |
 | W3.1 | Agents vs Skills | L | Planned |

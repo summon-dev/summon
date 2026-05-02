@@ -20,18 +20,18 @@ prior-note-commit: 9ec585f
 - **ADR transitions this session (cumulative):**
   - **ADR-0006:** Proposed (Shadow-Pilot) → **Accepted (Conditional on F1)** *(cited: `docs/adrs/0006-harness-contract.md` § Status; Rework Notes amendment 14)*
   - **ADR-0004:** stays Proposed (Shadow-Pilot); condition (b) MET, condition (a) deferred to human's independent pilot *(cited: `docs/adrs/0004-feature-spec-artifact.md` § Status; Rework Notes round-3 entries 7–8)*
-  - **ADR-0007:** drafted (Archie round 0); Wei round 1 verdict REWORK; Archie round-2 rework folded inline (12 amendments); Wei round 2 verdict **ACCEPT WITH AMENDMENTS**. Status: **Proposed (Pilot-pending)**; condition (a) Wei challenge satisfied; conditions (b–d) pending *(cited: `docs/adrs/0007-owned-partition.md` § Status, Rework Notes; `docs/tracking/2026-05-02-adr0007-owned-partition-debate.md` rounds 1 + 2)*
+  - **ADR-0007:** drafted → Wei round 1 REWORK → round-2 rework (12 amendments folded inline) → Wei round 2 ACCEPT WITH AMENDMENTS → **human approved 2026-05-02**. Status: **Accepted (Conditional)**; conditions (a) Wei + (b) human satisfied; (c) pilot pending W2.2 implementation, (d) W2.1 rollout work pending *(cited: `docs/adrs/0007-owned-partition.md` § Status, Rework Notes; `docs/tracking/2026-05-02-adr0007-owned-partition-debate.md` rounds 1 + 2)*
   - **Joint-reopen rule (ADR-0006 § 6):** did NOT fire; attribution clean *(cited: `docs/tracking/2026-05-02-w1.3-pilot-postmortem.md` § 4)*
 - **Recent commits (this session, oldest → newest):** `321cea2`, `9983ab2`, `8a69a0f` (Wave 1 doctrine), `15f5e74` (first progress note), `9ec585f` (override), `753dd8e` (W1.3 post-mortem), `e35a999` (ADR-0007 pre-Wei draft), `83a49e7` (Wei round-1 debate), and the in-flight handoff commit (ADR-0007 round-2 rework + Wei round-2 verification + this note) *(cited: `git log --oneline -10`)*
 - **Schema cutover marker:** `.claude/handoff.md` is a single-line redirect; this file is the canonical artifact per ADR-0006 § 3 *(cited: `.claude/handoff.md`; ADR-0006 § 3)*
 
 ## Next Step
 
-**Action:** Surface ADR-0007 to the human for approval — the Architecture Gate (Archie round 0 → Wei round 1 REWORK → Archie round 2 rework → Wei round 2 ACCEPT WITH AMENDMENTS) has closed; remaining Accept-transition conditions are (b) human approval, (c) pilot pass on W2.2 implementation, (d) W2.1 rollout work landing.
+**Action:** Execute W2.1 rollout work — apply ADR-0007's doctrine to operational docs: rewrite `docs/methodology/phases.md` Phase 4 (lines 140–157) with the owned-partition mechanics; create `docs/scaffolds/ownership-map.md` template conforming to ADR-0007 § 2 schema (nine fields); annotate `docs/methodology/personas.md` Grace section with the ownership-map authoring role; add the "Plan-Encoded Partition" anti-pattern entry to `docs/process/gotchas.md` per ADR-0007 § 5.
 
-- **Work item:** W2.1 (Owned Partition); ADR architecture gate closed at `docs/adrs/0007-owned-partition.md`; debate at `docs/tracking/2026-05-02-adr0007-owned-partition-debate.md`.
-- **File:** `docs/adrs/0007-owned-partition.md` § Status (the ADR itself states the remaining gate conditions; human approval is the next discrete decision).
-- **`gates:`** `[]` *(no Blockers; the human-approval step is the human's discretionary action, not a Blocker on this session's automated work; if the human approves, the next session executes W2.1 rollout — Phase 4 rewrite + ownership-map scaffold + Grace persona annotation — under existing patterns)*
+- **Work item:** W2.1 rollout (closes ADR-0007 transition condition (d)); pilot for condition (c) is scheduled for W2.2 implementation, not this step.
+- **File:** `docs/methodology/phases.md`, `docs/scaffolds/ownership-map.md` (new), `docs/methodology/personas.md`, `docs/process/gotchas.md`.
+- **`gates:`** `[]` *(no Blockers; this is verbatim ADR-doctrine rollout per L1 — same pattern as W1.1/W1.2/W1.3, four-lens code review skipped with rationale recorded in commit message)*
 
 ## Learnings
 
