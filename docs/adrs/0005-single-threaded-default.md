@@ -6,7 +6,7 @@ agent-notes: { ctx: "single-threaded-by-default rule for code-write tasks", deps
 
 ## Status
 
-**Proposed** 2026-05-02. Per `docs/sprints/sprint-1-plan.md` W1.2, Wei challenge is optional and single-round; the human will dispatch Wei or Accept directly. This is the ADR-H slot under ADR-0003 § Follow-on table.
+**Accepted** 2026-05-02. Per `docs/sprints/sprint-1-plan.md` W1.2, Wei challenge was optional and single-round; human elected to skip Wei after reviewing the pre-empts applied to the draft (no custom-status, no pre-commit to ADR-B/C, concrete enforcement, umbrella-consistent operational definition). This is the ADR-H slot under ADR-0003 § Follow-on table.
 
 ## Context
 
