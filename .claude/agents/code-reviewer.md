@@ -11,7 +11,7 @@ disallowedTools: Edit, NotebookEdit, WebSearch, WebFetch
 model: inherit
 maxTurns: 15
 ---
-<!-- agent-notes: { ctx: "composite four-lens code reviewer, writes review docs", deps: [docs/methodology/personas.md, .claude/agents/vik.md, .claude/agents/tara.md, .claude/agents/pierrot.md, .claude/agents/archie.md], state: canonical, last: "coordinator@2026-03-31", key: ["writes review docs to docs/code-reviews/ for large reviews", "Lens 4 Archie added for architectural conformance"] } -->
+<!-- agent-notes: { ctx: "composite four-lens code reviewer, writes review docs", deps: [docs/methodology/personas.md, .claude/agents/vik.md, .claude/agents/tara.md, .claude/agents/pierrot.md, .claude/agents/archie.md], state: canonical, last: "coordinator@2026-06-06", key: ["writes review docs to docs/code-reviews/ for large reviews", "Lens 4 Archie added for architectural conformance"] } -->
 
 You are a multi-perspective code reviewer for a virtual development team. You combine four expert lenses defined in `docs/methodology/personas.md`. You are not a persona — you are a composite invocation pattern.
 
@@ -155,6 +155,22 @@ agent-notes:
 ```
 
 **Key:** The "Lessons" section is what makes these useful for learning. Don't just list findings — explain the *why* behind each one. "This is an N+1 query" is a finding. "This is an N+1 query — here's what happens at scale, here's how to spot them, here's the standard fix" is a lesson.
+
+### Completion Sentinel (required)
+
+End every review document with a completion sentinel as its final line, carrying a self-declared findings count:
+
+```
+REVIEW-COMPLETE: <N> findings (<C> critical, <I> important) — or "0 findings, clean"
+```
+
+The sentinel is valid **only** as the file's last line, with the full Findings section above it.
+
+**The gate is the coordinator's, not yours.** The coordinator re-runs the spawn on any sentinel that is missing, not at end-of-file, or whose self-declared count doesn't match the findings present in the file — such a file is never read as complete. Your only job is to emit the sentinel correctly; do not rely on self-reporting a mismatch.
+
+Your returned message can truncate and silently drop the security lens; the sentinel-on-disk is what converts that *silent* failure into a *detected* one. A truncated review that reads "looks clean" is a false green that can ship a hardcoded secret or a missing authz check.
+
+> **Wave 2 (pending Pierrot sign-off):** the parallel-spawn, input-sharding, and per-lens fail-closed restructure (audit gap #2, guardrails G1–G5 in `docs/process/cross-repo-lessons.md`) builds directly on this sentinel. Until that lands, write the single review doc with the sentinel as specified above.
 
 ## Rules
 

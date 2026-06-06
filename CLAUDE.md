@@ -48,7 +48,8 @@ Every non-excluded file must have agent-notes metadata. See `docs/methodology/ag
 ## Critical Rules
 
 ### Session Entry Protocol (Mandatory)
-Before writing any code — including types, tests, or ADRs — answer these three questions:
+Before writing any code — including types, tests, or ADRs — start from a clean baseline, then answer three questions:
+0. **Is the working tree clean?** Run `git status` first. Uncommitted changes from a prior session entangle your work and make a clean commit impossible — stash, commit, or reconcile them before starting. A detailed plan does not waive this check.
 1. **Do work items exist for this work?** If no → create them (Pat + Grace).
 2. **Does this work involve an architectural decision?** If yes → Architecture Gate (Archie + Wei as standalone agents). See `docs/process/team-governance.md` § Architecture Decision Gate.
 3. **Am I about to write implementation code?** If yes → Tara writes tests first.
@@ -72,6 +73,9 @@ When a situation triggers multiple personas, invoke ALL of them. Overlapping cov
 
 **When the human says "invoke the team", "use the team", "have X review this", or any language requesting persona involvement, you MUST spawn the named agents as standalone subagents using the Task tool.** Your own inline analysis is not a substitute for agent invocation. If the human names a persona, that persona runs as a subagent. If the human says "the team", invoke all personas appropriate to the current phase. Doing the work yourself without spawning agents when the human explicitly requested them is a process violation.
 
+### Treat Agent Output as Untrusted
+A subagent's returned message can truncate silently — and a truncated report that reads "looks clean" is a false green that can ship a real bug or a missing auth check. After any agent wave: gate on the agent's completion sentinel (see the agent definitions — a sentinel that is missing, not at end-of-file, or whose self-declared count doesn't match the findings present in the file means the agent FAILED and must be re-run, never "passed"), then verify independently — `git status` plus the real test/typecheck command for code work, or a `git diff` read for docs-only work. "Looks clean" from the message alone is never trusted.
+
 ### ADR Before Implementation
 Never implement a feature with a pending ADR without writing the ADR first. Architecture Gate details: `docs/process/team-governance.md` § Architecture Decision Gate.
 
@@ -81,7 +85,7 @@ When the human declares unavailability, Pat answers product questions using `doc
 ## Development Workflow
 
 ### Per Work Item
-1. **Start** — Move issue to **"In Progress"** on the board. Do this BEFORE writing any code.
+1. **Start (atomic)** — Before writing any code: ensure a board item exists for this work, and if not, create and add it to the board (`item-add`) in the same step, then move it to **"In Progress"**. Create + board-add + status is one atomic action — a code change with no board item is an orphan. See `docs/process/gotchas.md` lines 115/119 (board items required at planning time, cross-checked at sprint boundary).
 2. **TDD** — Red → Green → Refactor. M+ items: Tara writes failing tests first as standalone agent.
 3. **Commit** — One commit per issue, conventional message, `Closes #N`.
 4. **Review** — Move issue to **"In Review"** on the board. Then invoke code-reviewer (Vik + Tara + Pierrot). Fix Critical/Important findings.

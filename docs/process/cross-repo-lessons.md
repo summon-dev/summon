@@ -2,15 +2,19 @@
 agent-notes:
   ctx: "cross-repo audit of summon usage + team decision record"
   deps: [CLAUDE.md, docs/process/team-governance.md, docs/process/done-gate.md, docs/process/gotchas.md, docs/adrs/template.md]
-  state: draft
+  state: active
   last: "coordinator@2026-06-06"
 ---
 # Cross-Repo Audit — What Real Deployments Teach Summon
 
-> **Status:** DRAFT decision record. Section 1 is the original evidence-backed audit.
-> Section 2 is the team's critique and the resulting decisions (the team reviewed the
-> audit as standalone subagents on 2026-06-06). Nothing is implemented yet; the
-> "Adopt now" set awaits human approval, and three items are gated behind ADRs.
+> **Status:** Section 1 is the original evidence-backed audit. Section 2 is the team's
+> critique and the resulting decisions (the team reviewed the audit as standalone
+> subagents on 2026-06-06).
+>
+> **Wave 1 implemented 2026-06-06** (decisions #3, #7, #1-reshaped, #5, #4) — landed in
+> `CLAUDE.md` and `.claude/agents/{sato,tara,code-reviewer,wei}.md`. See the "ADOPT NOW"
+> rows in the Decision table below. **Wave 2 (R1 risk-tier → #2 → S1 → M1) remains gated
+> behind ADRs and not started.**
 
 ---
 
@@ -216,5 +220,7 @@ Measured over the next 2 sprints in the next summon repo (baselines from this au
   2 sprints, revert rather than accumulate dead process.
 
 ---
-*Next step: human approval of the Wave 1 "Adopt now" set, then ADRs for R1 → #2 → S1 →
-M1. This document is the decision record; implementation has not started.*
+*Wave 1 ("Adopt now") landed 2026-06-06. Next step: Wave 2 ADRs in order — R1 risk-tier
+(gates the rest) → re-spec'd #2 review-reliability with G1–G5 (Pierrot signs off on
+`code-reviewer.md`) → S1 Tier-2 safety track → M1 backflow spike. This document is the
+decision record.*
