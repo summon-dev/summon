@@ -11,3 +11,6 @@ dist/
 *~
 
 pnpm-debug.log*
+
+# Playwright MCP browser session scratch artifacts
+.playwright-mcp/
