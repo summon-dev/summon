@@ -111,7 +111,7 @@ session transcript; key cross-cutting conclusions:
 | 4 | **ADOPT NOW (as a habit, not a gate)** | One bullet in `wei.md`: grep "already encodes/mirrors/same as" claims against real code before accepting an ADR. Not a mandatory per-ADR checklist gate. | Wei |
 | 6 | **PARTIAL** | Worked Example as an **optional/triggered** section in `docs/adrs/template.md` (only for ADRs with a calculation). Durable-assertions + reversibility move to the safety track (below), **not** the generic template. | Archie |
 | 2 | **VETO LIFTED (conditional on G1–G5)** | File+sentinel+parallel mechanism (see below). No longer sequential. Pierrot retains sign-off on implemented `code-reviewer.md` for G1/G3/G4. | Archie + Pierrot |
-| R1 | **ELEVATED (new finding) → ADR** | Project Risk Tier (0/1/2), set at `/kickoff`. Gates all safety ceremony so Tier-0 toy projects stay light. This is the keystone that answers Vik's anti-ceremony objection. | Archie + Pat + Pierrot |
+| R1 | **ELEVATED (new finding) → ADR** | Per-feature hazard trip-wire gates the safety track per work item (fail-closed); project risk tier (0/1/2) set at `/kickoff` is a demoted default sensitivity the wire overrides upward. Keystone answering the **Wei/Vik/Pat** anti-ceremony objection (line ~98). See ADR-0003 (R2 revision). | Archie + Pat + Pierrot |
 | S1 | **TIER-2 ONLY → ADR** | Safety Contract ADR type + Unsupervised-Action checklist (durable-assertion re-check-at-use, authority-freshness, kill switch, fail-closed, audit trail). | Pierrot + Archie |
 | M1 | **DEFER (spike)** | Learning-backflow MVP = `LESSONS.md` file + `/retro` write-step + `/sprint-boundary` read-step, human-gated, **no auto-sync** (Grace). Decide via spike before building. | Grace |
 
