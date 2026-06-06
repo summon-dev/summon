@@ -11,3 +11,9 @@ dist/
 *~
 
 pnpm-debug.log*
+
+# Astro build cache
+.astro/
+
+# Playwright MCP browser session scratch artifacts
+.playwright-mcp/
