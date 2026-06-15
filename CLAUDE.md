@@ -133,6 +133,7 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 | `docs/methodology/phases.md` | 7-phase team methodology |
 | `docs/methodology/personas.md` | 16-agent persona catalog |
 | `docs/methodology/agent-notes.md` | Agent-notes protocol spec |
+| `docs/methodology/debt-markers.md` | `summon:` debt-marker convention (`pnpm harvest:debt`) |
 | `docs/process/team-governance.md` | Triggers, debate protocol, architecture gate, voice rules |
 | `docs/process/done-gate.md` | 15-item Done Gate checklist |
 | `docs/process/operational-baseline.md` | Cross-cutting operational concerns checklist |
