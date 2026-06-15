@@ -1,9 +1,9 @@
 ---
 agent-notes:
-  ctx: "15-item Done Gate checklist for work items"
-  deps: [CLAUDE.md]
+  ctx: "16-item Done Gate checklist for work items"
+  deps: [CLAUDE.md, docs/methodology/debt-markers.md]
   state: active
-  last: "coordinator@2026-02-28"
+  last: "vik@2026-06-15"
 ---
 # Done Gate — Detailed Checklist
 
@@ -23,7 +23,7 @@ Every work item must pass this gate before closing:
 9. **Board updated** — status has passed through "In Progress" → "In Review" → "Done" in order (not skipping any). Verify by checking the item's current status on the board (`gh project item-list <NUMBER> --owner <OWNER> --format json`). If "In Review" status doesn't exist on the board, this is a board configuration failure — fix it before proceeding (see `/kickoff` Phase 5 Step 2).
 10. **Migration safe** — if schema/data changes are involved, Archie's migration safety checklist passes.
 11. **API compatible** — if API contracts changed, backward compatibility verified or new version created.
-12. **Tech debt logged** — if shortcuts were taken, they're recorded in `docs/tech-debt.md`.
+12. **Tech debt logged** — if shortcuts were taken, they're marked in code with a `summon:` comment (`docs/methodology/debt-markers.md`) and material debt is recorded in `docs/tech-debt.md`. Run `pnpm harvest:debt` to confirm new markers are accounted for.
 12b. **Directives updated** — if a new convention was established or discovered during this work, add it to `docs/team-directives.md`.
 13. **SBOM current** — if dependencies were added/removed/upgraded, Pierrot has updated the SBOM.
 14. **Operational baseline checked** — if this work item changes application behavior (not docs-only, not CI-only), verify it hasn't degraded the operational baseline (`docs/process/operational-baseline.md`):
@@ -32,3 +32,4 @@ Every work item must pass this gate before closing:
     - Config: any new config values are documented and validated.
     - README: if user-facing behavior changed, the quick-start is still accurate.
 15. **External integration smoke-tested** — if this work item integrates with external tools, services, or binaries (subprocess spawning, external APIs, CLI tool invocation), the happy path has been verified against the real tool, not just mocks. Mocked unit tests verify internal logic; this gate verifies the integration actually works end-to-end. If the external tool is unavailable in CI, document which manual verification was performed and by whom.
+16. **Simplicity check (YAGNI)** — the change is the minimum that meets the acceptance criteria. No unrequested abstractions, no speculative generality, no new dependency where stdlib or a few lines suffice (Vik's laziness ladder, `.claude/agents/vik.md`). This is not "code reviewed" again — it's the explicit question "did we build more than was asked?" Simplicity never overrides the non-negotiables in item 12's neighbours: validation, security, data-loss handling, and accessibility stay. Deliberate shortcuts are marked with `summon:` and logged per item 12.
