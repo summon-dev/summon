@@ -3,7 +3,7 @@ agent-notes:
   ctx: "who owns which docs, update rules"
   deps: [CLAUDE.md]
   state: active
-  last: "coordinator@2026-02-15"
+  last: "vik@2026-06-15"
 ---
 # Document Ownership
 
@@ -18,6 +18,7 @@ Extracted from CLAUDE.md to reduce context window load. Referenced by CLAUDE.md 
 | Performance budget | Vik (review) / Ines (verify) | `docs/performance-budget.md` | System evolution |
 | Test strategy | Tara | `docs/test-strategy.md` | New test patterns or coverage targets |
 | Technical debt | Grace (track) / Pat (prioritize) | `docs/tech-debt.md` | Sprint boundaries, shortcuts taken |
+| Debt-marker convention | Vik | `docs/methodology/debt-markers.md` | Convention changes; harvested via `pnpm harvest:debt` |
 | Runbooks | Ines | `docs/runbooks/` | New infrastructure or alerts |
 | Config manifest | Ines | `docs/config-manifest.md` | New env vars, feature flags, config files |
 | Changelog | Diego | `CHANGELOG.md` | Releases |
