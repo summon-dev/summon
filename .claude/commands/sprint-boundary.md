@@ -1,4 +1,4 @@
-<!-- agent-notes: { ctx: "mandatory sprint boundary: retro + sweep + gate + passes", deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/scaffolds/tech-debt.md, docs/scaffolds/performance-budget.md], state: active, last: "coordinator@2026-03-31" } -->
+<!-- agent-notes: { ctx: "mandatory sprint boundary: retro + sweep + gate + passes", deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/scaffolds/tech-debt.md, docs/scaffolds/performance-budget.md, docs/methodology/debt-markers.md], state: active, last: "grace@2026-06-15" } -->
 Run the mandatory sprint boundary workflow for: $ARGUMENTS
 
 This is the **canonical end-of-sprint process**. It must be run at every sprint boundary — it is NOT optional and should NOT require the user to trigger it manually. When Grace detects that the sprint's work is complete (all sprint items are Done or explicitly deferred), this workflow triggers automatically.
@@ -33,10 +33,11 @@ Only proceed to Step 1 after all checks pass.
 
 Run `/retro` inline. This is not a suggestion — it happens now, as part of this workflow. The retro will:
 
-1. Reflect on the sprint.
-2. Create a retrospective document in `docs/retrospectives/`.
-3. Create GitHub issues labeled `process-improvement` for every identified problem.
-4. Update `CLAUDE.md` with lessons learned.
+1. Reflect on the sprint, including the two **magic-wand questions** ("what one command/check/fixture would make the next run easier?" / "what did you have to infer that the harness should have proved?").
+2. Create a retrospective document in `docs/retrospectives/` with an **encoding ledger** recording what each finding became.
+3. **Encode the cheap deterministic fixes now** (a `check-canon` case, a `pnpm` script, a command) rather than only filing issues — *encode the fix, not the memory*.
+4. Create GitHub issues labeled `process-improvement` for fixes that need sprint work, each naming its intended encoded (rung-1) target.
+5. Update `CLAUDE.md` only for findings that genuinely can't be checked yet.
 
 **Do not skip this step.** Do not ask the user if they want a retro. Just run it.
 
@@ -129,7 +130,7 @@ Before the next sprint can begin, verify that process-improvement issues from th
 
 Review the technical debt register (`docs/tech-debt.md`):
 
-1. **Log new debt:** Any shortcuts or known issues from this sprint get added to the register.
+1. **Log new debt:** Any shortcuts or known issues from this sprint get added to the register. Run `pnpm harvest:debt` to list every `summon:` marker in the tree and reconcile it against the register (`docs/methodology/debt-markers.md`) — material markers that aren't logged get added; markers for code that no longer exists get deleted.
 2. **Escalation check (hard constraint):** Any debt open for 3+ sprints is **automatically P0 for the next sprint**. This is not a suggestion — escalated items MUST be included as P0 in the next sprint's plan. Grace has authority to enforce this over Pat's prioritization. The only override is an explicit user decision to defer.
 3. **Review with Pat:** Which non-escalated debt items should be paid down next sprint? Pat decides based on risk and business value. Pat CANNOT deprioritize escalated items below P0 or label them as stretch goals.
 
