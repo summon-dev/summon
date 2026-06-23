@@ -65,7 +65,7 @@ If blocked by environment, tools, permissions, or you've tried twice — ask. Do
 Before any workflow that touches the project board (sprint-boundary, kickoff, resume, handoff), run the pre-flight check from your active tracking adapter at `docs/integrations/README.md`. If any check fails, STOP and ask the user to fix it.
 
 ### Don't Skip the Done Gate
-Every work item passes the gate before closing. Full checklist at `docs/process/done-gate.md`.
+Every work item passes the gate before closing. Full checklist at `docs/process/done-gate.md`. Each gate item carries a **proof grade** (deterministic / inferential / human-judgement) — the agent's say-so is not proof. When a claim's grade is inferential or human, or coverage looks thin, run `/grill` to interrogate it before closing.
 
 ### Don't Skip Agents
 When a situation triggers multiple personas, invoke ALL of them. Overlapping coverage is intentional.
