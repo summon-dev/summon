@@ -42,7 +42,7 @@ Critical findings block the merge. This isn't optional.
 
 ## 6. Done Gate
 
-Every work item passes a 15-item checklist before closing:
+Every work item passes a 16-item checklist before closing:
 - Tests pass and cover the change
 - No security findings
 - Docs updated

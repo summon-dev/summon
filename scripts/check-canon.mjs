@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "vik@2026-06-15", key: ["fails build if persona roster, agent-notes, or Done Gate count drift"] }
+// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "coordinator@2026-06-24", key: ["fails build if persona roster, agent-notes, or Done Gate count drift", "Done-Gate-count scan covers README + site/ current-state surfaces, excludes ADRs/CHANGELOG history"] }
 //
 // Fitness function for Summon's canon. Our agent/persona/process docs duplicate
 // facts across many files; the agent-notes protocol keeps them in sync by hand.
@@ -10,8 +10,8 @@
 //
 // Exit 0 = canon consistent. Exit 1 = drift found (printed below).
 
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
+import { join, relative } from "node:path";
 
 const ROOT = process.cwd();
 const AGENTS_DIR = join(ROOT, ".claude", "agents");
@@ -23,6 +23,18 @@ const failures = [];
 const fail = (msg) => failures.push(msg);
 const read = (p) => readFileSync(p, "utf8");
 const mdFiles = (dir) => readdirSync(dir).filter((f) => f.endsWith(".md"));
+
+// Recursively collect .md/.mdx files under a dir (tolerant of a missing dir).
+function walkMarkdown(dir) {
+  if (!existsSync(dir)) return [];
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const abs = join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...walkMarkdown(abs));
+    else if (/\.mdx?$/.test(entry.name)) out.push(abs);
+  }
+  return out;
+}
 
 // 1. Agent file integrity: frontmatter `name:` matches filename, agent-notes present.
 function checkAgentFiles() {
@@ -68,9 +80,20 @@ function checkCommandNotes() {
 //    This is exactly the prose-number-drifts-from-the-list bug agent-notes can't catch.
 function checkDoneGateCount() {
   const actual = (read(DONE_GATE).match(/^\d+\.\s/gm) ?? []).length;
-  const docs = ["CLAUDE.md", "docs/process/done-gate.md", "docs/process/gotchas.md"];
-  for (const rel of docs) {
-    const text = read(join(ROOT, rel));
+  // Scan user-facing, current-state surfaces that describe the live Done Gate.
+  // Historical records are deliberately NOT scanned: an accepted ADR
+  // (docs/adrs/**) and the CHANGELOG cite the count at the time they were
+  // written and must not be rewritten to a later value. The whole
+  // site/src/content tree is current-state product docs, so it's walked
+  // recursively — add new current-state surfaces here, not historical ones.
+  const explicit = ["CLAUDE.md", "README.md", "docs/process/done-gate.md", "docs/process/gotchas.md"];
+  const files = [
+    ...explicit.map((rel) => join(ROOT, rel)).filter(existsSync),
+    ...walkMarkdown(join(ROOT, "site", "src", "content")),
+  ];
+  for (const abs of files) {
+    const text = read(abs);
+    const rel = relative(ROOT, abs);
     for (const m of text.matchAll(/(\d+)-item[^\n]*?(?:Done Gate|checklist)/gi)) {
       if (Number(m[1]) !== actual) {
         fail(`${rel}: claims "${m[1]}-item" but done-gate.md has ${actual} top-level items`);

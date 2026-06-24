@@ -14,7 +14,7 @@ Summon's methodology is phase-dependent — different agents lead at different s
 | Planning | Pat + Grace | Work items before sprints |
 | Implementation | Tara → Sato | TDD red-green-refactor |
 | Code Review | Vik + Tara + Pierrot | Three parallel lenses |
-| Done Gate | Grace | 15-item checklist |
+| Done Gate | Grace | 16-item checklist |
 | Sprint Boundary | Grace | Retro + velocity + kaizen |
 
 ## Phase Details
@@ -54,7 +54,7 @@ Three parallel lenses — every time, not optionally:
 Critical or Important findings must be resolved before merge. Board status moves to "In Review."
 
 ### 6. Done Gate
-A 15-item checklist before any work item closes. Includes: tests pass, no security findings, docs updated, ADR written, board updated, and more.
+A 16-item checklist before any work item closes. Includes: tests pass, no security findings, docs updated, ADR written, board updated, and more.
 
 ### 7. Sprint Boundary
 Grace runs `/sprint-boundary`:

@@ -48,7 +48,7 @@ Or use the GitHub template directly:
 
 - **Mandatory architecture gates** — no implementation without an ADR
 - **Sprint boundaries** — retrospectives, velocity tracking, kaizen
-- **Done gate** — 15-item checklist before any work item closes
+- **Done gate** — 16-item checklist before any work item closes
 - **Adversarial debate** — Wei challenges assumptions, Pierrot has security veto
 - **Four-lens code review** — simplicity, test quality, security, and architectural conformance in parallel
 
