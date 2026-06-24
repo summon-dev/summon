@@ -1,7 +1,7 @@
 ---
 agent-notes:
   ctx: "review: check-canon status-flow + command-count checks (#34)"
-  deps: [scripts/check-canon.mjs, CLAUDE.md, docs/adrs/0004-summon-doctor-home-and-deferred-json.md]
+  deps: [scripts/check-canon.mjs, CLAUDE.md, docs/adrs/0004-summon-doctor.md]
   state: active
   last: "code-reviewer@2026-06-24"
 ---
