@@ -1,6 +1,6 @@
 ---
 title: Slash Commands
-description: 23 commands that drive the team's workflow.
+description: 24 commands that drive the team's workflow.
 ---
 
 Every command is a `.md` file in `.claude/commands/` — Claude Code discovers them automatically. Type `/` in Claude Code to see them all.

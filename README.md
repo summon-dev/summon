@@ -57,7 +57,7 @@ Or use the GitHub template directly:
 ```
 .claude/
   agents/       16 specialized agent personas
-  commands/     23 slash commands (/kickoff, /tdd, /review, /handoff, ...)
+  commands/     24 slash commands (/kickoff, /tdd, /review, /handoff, ...)
 
 docs/
   methodology/  7-phase team methodology, persona catalog

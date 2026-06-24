@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "coordinator@2026-06-24", key: ["fails build if persona roster, agent-notes, or Done Gate count drift", "Done-Gate-count scan covers README + site/ current-state surfaces, excludes ADRs/CHANGELOG history"] }
+// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "coordinator@2026-06-24", key: ["6 checks: agent files, persona roster, command agent-notes, Done-Gate count, board status-flow, command count", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names"] }
 //
 // Fitness function for Summon's canon. Our agent/persona/process docs duplicate
 // facts across many files; the agent-notes protocol keeps them in sync by hand.
@@ -102,11 +102,76 @@ function checkDoneGateCount() {
   }
 }
 
-// summon: 4 checks cover the drift we've actually seen; add a status-flow-order
-// check (Backlog->Ready->In Progress->In Review->Done across adapters) if those
-// strings ever diverge.
+// 5. Board status-flow consistency: the *ordered stage sequence* must match
+//    everywhere the pipeline is described. We normalize separators (→, -->, commas,
+//    "and", markdown bold) and compare the stage list — punctuation/format is free,
+//    but adding, dropping, renaming, or reordering a stage is drift. Historical
+//    records (docs/adrs/**, CHANGELOG) are not scanned — they cite the flow as it was.
+const STAGES = ["Backlog", "Ready", "In Progress", "In Review", "Done"];
+function checkStatusFlow() {
+  const files = [
+    ...["CLAUDE.md", "README.md"].map((r) => join(ROOT, r)),
+    ...walkMarkdown(join(ROOT, ".claude")),
+    ...walkMarkdown(join(ROOT, "docs", "integrations")),
+    ...walkMarkdown(join(ROOT, "site", "src", "content")),
+  ].filter(existsSync);
+  // Assumption: every single-line Backlog..Done enumeration in canon is the ORDERED
+  // pipeline. A set-style claim ("ensure Done, Backlog, Ready, ... all exist") in a
+  // non-canonical order would be reported as drift — keep such enumerations in order.
+  for (const abs of files) {
+    const rel = relative(ROOT, abs);
+    for (const m of read(abs).matchAll(/\bBacklog\b[^\n]*?\bDone\b/g)) {
+      const stages = m[0]
+        .replace(/[*`]/g, "") // strip markdown bold/code
+        .split(/\s*(?:→|-+>|>|\/|·|,|\|)\s*/) // arrows (→ --> > /), middot, comma, pipe
+        .map((s) => s.replace(/^and\s+/i, "").trim()) // "and Done" -> "Done"
+        .filter(Boolean);
+      // Identify the board pipeline STRUCTURALLY — a separator-chain of >=3 tokens
+      // anchored Backlog..Done — never by the middle stage names (those are what we
+      // validate; keying on them lets a rename evade the check). Prose like
+      // "from Backlog to Done" yields one token and is skipped.
+      if (stages.length < 3 || stages[0] !== "Backlog" || stages.at(-1) !== "Done") continue;
+      if (stages.join(" → ") !== STAGES.join(" → ")) {
+        fail(`${rel}: board status flow [${stages.join(", ")}] != canonical [${STAGES.join(", ")}]`);
+      }
+    }
+  }
+}
 
-for (const check of [checkAgentFiles, checkPersonaRoster, checkCommandNotes, checkDoneGateCount]) {
+// 6. Command-count consistency: every slash-command count claim across the
+//    current-state surfaces must equal the number of .claude/commands/*.md files.
+//    Scans CLAUDE.md + README + the whole site/src/content tree (the same surfaces
+//    checkDoneGateCount walks) — a narrow single-file/single-phrasing check gives a
+//    false sense of coverage (the count lives in marketing copy too). Historical
+//    records (CHANGELOG, adrs/**) are not scanned — they cite the count as it was.
+//    The robust subset of "command <-> file": the bijective /command-reference-
+//    resolves direction is deliberately NOT built — commands are auto-discovered
+//    with no canonical list, so that direction false-positives (YAGNI per ADR-0004's
+//    "only encode invariants we actually observe").
+function checkCommandCount() {
+  const actual = mdFiles(COMMANDS_DIR).length;
+  const files = [
+    ...["CLAUDE.md", "README.md"].map((r) => join(ROOT, r)).filter(existsSync),
+    ...walkMarkdown(join(ROOT, "site", "src", "content")),
+  ];
+  const patterns = [
+    /\((\d+),\s*auto-discovered\)/g, // CLAUDE.md "(24, auto-discovered)"
+    /\b(\d+)\s+(?:custom\s+|slash\s+)*commands?\b/gi, // "24 commands", "24 slash commands"
+  ];
+  for (const abs of files) {
+    const text = read(abs);
+    const rel = relative(ROOT, abs);
+    for (const re of patterns) {
+      for (const m of text.matchAll(re)) {
+        if (Number(m[1]) !== actual) {
+          fail(`${rel}: claims "${m[0].trim()}" but .claude/commands has ${actual} files`);
+        }
+      }
+    }
+  }
+}
+
+for (const check of [checkAgentFiles, checkPersonaRoster, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount]) {
   try {
     check();
   } catch (err) {

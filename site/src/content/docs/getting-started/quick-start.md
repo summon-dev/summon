@@ -10,7 +10,7 @@ npx summon-team my-project
 cd my-project
 ```
 
-This scaffolds a new project with the full Summon framework — 16 agents, 23 commands, and all the methodology docs.
+This scaffolds a new project with the full Summon framework — 16 agents, 24 commands, and all the methodology docs.
 
 Or use the GitHub template:
 
@@ -38,7 +38,7 @@ Choose `/quickstart` if you already know what you're building. Choose `/kickoff`
 ```
 .claude/
   agents/       16 specialized agent personas
-  commands/     23 slash commands
+  commands/     24 slash commands
 
 docs/
   methodology/  7-phase team methodology
@@ -54,4 +54,4 @@ CLAUDE.md       Runtime instructions — Claude reads this first
 
 - [Meet the Team](/summon/team/overview/) — learn who does what
 - [How It Works](/summon/getting-started/how-it-works/) — understand the methodology
-- [Slash Commands](/summon/team/commands/) — see all 23 commands
+- [Slash Commands](/summon/team/commands/) — see all 24 commands

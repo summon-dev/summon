@@ -157,7 +157,7 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 │   └── adrs/                 # Architecture Decision Records
 ├── .claude/
 │   ├── agents/               # Subagent persona definitions (16 agent files)
-│   └── commands/             # Custom slash commands (23, auto-discovered)
+│   └── commands/             # Custom slash commands (24, auto-discovered)
 ├── site/                     # Marketing site (Astro + Tailwind) — planned
 └── packages/
     └── create-summon/        # CLI scaffolder (npx create-summon) — planned
