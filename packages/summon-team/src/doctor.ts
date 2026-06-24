@@ -124,12 +124,84 @@ function checkAgentNotesDeps(root: string): CheckResult {
       };
 }
 
+// Claude Code built-in slash commands that legitimately appear in Summon docs but
+// are NOT Summon command files. Not exhaustive by design: an un-listed built-in
+// surfaces as a non-blocking `degraded` note, never a false CI failure — which is why
+// this set can stay small and need not track every Claude Code release.
+const CLAUDE_BUILTINS = new Set([
+  "clear", "compact", "help", "init", "cost", "model", "config", "memory",
+  "agents", "mcp", "status", "doctor", "review", "resume", "login", "logout",
+]);
+// `/command` is used generically in prose as a placeholder, not a real command.
+const COMMAND_PLACEHOLDERS = new Set(["command"]);
+
+// Health check (a): backtick `/command` tokens in the operative command WIRING
+// (CLAUDE.md + .claude/ — the runtime instructions and agent/command definitions)
+// should resolve to a `.claude/commands/*.md` file. A token that resolves to no file
+// and is not a known Claude built-in or placeholder is reported as `degraded`
+// (non-blocking) — it MIGHT be a deleted/renamed Summon command (broken wiring) or
+// simply a built-in we haven't listed; we cannot tell, so we warn rather than block.
+//
+// Scope is deliberately the wiring, NOT docs/ prose: ADRs, methodology, and review
+// docs legitimately quote `/command` tokens as *examples* (this check's own review doc
+// mentions `/ghost`, `/add-dir`, ...), which are references-to-discuss, not wiring. Only
+// backtick-delimited tokens are considered; prose mentions are advisory and ignored.
+function checkCommandRefs(root: string): CheckResult {
+  const commandsDir = join(root, ".claude", "commands");
+  const commandStems = new Set(
+    existsSync(commandsDir)
+      ? readdirSync(commandsDir)
+          .filter((f) => f.endsWith(".md"))
+          .map((f) => f.replace(/\.md$/, ""))
+      : []
+  );
+  const docs = [
+    ...(existsSync(join(root, "CLAUDE.md")) ? [join(root, "CLAUDE.md")] : []),
+    ...walkMarkdown(join(root, ".claude")),
+  ];
+  const unresolved = new Map<string, string>(); // token -> first file it appeared in
+  for (const abs of docs) {
+    const rel = relative(root, abs);
+    // Min 3 chars: every Summon command and Claude built-in is >=3 chars, while
+    // 1-2 char backtick slash-tokens are regex flags (`/g`, `/gi`) or short paths,
+    // not commands — excluding them keeps the check quiet on technical docs.
+    // Known residual: a 3-char flag combo (`/gms`) would warn; rare in backticked
+    // prose and only ever a non-blocking warning, so left as-is (YAGNI).
+    for (const m of readFileSync(abs, "utf8").matchAll(/`\/([a-z][a-z0-9-]{2,})`/g)) {
+      const name = m[1];
+      if (
+        commandStems.has(name) ||
+        CLAUDE_BUILTINS.has(name) ||
+        COMMAND_PLACEHOLDERS.has(name)
+      )
+        continue;
+      if (!unresolved.has(name)) unresolved.set(name, rel);
+    }
+  }
+  if (unresolved.size === 0) {
+    return {
+      id: "command-refs",
+      verdict: "ok",
+      detail: "backtick /command references resolve to command files or known built-ins",
+      evidence: [],
+      schemaVersion: DOCTOR_SCHEMA_VERSION,
+    };
+  }
+  const items = [...unresolved].map(([name, file]) => `/${name} (${file})`);
+  return {
+    id: "command-refs",
+    verdict: "degraded",
+    detail: `${unresolved.size} backtick /command reference(s) resolve to no command file — verify they are Claude built-ins or fix broken wiring: ${items.join("; ")}`,
+    evidence: [...unresolved].map(([name, file]) => ({
+      kind: "file" as const,
+      ref: `${file} (/${name})`,
+    })),
+    schemaVersion: DOCTOR_SCHEMA_VERSION,
+  };
+}
+
 // v1 health registry. Grows by observed need (ADR-0004 Vik YAGNI guard).
-// NOT YET BUILT — command<->file existence (a): a backtick `/word` cannot be cleanly
-// told apart from Claude Code built-ins (`/clear`) or the `/command` placeholder
-// without an allowlist, so it would false-error in a healthy project. Deferred until
-// that allowlist is designed; see ADR-0004 and the #30 follow-up.
-export const HEALTH_CHECKS = [checkAgentNotesDeps];
+export const HEALTH_CHECKS = [checkAgentNotesDeps, checkCommandRefs];
 
 export function runHealth(root: string): CheckResult[] {
   return HEALTH_CHECKS.map((check) => check(root));
@@ -141,10 +213,15 @@ export function exitCodeFor(results: CheckResult[]): number {
 
 export function formatResults(results: CheckResult[]): string {
   const icon = (v: Verdict) => (v === "ok" ? "✓" : v === "degraded" ? "!" : "✗");
-  const healthy = results.every((r) => r.verdict === "ok");
-  const header = healthy
-    ? `summon doctor: healthy — ${results.length} check(s) passed`
-    : `summon doctor: problems found`;
+  const errors = results.filter((r) => r.verdict === "error").length;
+  const warnings = results.filter((r) => r.verdict === "degraded").length;
+  const ran = `${results.length} check(s) ran`;
+  const header =
+    errors > 0
+      ? `summon doctor: problems found — ${ran}`
+      : warnings > 0
+        ? `summon doctor: healthy with ${warnings} warning(s) — ${ran}`
+        : `summon doctor: healthy — ${results.length} check(s) passed`;
   const lines = results.map((r) => `  ${icon(r.verdict)} ${r.id}: ${r.detail}`);
   return [header, ...lines].join("\n");
 }

@@ -144,6 +144,64 @@ describe("doctor health registry", () => {
   });
 });
 
+// ---- unit: command-refs health check (a) -----------------------------------
+
+describe("doctor command-refs health check", () => {
+  it("passes when fenced /command refs resolve or are known built-ins/placeholder", () => {
+    const root = makeProject({
+      "CLAUDE.md":
+        "Run `/kickoff`, then `/clear` the screen. A `/command` drives each phase.\n",
+      ".claude/commands/kickoff.md": notes([]),
+    });
+    const c = runHealth(root).find((r) => r.id === "command-refs");
+    expect(c?.verdict).toBe("ok");
+    expect(exitCodeFor(runHealth(root))).toBe(0);
+  });
+
+  it("warns (degraded, non-blocking) on a fenced /command with no command file", () => {
+    const root = makeProject({
+      "CLAUDE.md": "Run `/ghost` to summon nothing.\n",
+      ".claude/commands/kickoff.md": notes([]),
+    });
+    const results = runHealth(root);
+    const c = results.find((r) => r.id === "command-refs");
+    expect(c?.verdict).toBe("degraded");
+    expect(c?.detail).toContain("/ghost");
+    expect(c?.evidence[0]).toMatchObject({ kind: "file" });
+    expect(c?.evidence[0].ref).toContain("/ghost");
+    expect(exitCodeFor(results)).toBe(0); // a warning, not a gate failure
+  });
+
+  it("ignores 1-2 char backtick slash-tokens (regex flags like /g, /gi)", () => {
+    const root = makeProject({
+      "CLAUDE.md": "The matcher uses `/g` and `/gi`, not `/m`.\n",
+      ".claude/commands/kickoff.md": notes([]),
+    });
+    const c = runHealth(root).find((r) => r.id === "command-refs");
+    expect(c?.verdict).toBe("ok");
+  });
+
+  it("scans only the wiring (CLAUDE.md + .claude/), not docs/ prose examples", () => {
+    const root = makeProject({
+      "CLAUDE.md": "Run `/kickoff`.\n",
+      ".claude/commands/kickoff.md": notes([]),
+      // a review/ADR doc quoting `/ghost` as an example must NOT warn
+      "docs/code-reviews/r.md": "We considered `/ghost` and `/add-dir` here.\n",
+    });
+    const c = runHealth(root).find((r) => r.id === "command-refs");
+    expect(c?.verdict).toBe("ok");
+  });
+
+  it("ignores non-fenced (prose) /command mentions", () => {
+    const root = makeProject({
+      "CLAUDE.md": "The /ghost workflow is conceptual, not a real command.\n",
+      ".claude/commands/kickoff.md": notes([]),
+    });
+    const c = runHealth(root).find((r) => r.id === "command-refs");
+    expect(c?.verdict).toBe("ok");
+  });
+});
+
 // ---- integration: CLI dispatch (requires `pnpm build`) ---------------------
 
 function run(
