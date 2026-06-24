@@ -6,13 +6,12 @@ agent-notes: { ctx: "ADR: summon doctor on-demand vs cwd, canon-vs-health split,
 
 ## Status
 
-Proposed — passed Architecture Gate (Archie/Wei debate, 2026-06-24); awaiting human approval.
-
-Authored from the seven-agent direction review recorded in
-`docs/process/ponytail-harness-review.md` (Archie/Vik/Tara lenses), then revised across three
-debate rounds at the Architecture Gate. Wei holds no block. **Human approval is the final gate
-step and has not happened** — this ADR does not gate code until it is Accepted. Implements the
-descoped form of GitHub issue #30.
+Accepted (2026-06-24) — human-approved after the Architecture Gate (Archie/Wei debate, three
+rounds; Wei holds no block). Revised from the seven-agent direction review recorded in
+`docs/process/ponytail-harness-review.md` (Archie/Vik/Tara lenses). Implements the descoped
+form of GitHub issue #30. **Not yet implemented** — this ADR is the spec; the on-demand
+`summon-team doctor` invocation mode, the `health` registry, and the cheap canon checks are
+built in the implementation step that follows acceptance.
 
 Debate record: docs/tracking/2026-06-24-doctor-benchmark-gate-debate.md
 

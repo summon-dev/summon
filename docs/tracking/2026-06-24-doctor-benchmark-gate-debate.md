@@ -91,7 +91,7 @@ Wei confirmed **no remaining block**, with one sharper recommendation and three 
 - [x] **Multi-round debate executed** — R1 challenges → R2 point-by-point → R3 rebuttal.
 - [x] **Debate tracked** — this file.
 - [x] **ADR updated** — both ADRs revised to reflect every resolution.
-- [ ] **Human approved** — *pending.* The human reviews this record + the revised ADRs and approves before Proposed → Accepted.
+- [x] **Human approved** — approved 2026-06-24; both ADRs moved Proposed → Accepted.
 
 ---
 *Both blocks (0004-C1, 0005-C2) were code-verified flaws inherited from issues #30/#31 and missed by the direction review — caught only by the adversarial gate. Both ADRs are materially stronger for it. Awaiting human approval to move Proposed → Accepted.*
