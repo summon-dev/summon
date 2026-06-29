@@ -3,7 +3,7 @@ agent-notes:
   ctx: "implementation gotchas and established patterns"
   deps: [CLAUDE.md]
   state: active
-  last: "coordinator@2026-03-28"
+  last: "vik@2026-06-15"
 ---
 # Known Patterns and Gotchas
 
@@ -118,7 +118,7 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 
 - **All sprint items must be on the board at planning time.** Pat must add every sprint item — committed and stretch — to the project board with "Ready" status during sprint planning. Items not on the board at the start of the sprint create friction when Grace tries to track status transitions, and they often skip "In Progress" and "In Review" entirely. **Detection signal:** sprint execution starts but `gh project item-list` shows fewer items than the sprint plan. **Fix:** Pat adds all items during planning; Grace verifies board count matches plan count before execution begins.
 
-- **Spike work gets an abbreviated Done Gate.** For spike/research work (disposable code, no production users), apply a shortened gate: tests pass, results documented, relevant ADR updated, board moved to Done. The full 15-item checklist applies only to production code. **However:** if spike code is later reused (even partially) in production, the full gate must run on the reused portions. **Detection signal:** production code imports or copies from a spike directory. **Fix:** run full Done Gate on the reused code before merging.
+- **Spike work gets an abbreviated Done Gate.** For spike/research work (disposable code, no production users), apply a shortened gate: tests pass, results documented, relevant ADR updated, board moved to Done. The full 16-item checklist applies only to production code. **However:** if spike code is later reused (even partially) in production, the full gate must run on the reused portions. **Detection signal:** production code imports or copies from a spike directory. **Fix:** run full Done Gate on the reused code before merging.
 
 - **Architecture docs describe contracts, not aspirations.** If an architecture doc says "the theme schema has a `pptx:` section," that must be true in code. Treat architecture claims as testable assertions. When you implement and discover you can't honor a stated constraint, update the doc to reflect reality — mark the section as "deferred" or "not yet implemented," don't leave it describing a future that doesn't exist. **Detection signal:** architecture doc describes capability that isn't in the codebase. **Fix:** doc reflects what IS, with clear markers for what's PLANNED.
 

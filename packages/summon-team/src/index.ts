@@ -11,6 +11,12 @@ import {
   writeFileSync,
 } from "node:fs";
 import { basename, resolve } from "node:path";
+import {
+  exitCodeFor,
+  formatResults,
+  isSummonProject,
+  runHealth,
+} from "./doctor";
 
 declare const __VERSION__: string;
 
@@ -29,8 +35,29 @@ const EXCLUDE_FILES = new Set([
   "package.json",
 ]);
 
+// `summon-team doctor` — second invocation mode (ADR-0004). Runs the portable
+// health registry against the current working directory; downloads nothing, writes
+// nothing. Exit 0 = healthy, non-zero = at least one check failed (the v1 contract).
+function runDoctor() {
+  const root = process.cwd();
+  if (!isSummonProject(root)) {
+    console.error(
+      `No Summon installation found in ${root} — expected a .claude/ directory.`
+    );
+    process.exit(1);
+  }
+  const results = runHealth(root);
+  console.log(formatResults(results));
+  process.exit(exitCodeFor(results));
+}
+
 async function main() {
   const args = process.argv.slice(2);
+
+  if (args[0] === "doctor") {
+    runDoctor();
+    return;
+  }
 
   if (args.includes("--version") || args.includes("-v")) {
     console.log(`summon-team v${VERSION}`);
@@ -44,6 +71,7 @@ async function main() {
   Usage:
     npx summon-team <project-name>
     npx summon-team
+    npx summon-team doctor          Check this project's Summon wiring (run in the project)
 
   Options:
     -v, --version        Show version

@@ -66,7 +66,7 @@ If blocked by environment, tools, permissions, or you've tried twice — ask. Do
 Before any workflow that touches the project board (sprint-boundary, kickoff, resume, handoff), run the pre-flight check from your active tracking adapter at `docs/integrations/README.md`. If any check fails, STOP and ask the user to fix it.
 
 ### Don't Skip the Done Gate
-Every work item passes the gate before closing. Full checklist at `docs/process/done-gate.md`.
+Every work item passes the gate before closing. Full checklist at `docs/process/done-gate.md`. Each gate item carries a **proof grade** (deterministic / inferential / human-judgement) — the agent's say-so is not proof. When a claim's grade is inferential or human, or coverage looks thin, run `/grill` to interrogate it before closing.
 
 ### Don't Skip Agents
 When a situation triggers multiple personas, invoke ALL of them. Overlapping coverage is intentional.
@@ -133,8 +133,9 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 | `docs/methodology/phases.md` | 7-phase team methodology |
 | `docs/methodology/personas.md` | 16-agent persona catalog |
 | `docs/methodology/agent-notes.md` | Agent-notes protocol spec |
+| `docs/methodology/debt-markers.md` | `summon:` debt-marker convention (`pnpm harvest:debt`) |
 | `docs/process/team-governance.md` | Triggers, debate protocol, architecture gate, voice rules |
-| `docs/process/done-gate.md` | 15-item Done Gate checklist |
+| `docs/process/done-gate.md` | 16-item Done Gate checklist |
 | `docs/process/operational-baseline.md` | Cross-cutting operational concerns checklist |
 | `docs/process/doc-ownership.md` | Who owns which docs, update triggers |
 | `docs/process/gotchas.md` | Implementation patterns and known pitfalls |
@@ -156,7 +157,7 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 │   └── adrs/                 # Architecture Decision Records
 ├── .claude/
 │   ├── agents/               # Subagent persona definitions (16 agent files)
-│   └── commands/             # Custom slash commands (23, auto-discovered)
+│   └── commands/             # Custom slash commands (24, auto-discovered)
 ├── site/                     # Marketing site (Astro + Tailwind) — planned
 └── packages/
     └── create-summon/        # CLI scaffolder (npx create-summon) — planned
