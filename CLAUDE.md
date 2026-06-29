@@ -139,6 +139,7 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 | `docs/process/operational-baseline.md` | Cross-cutting operational concerns checklist |
 | `docs/process/doc-ownership.md` | Who owns which docs, update triggers |
 | `docs/process/gotchas.md` | Implementation patterns and known pitfalls |
+| `docs/process/ai-tells-catalog.md` | AI-tell catalog for keeping Summon's own docs from reading as machine-built |
 | `docs/team-directives.md` | Low-ceremony project conventions ("always X" / "prefer Y") |
 | `docs/integrations/README.md` | Active tracking adapter and setup |
 | `docs/process/tracking-protocol.md` | Phase tracking artifact protocol |
