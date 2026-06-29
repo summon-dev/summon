@@ -18,8 +18,8 @@ Summon enforces the pause with an Architecture Gate.
 
 When work involves an architectural decision, the gate activates:
 
-1. **Archie** proposes a design — data models, API contracts, component boundaries
-2. **Wei** plays devil's advocate — challenges assumptions, defends alternatives
+1. **Archie** proposes a design: data models, API contracts, component boundaries
+2. **Wei** plays devil's advocate, challenging assumptions and defending alternatives
 3. An **ADR** is written using the project template at `docs/adrs/template.md`
 4. The ADR is approved before any implementation starts
 
@@ -41,7 +41,7 @@ Every ADR follows the same structure:
 - **Consequences:** What are the tradeoffs?
 - **Alternatives Considered:** What else did we evaluate?
 
-ADRs live in `docs/adrs/` and are numbered sequentially. They're never deleted — superseded ADRs link to their replacement.
+ADRs live in `docs/adrs/` and are numbered sequentially. They're never deleted; superseded ADRs link to their replacement.
 
 ## The Wei Factor
 
@@ -51,4 +51,4 @@ Wei's role is deliberate friction. When Archie proposes a design, Wei asks:
 - Are we building this because we need it, or because it's interesting?
 - What would we do differently if we had half the time?
 
-This isn't obstruction — it's the adversarial review that catches groupthink before it becomes architecture.
+Those questions are adversarial review, and they catch groupthink before it hardens into architecture.

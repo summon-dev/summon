@@ -32,24 +32,24 @@ Backlog → Ready → In Progress → In Review → Done
 ```
 
 Grace moves items through these statuses as part of the development workflow:
-- **In Progress** — when a developer starts work on an issue
-- **In Review** — when code review begins
-- **Done** — when the done gate passes
+- **In Progress**: when a developer starts work on an issue
+- **In Review**: when code review begins
+- **Done**: when the done gate passes
 
 Skipping "In Review" is a process violation.
 
 ## Pre-Flight Check
 
 Before any board operation, Summon runs a pre-flight:
-1. `gh auth status` — verifies CLI authentication
-2. `gh project field-list` — verifies board access
+1. `gh auth status` verifies CLI authentication
+2. `gh project field-list` verifies board access
 3. Checks all 5 status options exist
 
 If any check fails, Summon stops and tells you what to fix.
 
 ## Commands That Use the Board
 
-- `/kickoff` — creates initial work items
-- `/sprint-boundary` — reviews sprint status, moves deferred items
-- `/handoff` — captures board state for session continuity
-- `/resume` — verifies board state before continuing work
+- `/kickoff` creates initial work items
+- `/sprint-boundary` reviews sprint status and moves deferred items
+- `/handoff` captures board state for session continuity
+- `/resume` verifies board state before continuing work

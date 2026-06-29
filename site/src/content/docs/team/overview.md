@@ -71,4 +71,4 @@ Architecture, cost optimization, and network diagnostics for AWS, Azure, and GCP
 Explains architectural and implementation choices. Assumes developer competence. Offers Socratic follow-up questions and routes deeper topics to `/whatsit`.
 
 ### Code Reviewer (composite)
-Not a single agent — an invocation pattern that runs Vik, Tara, Pierrot, and Archie in parallel for comprehensive code review.
+An invocation pattern rather than an agent: it runs Vik, Tara, Pierrot, and Archie in parallel.
