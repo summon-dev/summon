@@ -2,7 +2,9 @@
 
 /* ─── Brand Colors ──────────────────────────────────── */
 :root {
-	--summon-accent: #6366f1;
+	/* #4f46e5 (indigo-600) clears WCAG AA (4.5:1) for white-on-accent buttons
+	   and accent link text on white; #6366f1 was ~4.4:1 and failed. */
+	--summon-accent: #4f46e5;
 	--summon-accent-light: #a5b4fc;
 	--summon-accent-glow: rgba(99, 102, 241, 0.15);
 	--summon-bg-dark: #0f172a;
@@ -11,7 +13,7 @@
 /* Override Starlight accent to match brand */
 :root {
 	--sl-color-accent-low: #1e1b4b;
-	--sl-color-accent: #6366f1;
+	--sl-color-accent: #4f46e5;
 	--sl-color-accent-high: #c7d2fe;
 }
 
@@ -56,6 +58,24 @@
 	color: var(--summon-accent);
 }
 
+/* ─── Lead punch line ───────────────────────────────── */
+.lead {
+	font-size: 1.25rem;
+	line-height: 1.5;
+	text-align: center;
+	max-width: 56ch;
+	margin: 0 auto 1rem;
+	color: var(--sl-color-white);
+}
+
+.lead strong {
+	color: var(--summon-accent-light);
+}
+
+[data-theme="light"] .lead strong {
+	color: var(--summon-accent);
+}
+
 /* ─── Feature Cards ─────────────────────────────────── */
 .card {
 	transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -70,27 +90,6 @@
 	.card:hover {
 		transform: none;
 	}
-}
-
-/* ─── Comparison Table ──────────────────────────────── */
-.comparison-section table {
-	border-collapse: collapse;
-	width: 100%;
-}
-
-.comparison-section th:last-child,
-.comparison-section td:last-child {
-	background: var(--summon-accent-glow);
-	font-weight: 500;
-}
-
-[data-theme="light"] .comparison-section th:last-child,
-[data-theme="light"] .comparison-section td:last-child {
-	background: rgba(99, 102, 241, 0.08);
-}
-
-.comparison-section td:nth-child(2) {
-	color: var(--sl-color-gray-3);
 }
 
 /* ─── Closing CTA ───────────────────────────────────── */
@@ -126,7 +125,7 @@
 }
 
 .cta-links a:first-child:hover {
-	background: #4f46e5;
+	background: #4338ca;
 }
 
 .cta-links a:last-child {
@@ -144,16 +143,4 @@
 
 .cta-links a:last-child:hover {
 	border-color: var(--summon-accent);
-}
-
-/* ─── Mobile Table Fix ──────────────────────────────── */
-@media (max-width: 40rem) {
-	.comparison-section {
-		overflow-x: auto;
-		-webkit-overflow-scrolling: touch;
-	}
-
-	.comparison-section table {
-		min-width: 560px;
-	}
 }

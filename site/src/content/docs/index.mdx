@@ -1,6 +1,6 @@
 ---
 title: Summon
-description: "Ship like a team of 10. You're the only human. Summon is a drop-in AI engineering team for Claude Code — 16 agents, 24 commands, real methodology."
+description: "A virtual engineering team for Claude Code: 16 agents with architecture gates, TDD, and multi-lens review, for code you have to answer for later."
 template: splash
 head:
   - tag: meta
@@ -24,7 +24,7 @@ head:
       name: twitter:image
       content: https://summon-dev.github.io/summon/og.png
 hero:
-  tagline: "Ship like a team of 10. You're the <strong>only human</strong>."
+  tagline: "A virtual engineering team for code you have to <strong>answer for later</strong>."
   actions:
     - text: Get Started
       link: /summon/getting-started/quick-start/
@@ -39,48 +39,59 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <p class="what-is">Summon is a drop-in framework for <a href="https://claude.ai/code">Claude Code</a>. It installs agent definitions, slash commands, and process docs into your project. No runtime. No dependencies. Just markdown.</p>
 
----
-
-## The Problem
-
-Agent marketplaces offer hundreds of AI agents. Install them, and you get... a pile of tools. No one decides what to build first. No one catches the bad architecture before you've built on top of it.
-
-**You don't need more agents. You need a team that works like a team.**
+<p class="lead">A lone agent says "looks clean, shipping." Summon is the engineering team that asks <strong>"who decided this?"</strong> and holds the merge until someone has.</p>
 
 ---
 
-## What You Get
+## Summon caught its own team skipping a gate. That's the whole pitch.
 
 <CardGrid>
-  <Card title="16 Specialized Agents" icon="group">
-    Architects, testers, reviewers, SREs, and security auditors — a team that self-organizes around your work.
+  <Card title="Before — a capable agent, alone" icon="warning">
+    A Claude session set out to improve Summon, and did good work: four clean commits, tests passing, diffs that read well. It shipped. What no one wrote down was that four of those commits had rewritten how the team operates — its review gates, its definition of done — with no decision record behind them. No ADR. No second opinion.
   </Card>
-  <Card title="24 Slash Commands" icon="terminal">
-    From /kickoff to /handoff — every phase of development has a command that drives it.
+  <Card title="After — run through the team" icon="approve-check-circle">
+    Seven agents reviewed it, each with standing to halt. Wei named the omission: the team had rewritten its own governance with no record. Archie reclassified the four commits from "done" to a spike to ratify or revert, and the work stayed frozen until two ADRs were written, argued across three rounds, and ratified by a human.
   </Card>
-  <Card title="7-Phase Methodology" icon="list-format">
-    Not just agents — a complete workflow with enforced gates, reviews, and sprint boundaries.
+</CardGrid>
+
+The uncomfortable part is the actual point: this happened *in the Summon repo*, by an agent that had every gate available and skipped them anyway. Gates you have to remember to invoke get skipped; that's human, and prompt-tuning a single agent doesn't fix it, because nothing in a solo pass is built to notice the *absence* of a decision. What Summon changes is the aftermath: the omission became legible and reversible, and [ADR-0004](https://github.com/summon-dev/summon/blob/main/docs/adrs/0004-summon-doctor.md) and [ADR-0005](https://github.com/summon-dev/summon/blob/main/docs/adrs/0005-behavioral-benchmark.md) now exist. Judge that, not a promise that nothing ever slips.
+
+**Read the receipt:** the full episode — the verdicts, the freeze, the two ratified ADRs — is recorded in [the review log](https://github.com/summon-dev/summon/blob/main/docs/process/ponytail-harness-review.md).
+
+---
+
+## What the team holds you to
+
+<CardGrid>
+  <Card title="Architecture gates" icon="puzzle">
+    No implementation without an ADR. The calls that are expensive to reverse get a decision record *before* the code, not after.
   </Card>
-  <Card title="Real Accountability" icon="approve-check-circle">
-    Security veto. Test coverage veto. 16-item done gate. The team says no when it should.
+  <Card title="Vetoes with teeth" icon="error">
+    Pierrot can halt a merge on security. Tara can halt it on test coverage. The team says no when it should, and the no actually stops the work.
+  </Card>
+  <Card title="Multi-lens review" icon="random">
+    Simplicity, test quality, security, and architecture, reviewed in parallel and scored independently — never blended into one agreeable summary.
+  </Card>
+  <Card title="A decision trail" icon="open-book">
+    ADRs written before the code they govern. Six months on, "why is it like this, and who agreed?" has an answer in the git log.
   </Card>
 </CardGrid>
 
 ---
 
-## How It Works
+## How it works
 
 1. **You describe what you want to build.** Cam interviews you until the vision is sharp.
 2. **The team plans.** Archie designs architecture. Pat writes work items. Grace organizes the sprint.
 3. **The team builds.** Tara writes failing tests. Sato makes them pass. One commit per issue.
-4. **The team reviews.** Vik checks simplicity. Tara checks coverage. Pierrot checks security. Three parallel lenses.
+4. **The team reviews.** Three parallel lenses at once: Vik on simplicity, Tara on coverage, Pierrot on security.
 5. **The team ships.** Done gate passes. Sprint boundary runs. Retrospective captures learnings.
 
 You're the product owner and the final decision-maker. The team handles the engineering discipline.
 
 ---
 
-## Quick Start
+## Quick start
 
 ```bash
 npx summon-team my-project
@@ -88,35 +99,19 @@ cd my-project
 # Open in Claude Code, then run /quickstart
 ```
 
-Two commands to install. One command to launch your team.
+That scaffolds the framework into a new project. Open it in Claude Code and run `/quickstart` to begin.
 
----
+Summon installs 16 agents and 24 slash commands as plain markdown. The full roster and the command reference live in the docs:
 
-<div class="comparison-section">
-
-## Why Not Just Use an Agent Marketplace?
-
-| | Agent Marketplaces | Summon |
-|---|---|---|
-| **Agents** | 100-1000+ independent tools | 16 agents that know each other |
-| **Process** | None | 7-phase methodology with gates |
-| **Architecture** | No guardrails | Mandatory ADRs before code |
-| **Testing** | Optional | TDD enforced — tests before code |
-| **Code Review** | Single-pass or none | Three parallel lenses |
-| **Sprint Management** | None | Velocity tracking, retros, handoffs |
-| **Accountability** | Agents don't say no | Veto authority on security + tests |
-
-</div>
+- [Meet the team](/summon/team/overview/) — who does what, and when they're invoked
+- [Browse the commands](/summon/team/commands/) — all 24, from `/kickoff` to `/handoff`
+- [How it works](/summon/getting-started/how-it-works/) — the 7-phase methodology in depth
 
 ---
 
 <div class="closing-cta">
 
 ## Ready to summon your team?
-
-```bash
-npx summon-team my-project
-```
 
 <div class="cta-links">
   <a href="/summon/getting-started/quick-start/" class="sl-flex">Get Started</a>
