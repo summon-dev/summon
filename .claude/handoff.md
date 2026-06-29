@@ -1,64 +1,54 @@
-<!-- agent-notes: { ctx: "session handoff — Wave 1 implemented + Wave 2 R1 ADR accepted", deps: [docs/process/cross-repo-lessons.md, docs/adrs/0003-project-risk-tiers.md, CLAUDE.md], state: active, last: "coordinator@2026-06-06" } -->
+<!-- agent-notes: { ctx: "session handoff — ponytail/harness positioning wrap", deps: [CLAUDE.md, docs/process/ponytail-harness-review.md, docs/code-map.md], state: active, last: "coordinator@2026-06-29" } -->
 
 # Session Handoff
 
-**Created:** 2026-06-06
-**Sprint:** N/A — meta/self-improvement work on the summon framework itself (no sprint, no board; board not configured).
-**Wave:** Self-improvement initiative — Wave 1 DONE; Wave 2 R1 ADR accepted, R1 implementation NOT started.
-**Session summary:** Resumed from the prior handoff (which was stale — the decision record was already committed). Implemented Wave 1 (5 "adopt now" decisions) with a code-review pass, then ran the full Architecture Decision Gate for Wave 2 item R1 (risk-tiering): Archie authored, Wei challenged and inverted the design, Pierrot gave conditional safety sign-off, Pat gave product sign-off. ADR-0003 accepted by the human. Nothing implemented for R1 yet.
+**Created:** 2026-06-29
+**Sprint:** n/a — this repo is issue-driven (no `docs/sprints/` wave plan, no GitHub Projects board configured)
+**Wave:** n/a
+**Session summary:** Merged the ponytail/harness review PR (#36), then completed and merged the #32a README positioning rewrite (PR #38). The next session is starting something slightly orthogonal — this handoff exists so the positioning thread can be resumed cleanly later, not necessarily next.
 
 ## What Was Done
-
-- **Wave 1 implemented + committed (`b030a00`)** on branch `docs/cross-repo-lessons`. Five decisions from `docs/process/cross-repo-lessons.md` Section 2, all in runtime surfaces, no magic numbers:
-  - `#3` Step 0 `git status` clean-baseline → `CLAUDE.md` Session Entry Protocol.
-  - `#7` atomic create+board+status → `CLAUDE.md` § Per Work Item (cites gotchas 115/119).
-  - `#1` file-based reports + completion sentinel (G1 EOF + G3 self-declared count) → `sato.md`, `tara.md`, `code-reviewer.md`; "Treat Agent Output as Untrusted" Critical Rule → `CLAUDE.md`. One canonical coordinator-gated sentence, verbatim across the agent files.
-  - `#5` Tara "Red-Phase Pre-Flight (3 checks)" (calendar/direction/path) → `tara.md`.
-  - `#4` Wei citation-grep habit → `wei.md`.
-  - Code-reviewer ran over the diff (Approved w/ suggestions; 2 Important sentinel-coherence findings fixed pre-commit). Review at `docs/code-reviews/2026-06-06-wave1-self-improvements.md`.
-- **Wave 2 R1 — ADR-0003 ACCEPTED + committed (`0a193f8`).** Full Architecture Decision Gate run with standalone agents:
-  - Design **inverted** from a 3-tier project label to a **per-feature hazard trip-wire** (4 fail-closed questions: no-human-in-loop+injection / irreversible-or-money / standing-creds / data-exposure) as the load-bearing gate; project tier (0/1/2) demoted to a default sensitivity the wire overrides upward.
-  - Pierrot conditions (all applied): Q4 + Q1-injection, security lens non-droppable at every tier, S1 decoupled (taxonomy owns the wire).
-  - Pat changes: measurable acceptance metric (mean control count vs flat baseline; trip-to-track coverage = 100%) + quickstart safety-floor framing. Pat's A/C (command wiring) deferred to implementation.
-  - Debate record: `docs/tracking/2026-06-06-risk-tiers-debate.md`.
+- **Merged PR #36** (squash) — the ponytail/harness integration (ADR-0004/0005, canon checks, `summon doctor`).
+- **Completed #32a README rewrite** and **merged PR #38** (squash → `main`, `b01b4e9`). README now leads with a value prop + a real in-repo before/after artifact (the dogfooding episode), ICP, anti-use-case, fears-not-features FAQ; roster/phases/commands moved below the fold.
+  - Drafted by Cam (voice/FAQ) + Pat (before/after/ICP) as standalone agents; reviewed by Diego (DX) + Wei (adversarial).
+  - **Wei caught a Fatal overclaim** — draft said "the gate fires," but the gates were *skipped* and the review was *retroactive*. Reframed to concede the skip and sell the verifiable aftermath (omission legible → freeze → ratify-or-revert → two ADRs). Diego's Critical (specialist miscount 9→6) and lens-count contradiction also fixed.
+- **Created follow-up issue #37** (Astro site port of the positioning); kept **#32 open** (`Refs`, not `Closes`) so it closes when the site lands.
+- **Memory updated** — new file `ponytail-harness-initiative.md` + MEMORY.md index pointer.
 
 ## Current State
+- **Branch:** `main` (up to date with origin, pruned)
+- **Last commit:** `b01b4e9 docs(readme): lead with value prop + real before/after artifact (#32a) (#38)`
+- **Uncommitted changes:** none (clean tree; this handoff is the only pending add)
+- **Tests:** 26 passing across 2 files in `packages/summon-team` (doctor.test.ts 18, cli.test.ts 8). `check-canon` OK, `summon doctor` healthy.
+- **Board status:** No GitHub Projects board configured (`project-number`/`project-owner` empty in `CLAUDE.md:105-106`). Work tracked via GitHub Issues only. Status transitions (In Progress→In Review→Done) are N/A until a board is set up via `/kickoff` Phase 5.
 
-- **Branch:** `docs/cross-repo-lessons` (3 commits ahead of `origin` — **NOT pushed**, no PR).
-  - `eb906d6` decision record (prior session)
-  - `b030a00` Wave 1 implementation
-  - `0a193f8` ADR-0003 accepted + debate artifact + citation fix
-- **Working tree:** clean.
-- **Tests:** N/A — no application code changed this session (framework markdown + ADRs only).
-- **Board:** not configured (`project-number`/`project-owner` empty in CLAUDE.md) — board checks skipped.
+## Sprint Progress
+- **Wave plan:** none — `docs/sprints/` is empty. Initiative tracked via issues + decision record `docs/process/ponytail-harness-review.md`.
+- **Initiative completed this session:** #32a (README), merged via PR #38.
+- **Open issues (ponytail/harness initiative):**
+  - **#37** — port #32a positioning to the Astro landing page (`site/src/content/docs/index.mdx`). Fast; reuses the ratified README framing. Closing it (+ merged #38) completes #32a. **Best next positioning step.**
+  - **#33 (#32b)** — wire a falsifiable benchmark number into the README. Gated on #31 Phase 2.
+  - **#31** — behavioral benchmark harness (the keystone, NOT started). ADR-0005 mandates outcome (not process-compliance) metrics, budget-matched control, real n, offline graders in Phase 1.
+  - **#32** — stays open until #37 lands.
+- Older CLI/Copilot issues (#5–#27) deferred until the positioning bet resolves.
 
 ## What To Do Next (in order)
+1. Read `docs/code-map.md` to orient.
+2. Read `docs/process/ponytail-harness-review.md` — the initiative's decision record (verdicts, gating, the artifact this positioning is built on).
+3. **If resuming positioning → #37 (site port):** apply the merged README's framing to `site/src/content/docs/index.mdx`. Carry the guardrails: concede gates are *skippable*, sell the aftermath, "unaccountable not wrong," NO benchmark number (gated on #33), keep counts canonical (16 agents / 24 commands). Update the `og:` description (still says "Ship like a team of 10"). Invoke Dani for visual hierarchy. Verify with `node scripts/check-canon.mjs` + `summon doctor`.
+4. **If tackling #31 (benchmark):** re-read ADR-0005 first — the design was contested (Goodhart trap); Phase 1 is offline graders only, no API key.
+5. **For the orthogonal new work the user mentioned:** start fresh from the Session Entry Protocol (clean baseline ✓ — tree is clean on `main`; branch before coding; create a work item; Architecture Gate if it's a design decision).
 
-1. Read `docs/adrs/0003-project-risk-tiers.md` (esp. §1 the four-question trip-wire, §4 the differential-ceremony table, and the "Implementation note") and `docs/tracking/2026-06-06-risk-tiers-debate.md`.
-2. **R1 implementation (the next chunk — this is the deferred wiring of an Accepted ADR):**
-   - Add `<!-- risk-tier: 1 -->` field to `CLAUDE.md` in the Tracking config region (~line 100, near the adapter markers).
-   - Add a "Hazard Trip-Wire (4 checks)" subsection to the `CLAUDE.md` Session Entry Protocol (rides the per-item board-add step) and mirror it in `.claude/agents/pierrot.md`.
-   - Wire tier-seeding into `.claude/commands/kickoff.md` Phase 1b (Pat's **Change A** — Pat gave exact wording in-session) and `.claude/commands/quickstart.md` (Pat's **Change C** — one-line `risk-tier: 1` default + re-tier note).
-   - Add the `/sprint-boundary` re-tier trigger (`.claude/commands/sprint-boundary` or the skill).
-   - Add a one-time "Risk Tier" subsection to `docs/product-context.md` IF/when that file exists (it does not yet; Pat flagged she'd add it on approval).
-   - Update the §4 differential-ceremony rules wherever the Done Gate / code-review / TDD docs need to *read* the tier (light touch — the ADR is the spec).
-   - **Pierrot retains sign-off** on anything that touches the security-lens-non-droppable rule.
-3. **Then continue Wave 2 in order:** gap `#2` review-reliability ADR (G1–G5; Pierrot signs off on the implemented `code-reviewer.md`) → `S1` Tier-2 safety track ADR (Pierrot+Archie; S1 owns the hazard taxonomy the trip-wire keys off) → `M1` backflow spike decision (Grace).
-4. **Push / PR decision:** the branch has 3 unpushed commits and no PR. Decide whether to push + open a PR for the self-improvement work, or keep accumulating locally.
-
-## Tracked Risks / Open Follow-ons
-
-- **Baseline ceremony granularity (from the R1 debate):** Archie kept 3 tiers to gate *non-safety* baseline ceremony (TDD relaxations, Done-Gate breadth, lens count). Whether that baseline should *also* be per-item (like the safety axis now is) is un-litigated — flagged for a future ADR, not blocking.
-- **R1 acceptance metric is live:** measure over the next 2 sprints OR 2 summon repos (whichever yields ≥1 trip). Kill criterion: revert if non-tripping Tier-0/1 items show no reduction in mean control count, OR any tripped item merged without its S1 artifact.
-- **gotchas.md:113** (G5 "hand-author the file" advice) is still UNTOUCHED — reconcile only when gap #2 is implemented (it contradicts the file+sentinel design once #2 lands).
+## Tracking Artifacts
+- `docs/process/ponytail-harness-review.md` — canonical initiative decision record + 7-agent critique.
+- `docs/tracking/2026-06-24-doctor-benchmark-gate-debate.md` — ADR-0004/0005 Architecture Gate debate (Archie/Wei).
+- `docs/product-context.md` — **does not exist** (no Pat proxy-mode product philosophy file). If the next session needs product context, it's in the decision record's acceptance criteria, not a standalone file.
 
 ## Proxy Decisions (Review Required)
-
-- None. The human was present and approved each gate decision directly.
+- None. The human was present and made the two key calls directly: hero artifact = self-caught gate-skip episode; scope = README first, site deferred.
 
 ## Key Context
-
-- **The headline:** R1's mechanism is the **per-feature hazard trip-wire**, not the project tier. The tier is a cheap default; the wire (fail-closed, per work item) is what actually switches on the S1 safety track. Any item that trips gets the safety track in any project at any tier.
-- **Wave 1's sentinel discipline is now load-bearing** for all future agent work: agents write findings to files ending in `<AGENT>-COMPLETE: <count>`; the **coordinator** (not the agent) verifies the count and re-runs on mismatch. The R1 gate dogfooded this (verified each agent's file on disk via grep/Read before trusting it).
-- Resumable agents from this session (if needed): the last Archie (B/D/E) `a25eb5891f6e7ed16`, Pierrot `a38b2429964270eb0`, Pat `a65341865ef6dc2dd`, Wei `a42be351424a75be0`.
-- **Don't push without being asked.** Branch is local-only by design this session.
+- **The positioning bet is deliberately self-critical:** the README *admits* an agent skipped Summon's own gates and sells the aftermath. This survives the kill criterion (the "that's just YAGNI in a prompt" tweet) precisely because it concedes the skeptic's true premise. Do not let future edits drift back to "the gate fires" / "the team prevents all slips" — Wei rated that Fatal.
+- **`code-reviewer` is the 16th agent file but NOT a persona** (it's a composite invocation pattern). README copy says "16 agents" + "9 named + 6 specialists" (= 15 personas + composite). Keep that math intact; `check-canon` enforces the "24 commands" string.
+- Files actively worked on this session: `README.md` (merged). No in-flight edits.
+- New `summon doctor` (`packages/summon-team/src/doctor.ts`) and `scripts/check-canon.mjs` are the deterministic gates — run both after any docs/canon-touching change.
