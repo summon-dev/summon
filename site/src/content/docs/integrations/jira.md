@@ -27,7 +27,7 @@ Backlog → Ready → In Progress → In Review → Done
 
 ## Adapter Details
 
-The full Jira adapter configuration — including authentication, field mapping, JQL queries, and API examples — is documented in `docs/integrations/jira.md` in your Summon project.
+The full Jira adapter configuration (authentication, field mapping, JQL queries, and API examples) is documented in `docs/integrations/jira.md` in your Summon project.
 
 The adapter covers:
 - Issue creation and updates

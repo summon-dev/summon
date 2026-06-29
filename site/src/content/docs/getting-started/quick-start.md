@@ -10,7 +10,7 @@ npx summon-team my-project
 cd my-project
 ```
 
-This scaffolds a new project with the full Summon framework — 16 agents, 24 commands, and all the methodology docs.
+This scaffolds a new project with the full Summon framework: 16 agents, 24 commands, and all the methodology docs.
 
 Or use the GitHub template:
 
@@ -23,8 +23,8 @@ Open the project in [Claude Code](https://claude.ai/code) (CLI, desktop app, or 
 
 Claude will detect the fresh project and tell you to run one of:
 
-- **`/quickstart`** — 5-minute setup. Gets you coding fast.
-- **`/kickoff`** — 30-60 minute full discovery. Architecture, board setup, sprint planning.
+- **`/quickstart`**: 5-minute setup. Gets you coding fast.
+- **`/kickoff`**: 30-60 minute full discovery. Architecture, board setup, sprint planning.
 
 Choose `/quickstart` if you already know what you're building. Choose `/kickoff` if you want the team to help you figure it out.
 

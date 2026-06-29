@@ -10,13 +10,13 @@ Thanks for your interest in contributing to Summon.
 
 ## What to Contribute
 
-**Agent improvements** — better prompts, clearer boundaries, new situational behaviors. These touch `.claude/agents/` and require close review for voice consistency and methodology alignment.
+**Agent improvements:** better prompts, clearer boundaries, new situational behaviors. These touch `.claude/agents/` and require close review for voice consistency and methodology alignment.
 
-**New slash commands** — useful workflows that fit the methodology. Add to `.claude/commands/`.
+**New slash commands:** useful workflows that fit the methodology. Add to `.claude/commands/`.
 
-**Scaffold templates** — new project types under `docs/scaffolds/`. Self-contained and testable.
+**Scaffold templates:** new project types under `docs/scaffolds/`. Self-contained and testable.
 
-**Bug fixes and docs** — always welcome.
+**Bug fixes and docs** are always welcome.
 
 ## Pull Request Process
 

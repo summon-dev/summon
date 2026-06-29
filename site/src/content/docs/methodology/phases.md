@@ -3,7 +3,7 @@ title: 7-Phase Workflow
 description: The methodology that turns agents into a team.
 ---
 
-Summon's methodology is phase-dependent — different agents lead at different stages, and the transitions are enforced, not suggested.
+Summon's methodology is phase-dependent: different agents lead at different stages, and the transitions between them are enforced.
 
 ## Phase Overview
 
@@ -20,7 +20,7 @@ Summon's methodology is phase-dependent — different agents lead at different s
 ## Phase Details
 
 ### 1. Discovery
-Cam leads. Before anyone writes code — including types, tests, or ADRs — three questions must be answered:
+Cam leads. Before anyone writes code (including types, tests, or ADRs), three questions must be answered:
 
 1. **Do work items exist?** If not, create them.
 2. **Is this an architectural decision?** If yes, go to Architecture first.
@@ -35,7 +35,7 @@ Archie leads, Wei challenges. Every feature with an architectural decision needs
 - Only then does implementation begin
 
 ### 3. Planning
-Pat writes acceptance criteria. Grace organizes into sprint waves — batches of work sized for one Claude Code session.
+Pat writes acceptance criteria. Grace organizes into sprint waves: batches of work sized for one Claude Code session.
 
 ### 4. Implementation
 Strict TDD cycle:
@@ -46,7 +46,7 @@ Strict TDD cycle:
 One commit per issue. Conventional commit format. Board status moves to "In Progress" before code starts.
 
 ### 5. Code Review
-Three parallel lenses — every time, not optionally:
+Three parallel lenses, run every time:
 - **Vik:** Simplicity and maintainability
 - **Tara:** Test quality and coverage
 - **Pierrot:** Security and compliance

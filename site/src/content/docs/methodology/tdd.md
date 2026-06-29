@@ -23,7 +23,7 @@ When the same person writes both the test and the implementation, there's a natu
 ### Green Phase (Sato)
 1. Read the failing test
 2. Write the simplest code that makes it pass
-3. No more, no less — don't anticipate future requirements
+3. No more, no less; don't anticipate future requirements
 
 ### Refactor Phase (Sato + Vik)
 1. Clean up while tests stay green
@@ -47,4 +47,4 @@ Tara has veto power on test coverage. If a work item doesn't have adequate tests
 - The item doesn't close
 - No exceptions
 
-This isn't bureaucracy — it's the discipline that keeps the codebase trustworthy.
+That discipline is what keeps the codebase trustworthy.

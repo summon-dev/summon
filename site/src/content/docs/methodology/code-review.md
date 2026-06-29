@@ -3,7 +3,7 @@ title: Code Review
 description: Four parallel lenses catch what single-pass review misses.
 ---
 
-Every code change in Summon goes through four-lens review. Not sequentially — in parallel.
+Every code change in Summon goes through four-lens review, with all four lenses running in parallel.
 
 ## The Four Lenses
 
