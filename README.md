@@ -122,6 +122,8 @@ Summon installs 16 specialized agents that know each other and know when to invo
 
 Plus 6 more specialists: cloud ops, SRE, data science, UX/design, documentation, and pedagogy. The team self-organizes around your work using a 7-phase methodology — from discovery through sprint boundary.
 
+**[Meet the team →](https://summon-dev.github.io/summon/team/overview/)** — the full roster as HD-2D hero sprites, with each agent's role and the moment it's invoked.
+
 ## What you get
 
 - **Mandatory architecture gates** — no implementation without an ADR
