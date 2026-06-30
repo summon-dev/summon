@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "HD-2D hero sprite art direction + prompts for Meet-the-Team page", deps: [docs/methodology/personas.md, .claude/agents/, site/src/styles/global.css], state: active, last: "dani@2026-06-30" }
+agent-notes: { ctx: "HD-2D hero sprite art direction + prompts for Meet-the-Team page", deps: [docs/methodology/personas.md, .claude/agents/, site/src/styles/global.css], state: active, last: "dani@2026-07-01" }
 ---
 
 # Team Hero Sprites — Art Direction & Prompt Sheet
@@ -77,7 +77,11 @@ Sixteen separate generations will **not** look like one set by luck. The techniq
 
 ### Step 1 — Build the anchor
 
-Generate **Archie** first as the anchor (clear silhouette, mid-palette cyan accent, lots of readable HD-2D surfaces — good stress test of the look). Iterate on Archie *alone* until the style bible (§ 1) is fully satisfied: pixel-character + bokeh diorama + indigo rim + 2:3 full-body + correct proportions. **Lock that image and its seed.** This is the single source of truth; everything else is judged against it.
+Generate **Archie** first as the anchor (clear silhouette, mid-palette cyan accent, lots of readable HD-2D surfaces — good stress test of the look). Iterate on Archie *alone* until the style bible (§ 1) is fully satisfied: pixel-character + bokeh diorama + indigo rim + 2:3 full-body + correct proportions. **Lock that image and its seed** *after* it lands, not before. This is the single source of truth; everything else is judged against it.
+
+> **Forcing the pixel render (learned from the v1 anchor).** An SDXL/Flux base will drift to a smooth, painterly character even with the words above — prompt weighting alone is not enough. The actual lever is one of: a **pixel-art style LoRA at ~0.8**, or a **nearest-neighbor pixelation pass** (downscale the character to ~384px wide, then upscale back). Add one of these to the graph; the preamble text is backup, not the mechanism.
+>
+> **Anchor seed strategy.** Don't nudge a single seed — you want a materially different render. Freeze the checkpoint, sampler (DPM++ 2M Karras), 30 steps, and CFG ~5.5, then **batch 6–8 fresh seeds**. When one nails all of: visible pixel grid, ~75% framing, neutral costume with cyan as the only accent, and an indigo rim that wraps the full silhouette (legs and boots clearing the background ≥3:1), *that* seed and image become the frozen anchor for all follower propagation.
 
 > Why Archie and not Cam (P0)? The anchor should be the *most representative of the style*, not the most important persona — Archie's structured silhouette and neutral-cool accent expose lighting/proportion problems early. Identity ordering is for § 3; style ordering is for here.
 
@@ -182,12 +186,17 @@ HD-2D JRPG hero sprite in the Octopath Traveler / Triangle Strategy style:
 a full-body pixel-art-rendered character standing on a shallow miniature
 diorama stage, dramatic HDR cinematic lighting with a bright brand-indigo
 #4f46e5 rim light separating the figure from the background, soft warm key
-light and cool fill, subtle bloom on the highlights. Background is a
-tilt-shift depth-of-field diorama melting into indigo bokeh, floating
-glowing particle motes and volumetric haze, deep #0f172a falloff. The
-character is crisp high-resolution pixel art with a selective dark
-silhouette outline; the background is soft and painterly. Heroic-realistic
-proportions, about 7 heads tall, centered full-body, slight low hero angle.
+light and cool fill, subtle bloom on the highlights. Background is a rich
+tilt-shift depth-of-field diorama with layered set pieces receding into
+indigo bokeh, floating glowing particle motes, subtle god-rays and
+volumetric haze, deep #0f172a falloff. The character is rendered as a crisp
+16-bit HD-2D pixel-art sprite — visible pixel grid, pixelated dithered
+shading, hard sprite edges, in the style of an Octopath Traveler character
+sprite — with a selective dark silhouette outline. The background alone is
+soft and painterly; the character is never smooth, airbrushed, or painterly.
+Heroic-realistic proportions, about 7 heads tall, full-body head-to-toe with
+the figure filling ~75% of frame height, minimal headroom and feet near the
+lower edge, slight low hero angle.
 ```
 
 ### Shared negative prompt (reuse verbatim — SDXL/Flux; for Midjourney prepend `--no`)
@@ -195,10 +204,12 @@ proportions, about 7 heads tall, centered full-body, slight low hero angle.
 ```
 chibi, super-deformed, big-head, cute mascot, smooth vector art, flat
 illustration, 3D render, plastic skin, anime cel-shading, blurry subject,
-soft-focus character, photoreal human, extra limbs, extra fingers, fused
-hands, deformed face, text, watermark, signature, logo, UI, frame, border,
-cropped head, cut-off feet, multiple characters, busy cluttered background,
-low contrast, washed-out colors, harsh flat lighting.
+soft-focus character, photoreal human, smooth digital painting, painterly
+character, airbrushed, semi-realistic rendering, concept-art illustration,
+extra limbs, extra fingers, fused hands, deformed face, text, watermark,
+signature, logo, UI, frame, border, cropped head, cut-off feet, multiple
+characters, busy cluttered background, low contrast, washed-out colors,
+harsh flat lighting.
 ```
 (For `code-reviewer` only, remove `multiple characters` from the negative — that one is a group.)
 
@@ -231,12 +242,16 @@ viewer, attentive curious expression with one eyebrow lifted. Amber-gold
 **archie** → `archie.webp`  *(generate FIRST — this is the anchor, no style-ref)*
 ```
 SUBJECT: Archie, "The Master Builder," a confident architect in a
-draftsman's tabard with a faint grid motif and measuring tools at the belt,
-unrolling a glowing holographic blueprint from one hand and holding a
-set-square in the other, presenting it, calm authoritative expression,
-grounded stance. Blueprint-cyan #22d3ee accent on the schematic glow and
-tabard trim.
+slate-grey draftsman's tabard with a glowing blueprint-cyan #22d3ee grid
+motif and trim, measuring tools at the belt, unrolling a glowing
+holographic cyan blueprint from one hand and holding a set-square in the
+other, presenting it, calm authoritative expression, grounded stance,
+bright indigo #4f46e5 rim light wrapping the entire silhouette including
+legs and boots. Cyan is the only saturated accent on an otherwise neutral
+costume.
 ```
+
+> **Archie-specific negatives** (anchor only): `orange costume, amber clothing, leather tunic, bow, quiver`. The v1 anchor drifted to an orange tunic with a back-strap that read as Tara's bow — a warm costume base also fights every follower's accent, so the anchor's costume must stay neutral with cyan as the only accent.
 
 **sato** → `sato.webp`
 ```
