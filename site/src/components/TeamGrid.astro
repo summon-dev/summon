@@ -1,11 +1,10 @@
 ---
-// agent-notes: { ctx: "Meet-the-Team hero-sprite grid; graceful placeholder until art lands", deps: ["site/src/assets/team/", "docs/design/team-hero-sprites.md"], state: active, last: "dani@2026-06-30" }
-import { Image } from 'astro:assets';
+// agent-notes: { ctx: "Meet-the-Team 16-bit sprite grid; graceful placeholder until art lands", deps: ["site/src/assets/team-16bit/", "docs/design/team-hero-sprites-16bit.md"], state: active, last: "claude@2026-07-02" }
 
 // Archetypes/accents are seeded here and kept in sync with the art bible at
-// docs/design/team-hero-sprites.md. Roles/triggers mirror the persona catalog.
+// docs/design/team-hero-sprites-16bit.md. Roles/triggers mirror the persona catalog.
 // Archetypes + accents are the authoritative values from the art bible
-// (docs/design/team-hero-sprites.md § 3). Roles/triggers mirror the persona catalog.
+// (docs/design/team-hero-sprites-16bit.md § 3). Roles/triggers mirror the persona catalog.
 const heroes = [
   { slug: 'cam',     name: 'Cam',     archetype: 'The Wayfinder',          role: 'Human Interface',       hue: '#f59e0b', blurb: 'Probes your vague idea with structured questions until the vision is concrete.', trigger: 'New feature request, vague requirement, or review session.' },
   { slug: 'archie',  name: 'Archie',  archetype: 'The Master Builder',     role: 'Lead Architect',        hue: '#22d3ee', blurb: 'Designs the system and writes the ADR before a line of code is written.', trigger: 'Architectural decision, schema change, or cross-boundary work.' },
@@ -28,30 +27,41 @@ const heroes = [
 // Per-sprite alt text describes the artwork (adds detail beyond the card text),
 // per Dani's a11y gate. Used only when a real sprite is present.
 const altFor = {
-  cam: 'Cam, the team’s guide, holding up a lantern that lights the path forward',
-  archie: 'Archie, the team’s architect, presenting a glowing holographic blueprint',
-  sato: 'Sato, the team’s engineer, resting a glowing smith’s hammer over one shoulder',
-  tara: 'Tara, the test lead, drawing a bow at a glowing red target reticle',
-  vik: 'Vik, the veteran reviewer, leaning on a sword-staff and holding a magnifying loupe',
-  grace: 'Grace, the sprint marshal, raising a banner beside a floating task board',
-  pat: 'Pat, the product lead, appraising a set of glowing priority scales',
-  wei: 'Wei, the devil’s advocate, tossing a spinning wildcard coin wreathed in chaos-flame',
-  pierrot: 'Pierrot, the security tester, a hooded figure in a porcelain mask picking a lock',
-  ines: 'Ines, the SRE, one hand on a heavy deploy lever with cables coiling around her',
-  diego: 'Diego, the technical writer, writing into a glowing floating tome',
-  dani: 'Dani, the designer, painting glowing interface panels into the air with a stylus-brush',
-  debra: 'Debra, the data scientist, rotating a holographic constellation of data points',
-  cloud: 'Cloud, the cloud specialist, levitating while conducting three floating cloud-platforms',
-  prof: 'Prof, the mentor, drawing a glowing explanatory diagram in mid-air with chalk',
-  'code-reviewer': 'The Review Tribunal: Vik, Tara, Pierrot, and Archie examining a glowing codex around a war-table',
+  cam: 'Cam, the team’s guide, a hooded traveler holding out a glowing amber lantern',
+  archie: 'Archie, the team’s architect, holding a rolled cyan blueprint across his body',
+  sato: 'Sato, the team’s engineer, a broad smith resting a green-glowing hammer on his shoulder',
+  tara: 'Tara, the test lead, a ranger drawing a bow with a crimson-tipped arrow',
+  vik: 'Vik, the veteran reviewer, leaning on a tall sword-staff and holding up a loupe',
+  grace: 'Grace, the sprint marshal, raising a tall violet banner',
+  pat: 'Pat, the product lead, holding out a set of burgundy priority scales',
+  wei: 'Wei, the devil’s advocate, leaning back mid-toss of a glowing magenta card',
+  pierrot: 'Pierrot, the security tester, a hooded rogue in a white half-mask holding a dagger',
+  ines: 'Ines, the SRE, throwing a yellow-knobbed deploy lever with goggles on her brow',
+  diego: 'Diego, the technical writer, holding open a book with glowing teal script',
+  dani: 'Dani, the designer, holding up a coral-edged interface panel and a brush',
+  debra: 'Debra, the data scientist, in a pointed astronomer’s hat holding a teal constellation',
+  cloud: 'Cloud, the cloud specialist, a sky-mage with an azure cloud floating over his staff',
+  prof: 'Prof, the mentor, in tweed gesturing with a pointer at a floating ochre diagram',
+  'code-reviewer': 'The Review Party: a warden, ranger, nightblade, and architect examining a glowing codex on a shared indigo stage',
 };
 
 // Eagerly pull in any sprites that have landed; missing ones render a styled
 // placeholder so the build stays green before/while the art is generated.
-const sprites = import.meta.glob('../assets/team/*.{webp,png,jpg,jpeg}', { eager: true });
+// 16-bit pixel sprites are served as-is (plain <img>, no Astro re-encode) so the
+// hard pixels survive; CSS image-rendering: pixelated keeps the ×4 upscale crisp.
+// Glob is single-level, so it skips the 64px masters in _src/.
+const sprites = import.meta.glob('../assets/team-16bit/*.png', { eager: true });
 const spriteFor = (slug) => {
-  const hit = Object.entries(sprites).find(([path]) => path.includes(`/${slug}.`));
-  return hit ? hit[1].default : null;
+  const x1 = Object.entries(sprites).find(([p]) => p.endsWith(`/${slug}.png`));
+  if (!x1) return null;
+  const x2 = Object.entries(sprites).find(([p]) => p.endsWith(`/${slug}@2x.png`));
+  const a = x1[1].default;
+  return {
+    src: a.src,
+    width: a.width,
+    height: a.height,
+    srcset: x2 ? `${a.src} 1x, ${x2[1].default.src} 2x` : undefined,
+  };
 };
 ---
 
@@ -62,7 +72,15 @@ const spriteFor = (slug) => {
       <article class={`hero-card${h.slug === 'code-reviewer' ? ' composite' : ''}`} style={`--accent: ${h.hue};`}>
         <div class="hero-art">
           {img ? (
-            <Image src={img} alt={altFor[h.slug]} width={640} densities={[1, 2]} loading="lazy" />
+            <img
+              src={img.src}
+              srcset={img.srcset}
+              width={img.width}
+              height={img.height}
+              alt={altFor[h.slug]}
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
             <div class="hero-placeholder" aria-hidden="true">
               <span class="placeholder-initial">{h.name.charAt(0)}</span>
@@ -90,7 +108,7 @@ const spriteFor = (slug) => {
   }
 
   /* Fixed-dark "character select" panels — predictable contrast in both site
-     themes, and the right backdrop for the HD-2D diorama sprites. */
+     themes, and a clean dark backdrop for the transparent 16-bit sprites. */
   .hero-card {
     display: flex;
     flex-direction: column;
@@ -107,31 +125,44 @@ const spriteFor = (slug) => {
     box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 35%, transparent);
   }
 
-  /* The composite Code Reviewer renders as a wide 16:9 party formation,
-     featured full-width rather than cropped into a 2:3 hero card. */
+  /* The composite Code Reviewer renders as a wide party-formation strip
+     (640×256, a 5:2 ratio), featured full-width rather than as a square card. */
   .hero-card.composite {
     grid-column: 1 / -1;
   }
 
   .hero-card.composite .hero-art {
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 5 / 2;
   }
 
   .hero-art {
-    aspect-ratio: 2 / 3;
+    aspect-ratio: 1 / 1;
     background:
-      radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 70%),
+      radial-gradient(120% 90% at 50% 100%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 65%),
       #0b1120;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
+  /* Contain (not cover) so the whole transparent sprite shows on its stage.
+     image-rendering: pixelated keeps the ×4 upscale hard-edged; declarations are
+     ordered so a supporting engine lands on `pixelated` (last wins).
+     The drop-shadow rim backs the near-black #0b1020 sprite outline with a cool
+     #a5b4fc edge (our indigo-light token) so the darkest costumes — Pierrot's
+     oxblood, Pat's burgundy — clear ≥3:1 against the near-black panel. It follows
+     the PNG alpha, sits behind the pixels (image-rendering untouched), and is
+     static (reduced-motion safe). Uniform across all 16 → reads as one set. */
   .hero-art :global(img) {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    object-position: top center;
+    object-fit: contain;
+    object-position: center;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 1.5px rgba(165, 180, 252, 0.8))
+            drop-shadow(0 0 3px rgba(165, 180, 252, 0.35));
   }
 
   .hero-placeholder {
