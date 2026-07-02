@@ -10,6 +10,9 @@ dist/
 *.swo
 *~
 
+# WSL / NTFS mark-of-the-web artifacts (alternate data streams)
+*:Zone.Identifier
+
 pnpm-debug.log*
 
 # Astro build cache

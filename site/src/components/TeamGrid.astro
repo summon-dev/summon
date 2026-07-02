@@ -1,0 +1,238 @@
+---
+// agent-notes: { ctx: "Meet-the-Team 16-bit sprite grid; graceful placeholder until art lands", deps: ["site/src/assets/team-16bit/", "docs/design/team-hero-sprites-16bit.md"], state: active, last: "claude@2026-07-02" }
+
+// Archetypes/accents are seeded here and kept in sync with the art bible at
+// docs/design/team-hero-sprites-16bit.md. Roles/triggers mirror the persona catalog.
+// Archetypes + accents are the authoritative values from the art bible
+// (docs/design/team-hero-sprites-16bit.md § 3). Roles/triggers mirror the persona catalog.
+const heroes = [
+  { slug: 'cam',     name: 'Cam',     archetype: 'The Wayfinder',          role: 'Human Interface',       hue: '#f59e0b', blurb: 'Probes your vague idea with structured questions until the vision is concrete.', trigger: 'New feature request, vague requirement, or review session.' },
+  { slug: 'archie',  name: 'Archie',  archetype: 'The Master Builder',     role: 'Lead Architect',        hue: '#22d3ee', blurb: 'Designs the system and writes the ADR before a line of code is written.', trigger: 'Architectural decision, schema change, or cross-boundary work.' },
+  { slug: 'sato',    name: 'Sato',    archetype: 'The Forge-Knight',       role: 'Principal Engineer',    hue: '#22c55e', blurb: 'Writes the production code that makes Tara’s tests pass. The builder.', trigger: 'Implementation work after the tests exist.' },
+  { slug: 'tara',    name: 'Tara',    archetype: 'The Sentinel Archer',    role: 'Test Lead',             hue: '#ef4444', blurb: 'Writes the failing test first. Holds a veto on test coverage.', trigger: 'New feature (tests first); code review (coverage).' },
+  { slug: 'vik',     name: 'Vik',     archetype: 'The Grey Warden',        role: 'Code Reviewer',         hue: '#64748b', blurb: 'Reads for simplicity and maintainability. Names problems; never fixes them.', trigger: 'Code review, core data models, critical paths.' },
+  { slug: 'grace',   name: 'Grace',   archetype: 'The Marshal',            role: 'Sprint Manager',        hue: '#8b5cf6', blurb: 'Runs the board, tracks velocity, and keeps the party moving.', trigger: 'Sprint boundary, work distribution, board ops.' },
+  { slug: 'pat',     name: 'Pat',     archetype: 'The Quartermaster-Judge', role: 'Product Manager',      hue: '#9f1239', blurb: 'Owns the backlog and prioritizes ruthlessly. Speaks for you in proxy mode.', trigger: 'Requirements, prioritization, stakeholder questions.' },
+  { slug: 'wei',     name: 'Wei',     archetype: 'The Wildcard',           role: 'Devil’s Advocate',  hue: '#ec4899', blurb: 'Breaks consensus and challenges groupthink on purpose.', trigger: 'Architecture debates, fast convergence, big decisions.' },
+  { slug: 'pierrot', name: 'Pierrot', archetype: 'The Nightblade',         role: 'Security & Compliance', hue: '#7f1d1d', blurb: 'Pentests, scans, and holds a hard veto on security grounds.', trigger: 'Security review, auth changes, pre-release gates.' },
+  { slug: 'ines',    name: 'Ines',    archetype: 'The Pipeline-Wright',    role: 'DevOps & SRE',          hue: '#facc15', blurb: 'Owns everything between git push and production traffic.', trigger: 'New infra, CI/CD, alerts, chaos engineering.' },
+  { slug: 'diego',   name: 'Diego',   archetype: 'The Lorekeeper',         role: 'Technical Writer',      hue: '#0e7490', blurb: 'Docs, changelogs, onboarding. If it isn’t documented, it doesn’t exist.', trigger: 'User-facing behavior changes; releases.' },
+  { slug: 'dani',    name: 'Dani',    archetype: 'The Illusion-Artificer', role: 'Design & UX',           hue: '#fb7185', blurb: 'Design exploration, user flows, and accessibility review.', trigger: 'Any user-facing design or frontend change.' },
+  { slug: 'debra',   name: 'Debra',   archetype: 'The Star-Diviner',       role: 'Data Scientist',        hue: '#2dd4bf', blurb: 'Turns telemetry into decisions. The only one with notebook access.', trigger: 'Telemetry, experiments, model training, analysis.' },
+  { slug: 'cloud',   name: 'Cloud',   archetype: 'The Aeromancer',         role: 'Cloud Specialist',      hue: '#0ea5e9', blurb: 'Architects and tunes AWS, Azure, and GCP for cost and reliability.', trigger: 'Cloud architecture, cost, connectivity diagnosis.' },
+  { slug: 'prof',    name: 'Prof',    archetype: 'The Sage',               role: 'Pedagogy',              hue: '#a16207', blurb: 'Explains the team’s choices, Socratically. Assumes you’re competent.', trigger: 'Explaining a decision; learning the codebase.' },
+  { slug: 'code-reviewer', name: 'The Code Reviewer', archetype: 'The Review Tribunal', role: 'Composite Review', hue: '#6366f1', blurb: 'Not one hero — a formation. Vik, Tara, Pierrot, and Archie review in parallel.', trigger: 'After code changes, before commit.' },
+];
+
+// Per-sprite alt text describes the artwork (adds detail beyond the card text),
+// per Dani's a11y gate. Used only when a real sprite is present.
+const altFor = {
+  cam: 'Cam, the team’s guide, a hooded traveler holding out a glowing amber lantern',
+  archie: 'Archie, the team’s architect, holding a rolled cyan blueprint across his body',
+  sato: 'Sato, the team’s engineer, a broad smith resting a green-glowing hammer on his shoulder',
+  tara: 'Tara, the test lead, a ranger drawing a bow with a crimson-tipped arrow',
+  vik: 'Vik, the veteran reviewer, leaning on a tall sword-staff and holding up a loupe',
+  grace: 'Grace, the sprint marshal, raising a tall violet banner',
+  pat: 'Pat, the product lead, holding out a set of burgundy priority scales',
+  wei: 'Wei, the devil’s advocate, leaning back mid-toss of a glowing magenta card',
+  pierrot: 'Pierrot, the security tester, a hooded rogue in a white half-mask holding a dagger',
+  ines: 'Ines, the SRE, throwing a yellow-knobbed deploy lever with goggles on her brow',
+  diego: 'Diego, the technical writer, holding open a book with glowing teal script',
+  dani: 'Dani, the designer, holding up a coral-edged interface panel and a brush',
+  debra: 'Debra, the data scientist, in a pointed astronomer’s hat holding a teal constellation',
+  cloud: 'Cloud, the cloud specialist, a sky-mage with an azure cloud floating over his staff',
+  prof: 'Prof, the mentor, in tweed gesturing with a pointer at a floating ochre diagram',
+  'code-reviewer': 'The Review Party: a warden, ranger, nightblade, and architect examining a glowing codex on a shared indigo stage',
+};
+
+// Eagerly pull in any sprites that have landed; missing ones render a styled
+// placeholder so the build stays green before/while the art is generated.
+// 16-bit pixel sprites are served as-is (plain <img>, no Astro re-encode) so the
+// hard pixels survive; CSS image-rendering: pixelated keeps the ×4 upscale crisp.
+// Glob is single-level, so it skips the 64px masters in _src/.
+const sprites = import.meta.glob('../assets/team-16bit/*.png', { eager: true });
+const spriteFor = (slug) => {
+  const x1 = Object.entries(sprites).find(([p]) => p.endsWith(`/${slug}.png`));
+  if (!x1) return null;
+  const x2 = Object.entries(sprites).find(([p]) => p.endsWith(`/${slug}@2x.png`));
+  const a = x1[1].default;
+  return {
+    src: a.src,
+    width: a.width,
+    height: a.height,
+    srcset: x2 ? `${a.src} 1x, ${x2[1].default.src} 2x` : undefined,
+  };
+};
+---
+
+<div class="team-grid">
+  {heroes.map((h) => {
+    const img = spriteFor(h.slug);
+    return (
+      <article class={`hero-card${h.slug === 'code-reviewer' ? ' composite' : ''}`} style={`--accent: ${h.hue};`}>
+        <div class="hero-art">
+          {img ? (
+            <img
+              src={img.src}
+              srcset={img.srcset}
+              width={img.width}
+              height={img.height}
+              alt={altFor[h.slug]}
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <div class="hero-placeholder" aria-hidden="true">
+              <span class="placeholder-initial">{h.name.charAt(0)}</span>
+              <span class="placeholder-note">art in progress</span>
+            </div>
+          )}
+        </div>
+        <div class="hero-meta">
+          <h3>{h.name} <span class="archetype">{h.archetype}</span></h3>
+          <p class="role">{h.role}</p>
+          <p class="blurb">{h.blurb}</p>
+          <p class="trigger"><strong>Invoked:</strong> {h.trigger}</p>
+        </div>
+      </article>
+    );
+  })}
+</div>
+
+<style>
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr));
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+
+  /* Fixed-dark "character select" panels — predictable contrast in both site
+     themes, and a clean dark backdrop for the transparent 16-bit sprites. */
+  .hero-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #1e293b;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: #0f172a;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+
+  .hero-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  /* The composite Code Reviewer renders as a wide party-formation strip
+     (640×256, a 5:2 ratio), featured full-width rather than as a square card. */
+  .hero-card.composite {
+    grid-column: 1 / -1;
+  }
+
+  .hero-card.composite .hero-art {
+    aspect-ratio: 5 / 2;
+  }
+
+  .hero-art {
+    aspect-ratio: 1 / 1;
+    background:
+      radial-gradient(120% 90% at 50% 100%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 65%),
+      #0b1120;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Contain (not cover) so the whole transparent sprite shows on its stage.
+     image-rendering: pixelated keeps the ×4 upscale hard-edged; declarations are
+     ordered so a supporting engine lands on `pixelated` (last wins).
+     The drop-shadow rim backs the near-black #0b1020 sprite outline with a cool
+     #a5b4fc edge (our indigo-light token) so the darkest costumes — Pierrot's
+     oxblood, Pat's burgundy — clear ≥3:1 against the near-black panel. It follows
+     the PNG alpha, sits behind the pixels (image-rendering untouched), and is
+     static (reduced-motion safe). Uniform across all 16 → reads as one set. */
+  .hero-art :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 1.5px rgba(165, 180, 252, 0.8))
+            drop-shadow(0 0 3px rgba(165, 180, 252, 0.35));
+  }
+
+  .hero-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Lift dark accents (oxblood, burgundy, ochre) into a legible range on the
+     dark panel without losing the hue identity. */
+  .placeholder-initial {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1;
+    color: color-mix(in srgb, var(--accent), white 35%);
+    text-shadow: 0 2px 14px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  .placeholder-note {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3b8;
+  }
+
+  .hero-meta {
+    padding: 0.85rem 1rem 1.1rem;
+  }
+
+  .hero-meta h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.3;
+    color: #f1f5f9;
+  }
+
+  .hero-meta .archetype {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--accent), white 42%);
+  }
+
+  .hero-meta .role {
+    margin: 0.15rem 0 0.5rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+  }
+
+  .hero-meta .blurb {
+    margin: 0 0 0.6rem;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+  }
+
+  .hero-meta .trigger {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-card:hover {
+      transform: none;
+    }
+  }
+</style>
