@@ -1,4 +1,4 @@
-// agent-notes: { ctx: "integration tests for summon-team CLI", deps: ["dist/index.js", "src/index.ts"], state: active, last: "sato@2026-04-03" }
+// agent-notes: { ctx: "integration tests for summon-team CLI", deps: ["dist/index.js", "src/index.ts"], state: active, last: "sato@2026-04-14" }
 
 import { execFile } from "node:child_process";
 import {
@@ -86,6 +86,17 @@ describe("summon-team CLI", () => {
     const cwd = makeTempDir();
     const result = await run(["bad name!"], { cwd });
     expect(result.code).not.toBe(0);
+  });
+
+  it("rejects bare `.` with helpful error pointing at `add` verb", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["."], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("summon-team add");
+    expect(output).toContain("existing project");
+    // Must not fall through to the generic regex-validation error path
+    expect(output).not.toMatch(/letters, numbers, hyphens, or underscores/i);
   });
 
   it("--local without path exits non-zero", async () => {

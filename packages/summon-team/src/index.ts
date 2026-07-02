@@ -101,6 +101,12 @@ async function main() {
   let projectName: string;
 
   if (projectArg) {
+    if (projectArg === ".") {
+      p.log.error(
+        "Use `summon-team add <runtime>` to install into an existing project."
+      );
+      process.exit(1);
+    }
     if (!PROJECT_NAME_RE.test(projectArg)) {
       p.log.error("Use letters, numbers, hyphens, or underscores only.");
       process.exit(1);
