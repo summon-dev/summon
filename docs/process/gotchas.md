@@ -3,7 +3,7 @@ agent-notes:
   ctx: "implementation gotchas and established patterns"
   deps: [CLAUDE.md]
   state: active
-  last: "vik@2026-06-15"
+  last: "coordinator@2026-07-02"
 ---
 # Known Patterns and Gotchas
 
@@ -65,6 +65,8 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 ## Process
 
 - **Plans don't replace process (Plan-as-Bypass anti-pattern).** A detailed implementation plan (from plan mode, a prior session, or a human-provided spec) is **input** to the Summon team phases, not a bypass. The plan still needs: GitHub issues (Grace), architecture gate if applicable (Archie + Wei as standalone agents), TDD (Tara → Sato), code review (Vik + Tara + Pierrot), and Done Gate. **Detection signal:** if the coordinator's first tool call is `Read` on a source file (not `docs/code-map.md`, governance docs, or the sprint plan), it's likely in bypass mode. See `2026-02-20-process-violation-plan-bypass.md` for the full retro.
+
+- **Backlog-Blind Session Start anti-pattern.** A session dives straight into new work without checking what's already in flight — open PRs that still merge clean and fix real bugs, board items already In Progress, or `summon:` debt markers that overlap the planned change. New work lands on top of an untriaged backlog, and the stale-but-valid PR rots further (a CLI fix sat open for ~3 months while unrelated features shipped past it). **Detection signal:** the first substantive action of a long session is new implementation, but `gh pr list`, the board, and `pnpm harvest:debt` were never consulted. A PR sits open for weeks while unrelated work merges. **Fix:** Session Entry Protocol step 1 — reconnoiter open PRs, board state, and tech debt before starting substantial work, surface overlaps and stale-but-valid PRs, and **ask the human whether to clear any of it first**. Exempt one-line fixes and conversational turns; this is for sessions that will run long. See `CLAUDE.md` § Session Entry Protocol.
 
 - **Wei must be invoked as a standalone agent.** The coordinator's own analysis of trade-offs is not a substitute for invoking Wei as a standalone agent during architecture debates. If an ADR claims "Wei debate resolved" but no Wei agent was spawned, the gate has not passed.
 

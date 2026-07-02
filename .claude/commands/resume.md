@@ -1,4 +1,4 @@
-<!-- agent-notes: { ctx: "resume from previous session handoff", deps: [.claude/handoff.md, CLAUDE.md, docs/sprints/], state: active, last: "coordinator@2026-03-31" } -->
+<!-- agent-notes: { ctx: "resume from previous session handoff", deps: [.claude/handoff.md, CLAUDE.md, docs/sprints/], state: active, last: "coordinator@2026-07-02" } -->
 Resume from a previous session's handoff.
 
 ## Steps
@@ -14,6 +14,7 @@ Resume from a previous session's handoff.
 3. **Verify state.** Run these checks:
    - `git log --oneline -5` — does the last commit match what the handoff says?
    - `git status` — is the working tree clean? If not, investigate before proceeding.
+   - **Backlog reconnaissance (Session Entry Protocol step 1).** Before picking up the handoff's next items, scan what's already in flight: `gh pr list` (open PRs — check whether any still merge clean and fix a real bug, like a stale-but-valid fix), board items in Ready/In Progress/In Review, and `pnpm harvest:debt` (outstanding `summon:` debt markers). If anything overlaps or precedes the planned work — especially an aged open PR — surface it in the step 4 summary and **ask the human whether to resolve it first** before continuing.
    - **GitHub Board Pre-Flight (Blocking):** If `CLAUDE.md` has a `project-number` and `project-owner` configured (not commented out / not blank), run the full pre-flight:
      1. `gh auth status` — if this fails, STOP: "GitHub CLI is not authenticated. Please run `gh auth login` and try again."
      2. `gh project field-list <NUMBER> --owner <OWNER> --format json` — if this fails, STOP: "Cannot access project board #<NUMBER>. Check your auth scopes (you may need `gh auth refresh -s project`) and that the project exists."

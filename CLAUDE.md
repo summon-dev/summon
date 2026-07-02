@@ -48,11 +48,12 @@ Every non-excluded file must have agent-notes metadata. See `docs/methodology/ag
 ## Critical Rules
 
 ### Session Entry Protocol (Mandatory)
-Before writing any code — including types, tests, or ADRs — start from a clean baseline, then answer three questions:
+Before writing any code — including types, tests, or ADRs — start from a clean baseline, then answer these questions:
 0. **Is the working tree clean?** Run `git status` first. Uncommitted changes from a prior session entangle your work and make a clean commit impossible — stash, commit, or reconcile them before starting. A detailed plan does not waive this check.
-1. **Do work items exist for this work?** If no → create them (Pat + Grace).
-2. **Does this work involve an architectural decision?** If yes → Architecture Gate (Archie + Wei as standalone agents). See `docs/process/team-governance.md` § Architecture Decision Gate.
-3. **Am I about to write implementation code?** If yes → Tara writes tests first.
+1. **What's already in flight?** Before starting substantial new work, reconnoiter the existing state — open PRs (`gh pr list`), board items already in Ready/In Progress/In Review, and outstanding tech debt (`pnpm harvest:debt`, `summon:` markers). Surface what you find — especially stale-but-valid open PRs and debt that overlaps the planned work — and **ask the human whether any of it should be resolved first**. Don't silently pile new work on top of an untriaged backlog. (One-line fixes and conversational turns are exempt; this triggers for sessions that will run long.)
+2. **Do work items exist for this work?** If no → create them (Pat + Grace).
+3. **Does this work involve an architectural decision?** If yes → Architecture Gate (Archie + Wei as standalone agents). See `docs/process/team-governance.md` § Architecture Decision Gate.
+4. **Am I about to write implementation code?** If yes → Tara writes tests first.
 
 If you received a detailed plan, the plan is **input to this protocol**, not a bypass of it. See `docs/process/gotchas.md` § Process.
 
