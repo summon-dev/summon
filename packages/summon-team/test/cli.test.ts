@@ -1,4 +1,4 @@
-// agent-notes: { ctx: "integration tests for summon-team CLI", deps: ["dist/index.js", "src/index.ts"], state: active, last: "sato@2026-04-14" }
+// agent-notes: { ctx: "integration tests for summon-team CLI", deps: ["dist/index.js", "src/index.ts"], state: active, last: "sato@2026-07-02" }
 
 import { execFile } from "node:child_process";
 import {
@@ -146,6 +146,22 @@ describe("summon-team CLI", () => {
 
     // git init ran
     expect(existsSync(join(projectDir, ".git"))).toBe(true);
+  }, 30_000);
+
+  it("excludes Summon's own development-history docs but keeps framework docs", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--local", REPO_ROOT, "history-test"], { cwd });
+
+    expect(result.code).toBe(0);
+    const projectDir = join(cwd, "history-test");
+
+    // Summon's own process exhaust is not part of a user's project
+    expect(existsSync(join(projectDir, "docs", "code-reviews"))).toBe(false);
+    expect(existsSync(join(projectDir, "docs", "tracking"))).toBe(false);
+
+    // Framework docs the user DOES inherit are still present
+    expect(existsSync(join(projectDir, "docs", "methodology"))).toBe(true);
+    expect(existsSync(join(projectDir, "docs", "adrs", "template.md"))).toBe(true);
   }, 30_000);
 
   it("rejects when target directory already exists and is non-empty", async () => {
