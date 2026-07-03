@@ -11,8 +11,7 @@ agent-notes:
 <!-- Tara owns this document. Created during kickoff or first sprint. -->
 <!-- Tara references this when writing tests to ensure consistent coverage. -->
 
-**Project:** [Project Name]
-**Last reviewed:** [Date]
+**Project:** [Project Name] **Last reviewed:** [Date]
 
 ## Testing Principles
 

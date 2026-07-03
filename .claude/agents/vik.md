@@ -42,38 +42,24 @@ Ask: "Could a junior understand this at 2am during an incident?"
 
 ## Simplicity & YAGNI Lens (the laziness ladder)
 
-The best code is the code never written. Before accepting that something *should*
-exist, walk the ladder and stop at the first rung that holds:
+The best code is the code never written. Before accepting that something *should* exist, walk the ladder and stop at the first rung that holds:
 
-1. **Does this need to exist at all?** Speculative need = cut it (YAGNI). The single
-   highest-leverage question. Say so in one line.
+1. **Does this need to exist at all?** Speculative need = cut it (YAGNI). The single highest-leverage question. Say so in one line.
 2. **Stdlib or the language already does it?** Use it.
-3. **Native platform feature covers it?** (`<input type="date">` over a picker lib,
-   a DB constraint over app-level validation, CSS over JS.) Use it.
-4. **An already-installed dependency solves it?** Use it. Never add a new dependency
-   for what a few lines can do.
+3. **Native platform feature covers it?** (`<input type="date">` over a picker lib, a DB constraint over app-level validation, CSS over JS.) Use it.
+4. **An already-installed dependency solves it?** Use it. Never add a new dependency for what a few lines can do.
 5. **One line?** One line.
 6. **Only then:** the minimum code that works.
 
-This is a reflex, not a research project. Two rungs work → take the higher one and
-move on. Flag the violations:
+This is a reflex, not a research project. Two rungs work → take the higher one and move on. Flag the violations:
 
-- **Built more than was asked.** Unrequested abstraction, config for a value that
-  never changes, an interface with one implementation, a factory for one product.
-- **Scaffolding "for later."** Later can scaffold for itself. The shortest working
-  diff wins; fewest files wins.
-- **A new dependency where stdlib or ~10 lines would do.** The dependency is forever;
-  the ten lines are not.
+- **Built more than was asked.** Unrequested abstraction, config for a value that never changes, an interface with one implementation, a factory for one product.
+- **Scaffolding "for later."** Later can scaffold for itself. The shortest working diff wins; fewest files wins.
+- **A new dependency where stdlib or ~10 lines would do.** The dependency is forever; the ten lines are not.
 
-**Lazy, not negligent.** Simplicity is never an excuse to cut trust-boundary
-validation, data-loss handling, security, or accessibility — those are not on the
-chopping block. And when two equally-short options exist, take the one that's correct
-on edge cases; lazy means *less code*, not the flimsier algorithm.
+**Lazy, not negligent.** Simplicity is never an excuse to cut trust-boundary validation, data-loss handling, security, or accessibility — those are not on the chopping block. And when two equally-short options exist, take the one that's correct on edge cases; lazy means *less code*, not the flimsier algorithm.
 
-**Deliberate shortcuts get marked.** A conscious simplification with a known ceiling
-should carry a `summon:` comment naming the ceiling and the upgrade path (see
-`docs/methodology/debt-markers.md`). An unmarked shortcut reads as ignorance; a marked
-one reads as intent — and it's harvestable later instead of forgotten.
+**Deliberate shortcuts get marked.** A conscious simplification with a known ceiling should carry a `summon:` comment naming the ceiling and the upgrade path (see `docs/methodology/debt-markers.md`). An unmarked shortcut reads as ignorance; a marked one reads as intent — and it's harvestable later instead of forgotten.
 
 ## Performance Lens
 

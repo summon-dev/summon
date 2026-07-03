@@ -47,9 +47,7 @@ core ────── (no deps — foundational types)
 | `src/foo.ts` | `FooClass`, `fooHelper()` | Entry point |
 | `src/bar.ts` | `BarSchema`, `BarType` | Zod schemas |
 
-**External deps:** list key dependencies
-**Internal deps:** list workspace dependencies
--->
+**External deps:** list key dependencies **Internal deps:** list workspace dependencies -->
 
 ## Test Inventory
 

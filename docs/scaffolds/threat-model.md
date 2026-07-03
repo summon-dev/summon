@@ -11,9 +11,7 @@ agent-notes:
 <!-- Pierrot owns this document. Archie contributes data flow diagrams. -->
 <!-- Created during kickoff Phase 3 (Architecture). Updated when the attack surface changes. -->
 
-**Project:** [Project Name]
-**Last reviewed:** [Date]
-**Reviewed by:** Pierrot, Archie
+**Project:** [Project Name] **Last reviewed:** [Date] **Reviewed by:** Pierrot, Archie
 
 ## System Overview
 

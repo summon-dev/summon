@@ -11,8 +11,7 @@ agent-notes:
 <!-- Grace maintains this register. Pat prioritizes debt against feature work. -->
 <!-- This persists across sprints — board items get closed, but debt lives here until resolved. -->
 
-**Project:** [Project Name]
-**Last reviewed:** [Date]
+**Project:** [Project Name] **Last reviewed:** [Date]
 
 ## Active Debt
 

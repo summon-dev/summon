@@ -10,10 +10,7 @@ agent-notes:
 <!-- Ines creates runbooks alongside the infrastructure they support. -->
 <!-- Every alert must link to a runbook. If there's no runbook, don't create the alert. -->
 
-**Service:** [service name]
-**Alert:** [alert name that links here]
-**Severity:** [P0/P1/P2/P3]
-**Last tested:** [date]
+**Service:** [service name] **Alert:** [alert name that links here] **Severity:** [P0/P1/P2/P3] **Last tested:** [date]
 
 ## Symptoms
 

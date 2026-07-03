@@ -4,9 +4,7 @@ agent-notes: { ctx: "16-bit SNES alt art direction + prompts for Meet-the-Team p
 
 # Team Hero Sprites — 16-bit SNES Direction & Prompt Sheet
 
-**Issue:** #42 — "Meet the Team" page (Astro site)
-**Owner:** Dani (Design & UX)
-**Status:** Creative direction proposed. Alternate to the HD-2D bible.
+**Issue:** #42 — "Meet the Team" page (Astro site) **Owner:** Dani (Design & UX) **Status:** Creative direction proposed. Alternate to the HD-2D bible.
 
 > **Read this first.** This is the **16-bit alternative** to the HD-2D direction in `docs/design/team-hero-sprites.md`. The two are competing directions for the same page and only one ships. The HD-2D bible stays intact as its own option; nothing here edits it. If you're deciding: HD-2D is cinematic, lit, atmospheric, heavier per asset. This one is flat, chunky, authentic Super Nintendo — Chrono Trigger and Final Fantasy VI, not a film still. Pick one, don't blend them.
 
@@ -51,8 +49,7 @@ A 64px image on a modern display is tiny and, scaled naively, blurry. The rule i
 - Target display box **128–256px** in the grid. Prefer sizes that are integer multiples of 64 (128 / 192 / 256) so the pixels land square. A `srcset` offering the 256 (×4) and a 512 (×8) retina export covers high-DPI without a non-integer scale.
 - Downscaling the ×4 asset slightly for a smaller cell is safe under `pixelated`; upscaling past ×8 is not — cap the cell.
 
-**Asset path (decide this explicitly so the two directions never collide):**
-The HD-2D pipeline writes `site/src/assets/team/<slug>.webp`. This set writes to a **separate directory**:
+**Asset path (decide this explicitly so the two directions never collide):** The HD-2D pipeline writes `site/src/assets/team/<slug>.webp`. This set writes to a **separate directory**:
 
 ```
 site/src/assets/team-16bit/<slug>.png        # ×4 (256px) shipped asset, lossless
@@ -82,8 +79,7 @@ HD-2D unified 16 images with a shared indigo rim light and a shared bokeh atmosp
 
 Those tones lift straight from `site/src/styles/global.css` (`--summon-accent #4f46e5`, `--summon-accent-light #a5b4fc`, `--summon-bg-dark #0f172a`) so the sprites sit native against the live site, same as v1 promised.
 
-**Per-character accent ramp (the only per-sprite variance):**
-Each teammate adds **one 3-shade accent ramp** (dark / base / light) on top of the shared core. The accent is the secondary identifier; silhouette and prop come first. Because the core is fixed and the accent is small, two characters with neighboring hues still read as family — the shared indigo neutrals and outline hold them together. Accent assignments are in the § 3 table (same hues as the HD-2D set, so the two directions stay hue-consistent).
+**Per-character accent ramp (the only per-sprite variance):** Each teammate adds **one 3-shade accent ramp** (dark / base / light) on top of the shared core. The accent is the secondary identifier; silhouette and prop come first. Because the core is fixed and the accent is small, two characters with neighboring hues still read as family — the shared indigo neutrals and outline hold them together. Accent assignments are in the § 3 table (same hues as the HD-2D set, so the two directions stay hue-consistent).
 
 **Palette discipline, stated as a rule:** a sprite = shared core + exactly one accent ramp, quantized to that combined palette, nothing off-palette. A sprite that introduces a fourth accent shade, a warm gray, or a pure-black outline is an outlier to re-quantize (§ 2). The indigo stage token appears under **every** character with no exception — it is the visual handshake that says "same set."
 

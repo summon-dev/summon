@@ -22,8 +22,7 @@ agent-notes:
 
 ## Section 1 — The Initiative (as found)
 
-A remote Claude session attempted to integrate the "interesting pieces" of two external
-repos into Summon:
+A remote Claude session attempted to integrate the "interesting pieces" of two external repos into Summon:
 
 | Source | What was borrowed |
 |--------|-------------------|
@@ -49,10 +48,7 @@ repos into Summon:
 
 ## Section 2 — Team Critique & Decisions
 
-Reviewed 2026-06-24 by **Cam** (vision), **Wei** (devil's advocate), **Archie**
-(architecture), **Vik** (YAGNI), **Tara** (test quality), **Pat** (product), and **Debra**
-(experiment design), each as a standalone subagent with its own lens. Full reasoning is in
-the session transcript; the verdicts and cross-cutting conclusions follow.
+Reviewed 2026-06-24 by **Cam** (vision), **Wei** (devil's advocate), **Archie** (architecture), **Vik** (YAGNI), **Tara** (test quality), **Pat** (product), and **Debra** (experiment design), each as a standalone subagent with its own lens. Full reasoning is in the session transcript; the verdicts and cross-cutting conclusions follow.
 
 ### Verdict tally
 
@@ -66,39 +62,19 @@ the session transcript; the verdicts and cross-cutting conclusions follow.
 | Pat | Agree-with-changes; Reprioritize | Process-only benchmark is the most attackable move; **split #32** (qualitative now, number later) |
 | Debra | Agree-with-changes; #31 has a construct-validity hole | Baseline-vs-Summon is a rigged A/B unless compute is held constant; n≥3 medians is an anecdote |
 
-**No agent rubber-stamped; none said scrap it.** The instincts are sound; the governance was
-skipped and the keystone (#31) is currently designed wrong.
+**No agent rubber-stamped; none said scrap it.** The instincts are sound; the governance was skipped and the keystone (#31) is currently designed wrong.
 
 ### Cross-cutting conclusions
 
-1. **Dogfood the gate (Cam, Archie, Tara, Debra).** A process-rigor product shipped process
-   changes that skipped its own process. #30 and #31 each introduce a machine-consumed
-   contract — exactly the class of decision the Architecture Decision Gate exists to force
-   through an ADR. → **ADR-0004 (doctor) and ADR-0005 (benchmark) before any more code.**
+1. **Dogfood the gate (Cam, Archie, Tara, Debra).** A process-rigor product shipped process changes that skipped its own process. #30 and #31 each introduce a machine-consumed contract — exactly the class of decision the Architecture Decision Gate exists to force through an ADR. → **ADR-0004 (doctor) and ADR-0005 (benchmark) before any more code.**
 
-2. **#31 must measure outcomes, not compliance (Wei, Tara, Pat, Debra).** A grader scoring
-   "was an ADR written before code?" measures whether the ritual ran, not whether the result
-   was better — the Goodhart trap, and especially corrosive here. Real-world precedent: a
-   [Scott Logic post](https://blog.scottlogic.com/2026/06/16/ponytail-yagni-and-the-problem-with-prompt-benchmarks.html)
-   beat ponytail's own benchmark with seven words ("follow YAGNI, one-liners"). The headline
-   claim must rest on a **framework-agnostic outcome** (defect caught, injected vuln flagged),
-   with process as explanation. Detail in ADR-0005.
+2. **#31 must measure outcomes, not compliance (Wei, Tara, Pat, Debra).** A grader scoring "was an ADR written before code?" measures whether the ritual ran, not whether the result was better — the Goodhart trap, and especially corrosive here. Real-world precedent: a [Scott Logic post](https://blog.scottlogic.com/2026/06/16/ponytail-yagni-and-the-problem-with-prompt-benchmarks.html) beat ponytail's own benchmark with seven words ("follow YAGNI, one-liners"). The headline claim must rest on a **framework-agnostic outcome** (defect caught, injected vuln flagged), with process as explanation. Detail in ADR-0005.
 
-3. **Ungate / split #32 (Vik, Pat).** The positioning rewrite is the cheapest, most
-   reversible, highest-leverage item, blocked on the most speculative one. Split it: ship the
-   qualitative before/after artifact now ("judge for yourself"); wire the falsifiable *number*
-   in later as an additive edit once #31 produces a defensible one. This honors Cam's "don't
-   cite invented numbers" rule without blocking the real work.
+3. **Ungate / split #32 (Vik, Pat).** The positioning rewrite is the cheapest, most reversible, highest-leverage item, blocked on the most speculative one. Split it: ship the qualitative before/after artifact now ("judge for yourself"); wire the falsifiable *number* in later as an additive edit once #31 produces a defensible one. This honors Cam's "don't cite invented numbers" rule without blocking the real work.
 
-4. **Descope #30 (Vik, Archie, Pat).** Keep "rename `check:canon` → `doctor`, grow checks as
-   real invariants appear." Cut the status taxonomy and per-check fixtures until a consumer
-   exists; land the two *cheap* canon checks (command↔file existence, status-flow-string
-   consistency) in `check-canon` now, independently. Detail in ADR-0004.
+4. **Descope #30 (Vik, Archie, Pat).** Keep "rename `check:canon` → `doctor`, grow checks as real invariants appear." Cut the status taxonomy and per-check fixtures until a consumer exists; land the two *cheap* canon checks (command↔file existence, status-flow-string consistency) in `check-canon` now, independently. Detail in ADR-0004.
 
-5. **Collapse the ceremony accumulation (Vik).** Simplicity is now enforced in four places
-   (Vik's agent, the composite reviewer, Done Gate item 16, `/grill`); "encode the fix" is
-   stated in three (`/retro`, Done Gate, `debt-markers.md`). One canonical home each, the rest
-   reference it — restated rules drift, the exact bug `check-canon` exists to catch.
+5. **Collapse the ceremony accumulation (Vik).** Simplicity is now enforced in four places (Vik's agent, the composite reviewer, Done Gate item 16, `/grill`); "encode the fix" is stated in three (`/retro`, Done Gate, `debt-markers.md`). One canonical home each, the rest reference it — restated rules drift, the exact bug `check-canon` exists to catch.
 
 ### Decision table
 
@@ -114,22 +90,8 @@ skipped and the keystone (#31) is currently designed wrong.
 
 ### Verified bugs (checked against the code, not relayed on trust)
 
-- **Bug A — `check-canon` has a blind spot on the marketing surface.** Its Done-Gate-count
-  check scans only `["CLAUDE.md", "docs/process/done-gate.md", "docs/process/gotchas.md"]`
-  (`scripts/check-canon.mjs:71`). The gate is now 16 items, but six stale "15-item" strings
-  survive outside the scan: `README.md:51`, `CHANGELOG.md:17`,
-  `docs/adrs/0003-project-risk-tiers.md:18`, `site/src/content/docs/index.mdx:65`,
-  `site/src/content/docs/methodology/phases.md:17,57`,
-  `site/src/content/docs/getting-started/how-it-works.md:45`. The fitness function introduced
-  as the poster child for "encode the fix" cannot pass its own first real drift. (Note: the
-  ADR-0003:18 and phases.md historical references to "the 15-item Done Gate" may be
-  intentional period references — triage each rather than blind-replacing.)
-- **Bug B — `summon doctor` cannot ship downstream as #30 claims.** The CLI
-  (`packages/summon-team/src/index.ts:24-29`) puts `package.json` in `EXCLUDE_FILES` and
-  `packages` in `EXCLUDE_DIRS`. A scaffolded project therefore receives
-  `scripts/check-canon.mjs` but **no `pnpm doctor` script and no workspace** to run it — and
-  the canon checks are hardcoded to Summon's own layout anyway. Resolution: ADR-0004 makes
-  doctor a CLI subcommand that travels with the binary.
+- **Bug A — `check-canon` has a blind spot on the marketing surface.** Its Done-Gate-count check scans only `["CLAUDE.md", "docs/process/done-gate.md", "docs/process/gotchas.md"]` (`scripts/check-canon.mjs:71`). The gate is now 16 items, but six stale "15-item" strings survive outside the scan: `README.md:51`, `CHANGELOG.md:17`, `docs/adrs/0003-project-risk-tiers.md:18`, `site/src/content/docs/index.mdx:65`, `site/src/content/docs/methodology/phases.md:17,57`, `site/src/content/docs/getting-started/how-it-works.md:45`. The fitness function introduced as the poster child for "encode the fix" cannot pass its own first real drift. (Note: the ADR-0003:18 and phases.md historical references to "the 15-item Done Gate" may be intentional period references — triage each rather than blind-replacing.)
+- **Bug B — `summon doctor` cannot ship downstream as #30 claims.** The CLI (`packages/summon-team/src/index.ts:24-29`) puts `package.json` in `EXCLUDE_FILES` and `packages` in `EXCLUDE_DIRS`. A scaffolded project therefore receives `scripts/check-canon.mjs` but **no `pnpm doctor` script and no workspace** to run it — and the canon checks are hardcoded to Summon's own layout anyway. Resolution: ADR-0004 makes doctor a CLI subcommand that travels with the binary.
 
 ### Sequencing
 
@@ -147,14 +109,8 @@ A single falsifiable KPI for the whole initiative, measured over the next 2 spri
 > is and isn't for and (b) point to one concrete artifact showing the team caught or
 > prevented something bare Claude Code did not.**
 
-- **Kill criterion:** if the before/after artifact can be neutralized by a skeptic in one
-  tweet ("that's just YAGNI in a prompt"), the positioning bet is wrong — stop polishing copy
-  and go fix the framework instead.
-- **Benchmark kill criterion (Debra):** if the pre-registered outcome metric shows no
-  significant difference between Summon and the budget-matched control across ≥5 tasks ×
-  ≥10 runs, do **not** publish a number — report the null and reconsider the claim.
+- **Kill criterion:** if the before/after artifact can be neutralized by a skeptic in one tweet ("that's just YAGNI in a prompt"), the positioning bet is wrong — stop polishing copy and go fix the framework instead.
+- **Benchmark kill criterion (Debra):** if the pre-registered outcome metric shows no significant difference between Summon and the budget-matched control across ≥5 tasks × ≥10 runs, do **not** publish a number — report the null and reconsider the claim.
 
 ---
-*Reviewed and recorded 2026-06-24. The four implementing commits remain a spike pending
-ratification; #30/#31/#32 are paused behind ADR-0004 and ADR-0005. This document is the
-decision record the initiative skipped.*
+*Reviewed and recorded 2026-06-24. The four implementing commits remain a spike pending ratification; #30/#31/#32 are paused behind ADR-0004 and ADR-0005. This document is the decision record the initiative skipped.*

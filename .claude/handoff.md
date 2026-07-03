@@ -1,54 +1,51 @@
-<!-- agent-notes: { ctx: "session handoff — ponytail/harness positioning wrap", deps: [CLAUDE.md, docs/process/ponytail-harness-review.md, docs/code-map.md], state: active, last: "coordinator@2026-06-29" } -->
+<!-- agent-notes: { ctx: "session handoff — repo review + two ratified ADRs (0006, 0007) merged", deps: [CLAUDE.md, docs/adrs/0006-multi-runtime-install.md, docs/adrs/0007-canon-meta-boundary.md], state: active, last: "coordinator@2026-07-03" } -->
 
 # Session Handoff
 
-**Created:** 2026-06-29
-**Sprint:** n/a — this repo is issue-driven (no `docs/sprints/` wave plan, no GitHub Projects board configured)
-**Wave:** n/a
-**Session summary:** Merged the ponytail/harness review PR (#36), then completed and merged the #32a README positioning rewrite (PR #38). The next session is starting something slightly orthogonal — this handoff exists so the positioning thread can be resumed cleanly later, not necessarily next.
+**Created:** 2026-07-03 **Sprint:** none active (this was an ad-hoc improvement session, not a sprint-wave execution) **Session summary:** A deep repo review surfaced Tier-1 bugs and a structural problem (Summon's own meta-content ships into user projects). Shipped a Tier-1 cleanup and two ratified ADRs (0006 multi-runtime install, 0007 canon/meta boundary), all through the Architecture Gate. Three PRs merged to main.
 
 ## What Was Done
-- **Merged PR #36** (squash) — the ponytail/harness integration (ADR-0004/0005, canon checks, `summon doctor`).
-- **Completed #32a README rewrite** and **merged PR #38** (squash → `main`, `b01b4e9`). README now leads with a value prop + a real in-repo before/after artifact (the dogfooding episode), ICP, anti-use-case, fears-not-features FAQ; roster/phases/commands moved below the fold.
-  - Drafted by Cam (voice/FAQ) + Pat (before/after/ICP) as standalone agents; reviewed by Diego (DX) + Wei (adversarial).
-  - **Wei caught a Fatal overclaim** — draft said "the gate fires," but the gates were *skipped* and the review was *retroactive*. Reframed to concede the skip and sell the verifiable aftermath (omission legible → freeze → ratify-or-revert → two ADRs). Diego's Critical (specialist miscount 9→6) and lens-count contradiction also fixed.
-- **Created follow-up issue #37** (Astro site port of the positioning); kept **#32 open** (`Refs`, not `Closes`) so it closes when the site lands.
-- **Memory updated** — new file `ponytail-harness-initiative.md` + MEMORY.md index pointer.
+- **Deep repo review** — categorized findings into Tier 1 (bugs), Tier 2 (ceremony vs solo-dev audience), Tier 3 (site). Full ledger in memory: `repo-review-2026-07.md`.
+- **ADR-0006 (multi-runtime install)** — authored via gate (Archie + Wei), ratified, **merged (#44)**. Fixes the orphaned epic: issues #7/#8/#13/#16/#17/#18 cited an "ADR-0004 § …" that never existed; 0006 is that missing doc. Those issues were re-commented to point at 0006.
+- **Tier-1 cleanup — merged (#45)** — scaffolder no longer ships `docs/code-reviews/` + `docs/tracking/` (new `EXCLUDE_PATHS` in `packages/summon-team/src/index.ts`, TDD'd); README "HD-2D"→"16-bit"; removed phantom "Starter/Full Tier" CHANGELOG line. Dropped a false-alarm threat-model "fix" after verifying the path was correct.
+- **ADR-0007 (canon/meta boundary)** — authored via gate, ratified, **merged (#46)**. The durable rule for what ships to users vs what stays framework-only.
+- Both gate debates recorded in `docs/tracking/` (2026-07-02 and 2026-07-03).
 
 ## Current State
-- **Branch:** `main` (up to date with origin, pruned)
-- **Last commit:** `b01b4e9 docs(readme): lead with value prop + real before/after artifact (#32a) (#38)`
-- **Uncommitted changes:** none (clean tree; this handoff is the only pending add)
-- **Tests:** 26 passing across 2 files in `packages/summon-team` (doctor.test.ts 18, cli.test.ts 8). `check-canon` OK, `summon doctor` healthy.
-- **Board status:** No GitHub Projects board configured (`project-number`/`project-owner` empty in `CLAUDE.md:105-106`). Work tracked via GitHub Issues only. Status transitions (In Progress→In Review→Done) are N/A until a board is set up via `/kickoff` Phase 5.
+- **Branch:** main (all work merged; feature branches deleted)
+- **Last commit:** `d5f28ec docs(adr): ADR-0007 canon/meta boundary — what ships vs framework-only (#46)`
+- **Uncommitted changes:** this handoff file only (see "Key Context" — intentionally uncommitted per ADR-0007)
+- **Tests:** 28 passing across 2 test files (`packages/summon-team`); `node scripts/check-canon.mjs` → OK
+- **Board status:** no gh project board wired (`project-number`/`project-owner` empty in CLAUDE.md). 25 open issues, 0 open PRs.
 
 ## Sprint Progress
-- **Wave plan:** none — `docs/sprints/` is empty. Initiative tracked via issues + decision record `docs/process/ponytail-harness-review.md`.
-- **Initiative completed this session:** #32a (README), merged via PR #38.
-- **Open issues (ponytail/harness initiative):**
-  - **#37** — port #32a positioning to the Astro landing page (`site/src/content/docs/index.mdx`). Fast; reuses the ratified README framing. Closing it (+ merged #38) completes #32a. **Best next positioning step.**
-  - **#33 (#32b)** — wire a falsifiable benchmark number into the README. Gated on #31 Phase 2.
-  - **#31** — behavioral benchmark harness (the keystone, NOT started). ADR-0005 mandates outcome (not process-compliance) metrics, budget-matched control, real n, offline graders in Phase 1.
-  - **#32** — stays open until #37 lands.
-- Older CLI/Copilot issues (#5–#27) deferred until the positioning bet resolves.
+- No `docs/sprints/*-plan.md` exists; no wave structure. Work was tracked by the deep-review Tier ledger in memory, not a sprint board.
 
 ## What To Do Next (in order)
-1. Read `docs/code-map.md` to orient.
-2. Read `docs/process/ponytail-harness-review.md` — the initiative's decision record (verdicts, gating, the artifact this positioning is built on).
-3. **If resuming positioning → #37 (site port):** apply the merged README's framing to `site/src/content/docs/index.mdx`. Carry the guardrails: concede gates are *skippable*, sell the aftermath, "unaccountable not wrong," NO benchmark number (gated on #33), keep counts canonical (16 agents / 24 commands). Update the `og:` description (still says "Ship like a team of 10"). Invoke Dani for visual hierarchy. Verify with `node scripts/check-canon.mjs` + `summon doctor`.
-4. **If tackling #31 (benchmark):** re-read ADR-0005 first — the design was contested (Goodhart trap); Phase 1 is offline graders only, no API key.
-5. **For the orthogonal new work the user mentioned:** start fresh from the Session Entry Protocol (clean baseline ✓ — tree is clean on `main`; branch before coding; create a work item; Architecture Gate if it's a design decision).
+1. Read `docs/code-map.md` to orient (note: currently at `docs/scaffolds/code-map.md` until a scaffold command moves it).
+2. Read memory: `canon-meta-boundary-adr.md` and `repo-review-2026-07.md` — they hold the full plan and open-item ledger.
+3. **Primary next task — the ADR-0007 implementation PR (now UNBLOCKED; #44+#45 are merged).** Branch off main. Per ADR-0007 (`docs/adrs/0007-canon-meta-boundary.md`), it must:
+   - Move meta → `docs/history/` (`code-reviews/`, `tracking/`, `process/ponytail-harness-review.md`, `process/cross-repo-lessons.md`, `design/`) and `docs/adrs/meta/` (product ADRs 0004, 0005, 0006, and 0007 itself).
+   - Add `docs/history` + `docs/adrs/meta` to `EXCLUDE_PATHS` in `packages/summon-team/src/index.ts` (extend the existing pattern from #45; add a scaffold test like the one at `test/cli.test.ts`).
+   - Sever ADR-0003's agent-notes `deps` on `cross-repo-lessons.md` (inline the one line of rationale it needs). 0003 stays canon.
+   - Add `README-template.md` (a minimal project-README stub); scaffolder installs it as the new project's `README.md`. Marketing `README.md` stays repo-only. This also repairs CLAUDE.md First-Run Detection (which already keys on `README-template.md` existing).
+   - Remove + gitignore `.claude/handoff.md`; scrub any `/handoff` prose implying git carries the cross-machine baton.
+   - Ship a NEW **canon** example ADR (fictional user decision, e.g. "Postgres vs SQLite for the user's app") so scaffolded projects get a worked ADR example without leaking Summon internals.
+   - Add a deterministic **canon→meta `deps`-edge FAIL** check to `scripts/check-canon.mjs` (+ an ADR-number-contiguity check across both adrs dirs). The prose-ref warn was **cut** as a non-goal — do not build it.
+   - Fix soft prose refs in shipped canon docs that point at now-moved meta paths (kickoff, team-governance, gotchas, phases, tracking-protocol, plan, tdd, code-review, sprint-boundary, code-reviewer) — prefer generic phrasing per ADR-0007 §5b.
+4. **Or** pick up the ADR-0006 implementation: issues **#7** (`--target` parsing, can stub copilot/both) and **#8** (`.summon/manifest.json` module) are the unblocked starting points.
+5. **Or** open the **Tier-2 ceremony-vs-solo-dev** discussion — the biggest untouched simplification item.
 
 ## Tracking Artifacts
-- `docs/process/ponytail-harness-review.md` — canonical initiative decision record + 7-agent critique.
-- `docs/tracking/2026-06-24-doctor-benchmark-gate-debate.md` — ADR-0004/0005 Architecture Gate debate (Archie/Wei).
-- `docs/product-context.md` — **does not exist** (no Pat proxy-mode product philosophy file). If the next session needs product context, it's in the decision record's acceptance criteria, not a standalone file.
+- `docs/tracking/2026-07-02-multi-runtime-install-debate.md` — ADR-0006 gate debate
+- `docs/tracking/2026-07-03-canon-meta-boundary-debate.md` — ADR-0007 gate debate
+- `docs/product-context.md` — does NOT exist (referenced 13× across the repo but only created by `/kickoff`; a known open review item)
 
 ## Proxy Decisions (Review Required)
-- None. The human was present and made the two key calls directly: hero artifact = self-caught gate-skip episode; scope = README first, site deferred.
+- None. Every ADR ratification and scope decision was made by the human directly (via AskUserQuestion), not by Pat proxy.
 
 ## Key Context
-- **The positioning bet is deliberately self-critical:** the README *admits* an agent skipped Summon's own gates and sells the aftermath. This survives the kill criterion (the "that's just YAGNI in a prompt" tweet) precisely because it concedes the skeptic's true premise. Do not let future edits drift back to "the gate fires" / "the team prevents all slips" — Wei rated that Fatal.
-- **`code-reviewer` is the 16th agent file but NOT a persona** (it's a composite invocation pattern). README copy says "16 agents" + "9 named + 6 specialists" (= 15 personas + composite). Keep that math intact; `check-canon` enforces the "24 commands" string.
-- Files actively worked on this session: `README.md` (merged). No in-flight edits.
-- New `summon doctor` (`packages/summon-team/src/doctor.ts`) and `scripts/check-canon.mjs` are the deterministic gates — run both after any docs/canon-touching change.
+- **This handoff file is intentionally uncommitted.** ADR-0007 (just ratified) classifies `.claude/handoff.md` as *meta* and slates it for removal + gitignore in the implementation PR; and per the branch-and-review convention we don't commit straight to main. The durable cross-session state lives in **memory** (`MEMORY.md` + the linked files), not in this file.
+- **Gate pattern that worked well (reuse it):** Archie authors the ADR as a standalone agent → Wei challenges as a standalone agent (he reads the *code*, which caught real defects) → coordinator **fact-checks both agents** before Round 2 (Wei was wrong twice on ADR-0007 due to reading `main` where unmerged branches' code was absent — do not relay an adversary uncritically) → Archie revises → debate recorded in `docs/tracking/` → human ratifies.
+- **Durable gotcha worth knowing:** issue bodies can cite ADR sections that don't exist (the whole #6–#20 epic cited a phantom "ADR-0004 § Generation Model"). Verify ADR citations against the actual ADR before implementing.
+- Open review items still on the table (in `repo-review-2026-07.md`): the ADR-0007 implementation (above); `docs/code-map.md`/`product-context.md` dangling until scaffold/kickoff; and all of Tier 2 (ceremony) and Tier 3 (site: abandoned `assets/team/`, duplicated site↔repo docs).

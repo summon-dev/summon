@@ -7,11 +7,7 @@ agent-notes:
 ---
 # Architecture Gate Debate — `summon doctor` (ADR-0004) & Behavioral Benchmark (ADR-0005)
 
-**Date:** 2026-06-24
-**Protocol:** `docs/process/team-governance.md` § Architecture Decision Gate (multi-round Archie/Wei debate).
-**Participants:** Wei (devil's advocate, standalone), Archie (author, standalone), coordinator (synthesis + edits).
-**Rounds:** R1 Wei challenges (parallel, per-ADR) → R2 Archie point-by-point responses → R3 Wei rebuttal on new/inadequately-addressed surfaces.
-**Outcome:** Both ADRs pass the gate. **Status: Proposed — passed gate, awaiting human approval** (the final checklist item). Both blocks conceded in full; one new surface (0004) replaced, one Phase-1 cut adopted (0005).
+**Date:** 2026-06-24 **Protocol:** `docs/process/team-governance.md` § Architecture Decision Gate (multi-round Archie/Wei debate). **Participants:** Wei (devil's advocate, standalone), Archie (author, standalone), coordinator (synthesis + edits). **Rounds:** R1 Wei challenges (parallel, per-ADR) → R2 Archie point-by-point responses → R3 Wei rebuttal on new/inadequately-addressed surfaces. **Outcome:** Both ADRs pass the gate. **Status: Proposed — passed gate, awaiting human approval** (the final checklist item). Both blocks conceded in full; one new surface (0004) replaced, one Phase-1 cut adopted (0005).
 
 These ADRs were authored from the seven-agent direction review (`ponytail-harness-review.md`). The gate's value-add: Wei verified each ADR's premises **against the actual code**, and found that *both* had inherited a real flaw from the issues they reframed — which the direction review did not catch.
 

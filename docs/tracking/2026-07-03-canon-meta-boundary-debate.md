@@ -2,10 +2,7 @@
 
 # Debate: The Canon/Meta Boundary (ADR-0007)
 
-**ADR:** docs/adrs/0007-canon-meta-boundary.md
-**Date:** 2026-07-03
-**Participants:** Archie (author) vs Wei (challenger), both standalone agents
-**Trigger:** Summon's template repo is also its dev repo, so Summon's own meta-content ships into every scaffolded user project. ADR-0007 establishes the rule for what ships (canon) vs what stays framework-only (meta).
+**ADR:** docs/adrs/0007-canon-meta-boundary.md **Date:** 2026-07-03 **Participants:** Archie (author) vs Wei (challenger), both standalone agents **Trigger:** Summon's template repo is also its dev repo, so Summon's own meta-content ships into every scaffolded user project. ADR-0007 establishes the rule for what ships (canon) vs what stays framework-only (meta).
 
 ## Round 1 — Wei's Challenges
 

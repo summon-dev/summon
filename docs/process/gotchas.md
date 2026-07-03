@@ -16,8 +16,7 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 - **Test real-world combinations, not just individual features.** Synthetic test data that exercises features in isolation (bold text, then a table, then a link) misses bugs that only appear in realistic combinations (bold links inside table cells, strikethrough in nested lists). **Detection signal:** all tests pass on synthetic data but break on real user input. **Fix:** add at least one test that processes a representative real-world sample alongside feature-specific unit tests.
 
 <!-- Tara: add project-specific testing gotchas here as you discover them.
-     Examples: mocking strategies that work/fail, flaky test patterns,
-     edge cases that keep recurring, test setup quirks. -->
+     Examples: mocking strategies that work/fail, flaky test patterns, edge cases that keep recurring, test setup quirks. -->
 
 ## Code Review Findings (Vik)
 
@@ -27,24 +26,21 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 ## Security & Compliance (Pierrot)
 
 <!-- Pierrot: add accepted risks, threat surfaces evaluated, and security
-     trade-offs here. Decisions the human explicitly approved should be recorded
-     so they aren't re-flagged in future sessions. -->
+     trade-offs here. Decisions the human explicitly approved should be recorded so they aren't re-flagged in future sessions. -->
 
 ## Implementation Patterns (Sato)
 
 - **Sweep all case variants when renaming.** `replace_all` for `marketId` misses `MarketId`, `market_id`, `MARKET_ID`, and names like `validateMarketId`. After any rename, run a case-insensitive grep as a final sweep: `grep -riE 'oldname|old_name'` across the repo. Check function names, type names, variable names, and comments.
 
 <!-- Sato: add codebase-specific implementation patterns, performance learnings,
-     and quirks here. Examples: which abstractions work well, fragile areas,
-     API client behaviors that differ from their types. -->
+     and quirks here. Examples: which abstractions work well, fragile areas, API client behaviors that differ from their types. -->
 
 ## Architecture Patterns (Archie)
 
 - **YAGNI vs. Planned Capabilities (the Drift Trap).** YAGNI says don't build abstractions for hypothetical futures. But when a future capability is architecturally planned (has an ADR, appears in the architecture doc, is on the roadmap), the abstraction boundary that enables it is a **current requirement**, not speculation. Using consumer-specific concepts in a shared type because "we only support X today" is not YAGNI — it's tech debt against a planned capability. **Detection signal:** a shared/core type contains concepts specific to one consumer while the architecture plans for multiple consumers. **Fix:** use format-neutral representations in shared types; consumer-specific conversions happen at the boundary (in the consumer, not in Core).
 
 <!-- Archie: add additional architectural constraints, integration point knowledge, and
-     schema evolution notes here. Patterns that informed past ADRs but aren't
-     worth a standalone ADR themselves. -->
+     schema evolution notes here. Patterns that informed past ADRs but aren't worth a standalone ADR themselves. -->
 
 ## Adapter / Integration Gotchas
 
