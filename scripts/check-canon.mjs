@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "coordinator@2026-06-24", key: ["6 checks: agent files, persona roster, command agent-notes, Done-Gate count, board status-flow, command count", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names"] }
+// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "coordinator@2026-07-03", key: ["8 checks: agent files, persona roster, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md"] }
 //
 // Fitness function for Summon's canon. Our agent/persona/process docs duplicate
 // facts across many files; the agent-notes protocol keeps them in sync by hand.
@@ -171,7 +171,81 @@ function checkCommandCount() {
   }
 }
 
-for (const check of [checkAgentFiles, checkPersonaRoster, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount]) {
+// 7. Canon->meta boundary (ADR-0007 §9): no shipped canon file may carry an
+//    agent-notes `dep` that points into a meta zone. Meta zones are excluded from
+//    the scaffold (docs/history/, docs/adrs/meta/) or removed from the repo
+//    entirely (.claude/handoff.md, the marketing README.md). A canon file that
+//    deps into one ships a reference the user's copy can't resolve — exactly the
+//    dangling `dep` `summon-team doctor` fails on downstream. We catch it here,
+//    in-repo, pre-ship: deterministic path-prefix match, near-zero false positives
+//    (it matches dep paths, not prose). The prose-mention variant was cut as a
+//    non-goal (ADR-0007 §9) — it can't trend to zero and contradicts §5b.
+//
+//    Note: `.claude/handoff.md` and `README.md` are meta *files*, not zone
+//    prefixes — §7 removes handoff.md and it (like the marketing README) never
+//    ships, so a canon dep on either dangles just like a canon->zone dep.
+const META_PREFIXES = ["docs/history/", "docs/adrs/meta/"];
+const META_FILES = new Set([".claude/handoff.md", "README.md"]);
+const isMetaTarget = (dep) =>
+  META_PREFIXES.some((pre) => dep.startsWith(pre)) || META_FILES.has(dep);
+const isCanonPath = (rel) =>
+  !META_PREFIXES.some((pre) => rel.startsWith(pre)) && !META_FILES.has(rel);
+
+function checkCanonMetaBoundary() {
+  // Canon files that can carry agent-notes: the shipped docs, agents, and commands,
+  // plus the two root docs. (Meta zones are skipped — their deps are meta->*, allowed.)
+  const canonRoots = [
+    join(ROOT, ".claude"),
+    join(ROOT, "docs"),
+  ];
+  const files = [
+    ...canonRoots.flatMap(walkMarkdown),
+    ...["CLAUDE.md"].map((r) => join(ROOT, r)).filter(existsSync),
+  ];
+  for (const abs of files) {
+    const rel = relative(ROOT, abs).split("\\").join("/");
+    if (!isCanonPath(rel)) continue; // skip meta files' own deps
+    const block = read(abs).match(/agent-notes:\s*\{[\s\S]*?deps:\s*\[([^\]]*)\]/);
+    if (!block) continue;
+    const deps = block[1]
+      .split(",")
+      .map((s) => s.trim().replace(/^["']|["']$/g, ""))
+      .filter(Boolean);
+    for (const dep of deps) {
+      if (isMetaTarget(dep)) {
+        fail(`canon->meta dep: ${rel} deps on "${dep}" (a meta path that does not ship)`);
+      }
+    }
+  }
+}
+
+// 8. ADR numbering (ADR-0007 §9 rider): because docs/adrs/meta/ fragments the ADR
+//    sequence, assert numbers are unique and contiguous from 0001 across BOTH
+//    docs/adrs/ and docs/adrs/meta/. Turns the numbering-rot risk the meta split
+//    introduces into a machine-caught error. (template.md has no number — skipped.)
+function checkAdrNumbering() {
+  const dirs = [join(ROOT, "docs", "adrs"), join(ROOT, "docs", "adrs", "meta")];
+  const seen = new Map();
+  for (const dir of dirs) {
+    if (!existsSync(dir)) continue;
+    for (const file of mdFiles(dir)) {
+      const m = file.match(/^(\d{4})-/);
+      if (!m) continue;
+      const n = Number(m[1]);
+      if (seen.has(n)) fail(`ADR number ${m[1]} is duplicated: ${file} and ${seen.get(n)}`);
+      else seen.set(n, file);
+    }
+  }
+  const nums = [...seen.keys()].sort((a, b) => a - b);
+  for (let i = 0; i < nums.length; i++) {
+    if (nums[i] !== i + 1) {
+      fail(`ADR numbering not contiguous: expected ${String(i + 1).padStart(4, "0")}, found ${String(nums[i]).padStart(4, "0")} (${seen.get(nums[i])})`);
+      break;
+    }
+  }
+}
+
+for (const check of [checkAgentFiles, checkPersonaRoster, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering]) {
   try {
     check();
   } catch (err) {

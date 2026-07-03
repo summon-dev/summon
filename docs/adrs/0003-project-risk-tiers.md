@@ -1,16 +1,16 @@
 ---
-agent-notes: { ctx: "ADR: four-question per-feature hazard wire (actuation/authority/injection/disclosure) gates safety track; tier is default sensitivity", deps: [CLAUDE.md, docs/process/cross-repo-lessons.md, docs/process/done-gate.md, docs/adrs/0002-tdd-workflow.md], state: active, last: "archie@2026-06-06" }
+agent-notes: { ctx: "ADR: four-question per-feature hazard wire (actuation/authority/injection/disclosure) gates safety track; tier is default sensitivity", deps: [CLAUDE.md, docs/process/done-gate.md, docs/adrs/0002-tdd-workflow.md], state: active, last: "archie@2026-07-03" }
 ---
 
 # ADR-0003: Per-Feature Hazard Trip-Wire and Project Risk Tiers
 
 ## Status
 
-Accepted (2026-06-06) — human-approved after the Architecture Gate (Archie/Wei debate), Pierrot safety sign-off (3 conditions applied), and Pat product sign-off (changes B/D/E applied; A/C deferred to R1 implementation). Debate record: `docs/tracking/2026-06-06-risk-tiers-debate.md`. **Not yet implemented** — see the Implementation note below.
+Accepted (2026-06-06) — human-approved after the Architecture Gate (Archie/Wei debate), Pierrot safety sign-off (3 conditions applied), and Pat product sign-off (changes B/D/E applied; A/C deferred to R1 implementation). The full debate record is retained in Summon's own development history. **Not yet implemented** — see the Implementation note below.
 
 ## Context
 
-Summon applies the same process rigor to every project regardless of blast radius. The cross-repo audit (`docs/process/cross-repo-lessons.md`) made this concrete with two real deployments:
+Summon applies the same process rigor to every project regardless of blast radius. Two real deployments make the cost concrete:
 
 - **`alpaca-trader`** takes real money via a live broker API and acts irreversibly and unsupervised. It needs durable-assertion re-checks, kill switches, fail-closed defaults, and audit trails.
 - **`predictasaurv2`** is a prediction/analysis pipeline — real users and data, but recoverable failures.

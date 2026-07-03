@@ -24,11 +24,11 @@ What no one wrote down: four of those changes rewrote *how the team itself opera
 
 Here's the uncomfortable part, and it's the actual point: this happened *in the Summon repo*, by an agent that had every gate available — and skipped them anyway. Gates you have to remember to invoke get skipped. That's human, and no amount of prompt-tuning a single agent reliably fixes it, because the agent making the change is the same one that would have to notice it was skippable.
 
-What Summon changes is the **aftermath**. Run through the team, the omission became *legible and reversible*: seven agents reviewed the change as independent reviewers, each with standing to halt. Wei (the devil's advocate) named it — the team had rewritten its own governance with no record. Archie (architecture) reclassified the four merged commits from "done" to *a spike to ratify or revert*, and the gated follow-on work stayed paused until two ADRs were written, argued across three rounds, and ratified by the human. [ADR-0004](docs/adrs/0004-summon-doctor.md) and [ADR-0005](docs/adrs/0005-behavioral-benchmark.md) now exist.
+What Summon changes is the **aftermath**. Run through the team, the omission became *legible and reversible*: seven agents reviewed the change as independent reviewers, each with standing to halt. Wei (the devil's advocate) named it — the team had rewritten its own governance with no record. Archie (architecture) reclassified the four merged commits from "done" to *a spike to ratify or revert*, and the gated follow-on work stayed paused until two ADRs were written, argued across three rounds, and ratified by the human. [ADR-0004](docs/adrs/meta/0004-summon-doctor.md) and [ADR-0005](docs/adrs/meta/0005-behavioral-benchmark.md) now exist.
 
 A bare agent leaves no decision-shaped hole for anyone to find later — the work just looks done. Summon left a reviewer the standing to stop the merge and a trail that says who decided what, and when. Judge *that* — not a promise that nothing ever slips.
 
-**Read the receipt yourself:** the full episode — verdicts, the freeze, the two ratified ADRs — is recorded in [`docs/process/ponytail-harness-review.md`](docs/process/ponytail-harness-review.md). Click through to the merge that got frozen.
+**Read the receipt yourself:** the full episode — verdicts, the freeze, the two ratified ADRs — is recorded in [`docs/history/ponytail-harness-review.md`](docs/history/ponytail-harness-review.md). Click through to the merge that got frozen.
 
 ---
 

@@ -35,14 +35,30 @@ const EXCLUDE_FILES = new Set([
   "package.json",
 ]);
 
-// Summon's own development-history — process exhaust from building the framework,
-// not template canon a user installs. These are nested paths (not top-level names),
-// so they're stripped after copy/download rather than via the EXCLUDE_DIRS filter.
-// Whole directories only: the doctor suppresses missing agent-notes deps when the
-// parent dir is absent, so removing the whole dir stays doctor-clean, whereas
-// removing individual files (docs/process/*-review.md) that ADRs still depend on
-// would surface as broken wiring downstream.
-const EXCLUDE_PATHS = ["docs/code-reviews", "docs/tracking"];
+// Meta paths (ADR-0007): Summon's own development exhaust — framework-only, not
+// template canon a user installs. Nested paths (not top-level basenames), so they're
+// stripped after copy/download rather than via the basename EXCLUDE_DIRS filter.
+// Canon files must not dep into these (check-canon.mjs fails CI on any canon->meta
+// edge, ADR-0007 §9). rmSync is force+recursive, so a missing path is a safe no-op —
+// which is what makes the "generative dirs" entries a forward guard, not a present cut.
+const EXCLUDE_PATHS = [
+  // The two consolidated meta zones.
+  "docs/history", //     dev-history, war-stories, design docs
+  "docs/adrs/meta", //   product ADRs about building summon-team itself
+  // Generative dirs: the commands write the USER's own reviews/tracking/sprints here
+  // in their project (created on first write), but Summon's own are meta. Excluding
+  // them means a future self-hosted /code-review or /sprint-boundary can't drop fresh
+  // Summon meta into a shipped path. The user's project makes its own on demand.
+  "docs/code-reviews",
+  "docs/tracking",
+  "docs/sprints",
+  // Individual meta files. handoff is per-session scratch: cpSync (the --local path)
+  // ignores .gitignore, so a locally-regenerated handoff would otherwise be copied.
+  // README.md is the marketing page — excluded so it never ships even if the stub
+  // swap below is skipped; README-template.md (not listed) survives to become README.md.
+  ".claude/handoff.md",
+  "README.md",
+];
 
 // `summon-team doctor` — second invocation mode (ADR-0004). Runs the portable
 // health registry against the current working directory; downloads nothing, writes
@@ -226,6 +242,16 @@ async function main() {
       "**Tech Stack:** [Your tech stack]"
     );
     writeFileSync(claudeMdPath, content);
+  }
+
+  // Swap Summon's marketing README for the project stub (ADR-0007 §6). The stub
+  // ships as README-template.md and becomes the new project's README.md, the same
+  // reset pattern applied to CLAUDE.md above; the template file is then consumed so
+  // it doesn't linger. First-Run Detection keys on README-template.md's presence.
+  const readmeTemplatePath = resolve(targetDir, "README-template.md");
+  if (existsSync(readmeTemplatePath)) {
+    cpSync(readmeTemplatePath, resolve(targetDir, "README.md"));
+    rmSync(readmeTemplatePath, { force: true });
   }
 
   // Initialize git repo with an initial commit

@@ -1,7 +1,7 @@
 ---
 agent-notes:
   ctx: "team review of the ponytail/harness-engineering integration + decision record"
-  deps: [CLAUDE.md, docs/process/cross-repo-lessons.md, docs/adrs/0004-summon-doctor.md, docs/adrs/0005-behavioral-benchmark.md, docs/adrs/template.md]
+  deps: [CLAUDE.md, docs/history/cross-repo-lessons.md, docs/adrs/meta/0004-summon-doctor.md, docs/adrs/meta/0005-behavioral-benchmark.md, docs/adrs/template.md]
   state: active
   last: "coordinator@2026-06-24"
 ---
@@ -83,8 +83,8 @@ Reviewed 2026-06-24 by **Cam** (vision), **Wei** (devil's advocate), **Archie** 
 | **Ratify spike** | The 4 merged commits are a spike. Keep #cd3b4dd (check-canon, the exemplar) and #1d597d2 (proof-graded Done Gate). Dedupe the simplicity lens (4→1+refs) and "encode the fix" (3→1+refs). `/grill` and the YAGNI lens stay but stop being re-stated. | This decision record + edits to `vik.md`/`code-reviewer.md`/`done-gate.md`/`retro.md` | coordinator |
 | **Bug A** | **ADOPT NOW** — extend `check-canon`'s Done-Gate-count scan to cover `README.md`, `CHANGELOG.md`, and `site/`; fix the 6 stale "15-item" strings. | `scripts/check-canon.mjs` + the stale files | Sato |
 | **Bug B** | **ADOPT NOW (record)** — the "ships to scaffolded projects" premise in #30 is false today (CLI `EXCLUDE_FILES`/`EXCLUDE_DIRS` delete `package.json` + `packages/`). Resolution decided in ADR-0004. | ADR-0004 | Archie |
-| **#30 doctor** | **ADR-0004 (Proposed)** — home, canon-vs-portable check split, exit-code v1 contract; `--json` envelope **deferred** until a real consumer exists. | `docs/adrs/0004-summon-doctor.md` | Archie |
-| **#31 benchmark** | **ADR-0005 (Proposed)** — outcome track + budget-matched control + real n + pre-registration + grader contract. Phase 1 offline only. | `docs/adrs/0005-behavioral-benchmark.md` | Archie + Tara + Debra |
+| **#30 doctor** | **ADR-0004 (Proposed)** — home, canon-vs-portable check split, exit-code v1 contract; `--json` envelope **deferred** until a real consumer exists. | `docs/adrs/meta/0004-summon-doctor.md` | Archie |
+| **#31 benchmark** | **ADR-0005 (Proposed)** — outcome track + budget-matched control + real n + pre-registration + grader contract. Phase 1 offline only. | `docs/adrs/meta/0005-behavioral-benchmark.md` | Archie + Tara + Debra |
 | **#32 positioning** | **SPLIT** — #32a (qualitative before/after + ICP + anti-use-case + FAQ) ships now; #32b (wire the number) gated on ADR-0005 Phase 2. Ungate #32a from #31. | Update issues #32 → #32a/#32b | Pat |
 | **Older CLI/copilot issues (#11–#27)** | **DEFER** until the positioning bet resolves — distribution multiplies a thing we haven't yet proven people want (Pat). | board | Pat + Grace |
 

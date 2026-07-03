@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "ADR: multi-runtime install (claude/copilot/both), manifest, generation-as-projection, CLI verb set", deps: [docs/adrs/template.md, docs/adrs/0004-summon-doctor.md, docs/adrs/0005-behavioral-benchmark.md, packages/summon-team/src/index.ts, packages/summon-team/src/doctor.ts], state: accepted, last: "claude@2026-07-02", key: ["manifest schema = § Additional Decisions #6", "Copilot output is a projection of .claude/*, never hand-authored", "targets: claude (default) | copilot | both = Cases A/C/B"] }
+agent-notes: { ctx: "ADR: multi-runtime install (claude/copilot/both), manifest, generation-as-projection, CLI verb set", deps: [docs/adrs/template.md, docs/adrs/meta/0004-summon-doctor.md, docs/adrs/meta/0005-behavioral-benchmark.md, packages/summon-team/src/index.ts, packages/summon-team/src/doctor.ts], state: accepted, last: "claude@2026-07-02", key: ["manifest schema = § Additional Decisions #6", "Copilot output is a projection of .claude/*, never hand-authored", "targets: claude (default) | copilot | both = Cases A/C/B"] }
 ---
 
 # ADR-0006: Multi-Runtime Install, the `.summon/manifest.json`, and Generation-as-Projection

@@ -1,8 +1,8 @@
-<!-- agent-notes: { ctx: "Architecture Gate debate record for ADR-0003 risk tiers", deps: [docs/adrs/0003-project-risk-tiers.md, docs/process/cross-repo-lessons.md, docs/process/team-governance.md], state: active, last: "coordinator@2026-06-06" } -->
+<!-- agent-notes: { ctx: "Architecture Gate debate record for ADR-0003 risk tiers", deps: [docs/adrs/0003-project-risk-tiers.md, docs/history/cross-repo-lessons.md, docs/process/team-governance.md], state: active, last: "coordinator@2026-06-06" } -->
 
 # Debate: Project Risk Tiers & Per-Feature Hazard Trip-Wire (R1)
 
-**ADR:** `docs/adrs/0003-project-risk-tiers.md` **Date:** 2026-06-06 **Participants:** Archie (author) vs Wei (challenger); Pierrot (safety co-owner, veto power); Pat (product co-owner) **Context:** Wave 2 item R1 from `docs/process/cross-repo-lessons.md` — the keystone that gates the rest of Wave 2 (#2 review-reliability, S1 safety track). Run as standalone subagents per the Architecture Decision Gate in `docs/process/team-governance.md`.
+**ADR:** `docs/adrs/0003-project-risk-tiers.md` **Date:** 2026-06-06 **Participants:** Archie (author) vs Wei (challenger); Pierrot (safety co-owner, veto power); Pat (product co-owner) **Context:** Wave 2 item R1 from `docs/history/cross-repo-lessons.md` — the keystone that gates the rest of Wave 2 (#2 review-reliability, S1 safety track). Run as standalone subagents per the Architecture Decision Gate in `docs/process/team-governance.md`.
 
 ## Outcome
 

@@ -1,4 +1,4 @@
-// agent-notes: { ctx: "summon doctor — portable health registry, run on-demand against cwd (ADR-0004)", deps: ["src/index.ts", "docs/adrs/0004-summon-doctor.md"], state: active, last: "sato@2026-06-24" }
+// agent-notes: { ctx: "summon doctor — portable health registry, run on-demand against cwd (ADR-0004)", deps: ["src/index.ts", "docs/adrs/meta/0004-summon-doctor.md"], state: active, last: "sato@2026-07-03" }
 //
 // The `health` registry per ADR-0004: "is THIS project's Summon install wired
 // correctly?" — run downstream via `npx summon-team@latest doctor`, against cwd,

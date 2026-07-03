@@ -3,7 +3,7 @@ agent-notes:
   ctx: "who owns which docs, update rules"
   deps: [CLAUDE.md]
   state: active
-  last: "vik@2026-06-15"
+  last: "vik@2026-07-03"
 ---
 # Document Ownership
 
@@ -62,3 +62,18 @@ Ines owns `docs/config-manifest.md`. Every environment variable, feature flag, a
 ## Changelog
 
 Diego owns `CHANGELOG.md`. At release time, generate entries from conventional commits, group by type, translate into user-facing language. Breaking changes include migration steps.
+
+## What Ships (Canon vs Meta)
+
+Summon's template repo is also its own development repo, so every doc is one of two kinds, and only one kind ships into a scaffolded project (ADR-0007).
+
+**The test:** a file is **canon** if it is about the user's project or the methodology they practice; it is **meta** if it is about building or operating Summon itself. One question decides it — *"when a stranger scaffolds their app with `summon-team`, does this file help them build it, or does it only make sense to a Summon maintainer?"* Help the user → canon (ships). Only makes sense to us → meta (repo-only). The test keys on the file's **subject**, not its directory: a meta file in an otherwise-canon folder is still meta and is excluded individually.
+
+**The two meta zones** (excluded from the scaffold by the CLI's `EXCLUDE_PATHS`):
+
+- `docs/history/` — dev-history, war-stories, and design docs (code reviews, gate transcripts, cross-repo audits, site art bibles).
+- `docs/adrs/meta/` — product ADRs about building `summon-team` itself. **Canon ADRs stay in `docs/adrs/`** (0001–0003, `template.md`, and the `0008` worked example) and ship.
+
+Two more files are meta by subject and never ship: the marketing `README.md` (a project stub, `README-template.md`, ships as the user's README instead) and `.claude/handoff.md` (per-session scratch, gitignored).
+
+**The one hard rule this creates:** a canon file must never carry an agent-notes `dep` on a meta file — downstream it becomes a dangling reference the user's `doctor` fails on. `scripts/check-canon.mjs` enforces this in CI (any canon→meta `dep` is a hard failure) and also asserts ADR numbers stay contiguous across both `adrs/` directories. Dead *prose* mentions of meta paths are a style matter caught by review, not the sensor — prefer generic phrasing ("the debate record for this decision") over a specific path that won't exist in the user's copy.
