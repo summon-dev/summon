@@ -26,13 +26,30 @@ const VERSION = typeof __VERSION__ !== "undefined" ? __VERSION__ : "0.0.0-dev";
 // Must start with a letter or number — no leading hyphens
 const PROJECT_NAME_RE = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/;
 
-// Directories and files that are repo infrastructure, not part of the template
-const EXCLUDE_DIRS = new Set(["packages", "site", "node_modules", ".git"]);
+// Directories that are Summon's own repo infrastructure, not template canon.
+// Matched by basename during the copy filter (so a nested one is caught too).
+// .github (Summon's CI + site-deploy workflows) and .playwright-mcp (gitignored
+// browser scratch that --local's cpSync would otherwise copy) are meta, ADR-0007.
+const EXCLUDE_DIRS = new Set([
+  "packages",
+  "site",
+  "node_modules",
+  ".git",
+  ".github",
+  ".playwright-mcp",
+]);
+// Files that are Summon's own project metadata, not the user's. The governance
+// files describe the Summon project/community (CONTRIBUTING "to Summon", Summon's
+// security policy) or carry Summon's copyright (LICENSE) — the user writes their own.
 const EXCLUDE_FILES = new Set([
   "CHANGELOG.md",
   "pnpm-workspace.yaml",
   "pnpm-lock.yaml",
   "package.json",
+  "CONTRIBUTING.md",
+  "CODE_OF_CONDUCT.md",
+  "SECURITY.md",
+  "LICENSE",
 ]);
 
 // Meta paths (ADR-0007): Summon's own development exhaust — framework-only, not
