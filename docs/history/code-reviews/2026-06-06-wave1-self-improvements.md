@@ -1,17 +1,17 @@
 ---
 agent-notes:
   ctx: "review of Wave 1 self-improvement framework edits"
-  deps: [CLAUDE.md, .claude/agents/sato.md, .claude/agents/tara.md, .claude/agents/code-reviewer.md, .claude/agents/wei.md, docs/process/cross-repo-lessons.md, docs/process/gotchas.md]
+  deps: [CLAUDE.md, .claude/agents/sato.md, .claude/agents/tara.md, .claude/agents/code-reviewer.md, .claude/agents/wei.md, docs/history/cross-repo-lessons.md, docs/process/gotchas.md]
   state: active
   last: "code-reviewer@2026-06-06"
 ---
 # Code Review: Wave 1 Self-Improvement Edits
 
-**Date:** 2026-06-06 **Reviewed by:** Vik (simplicity), Tara (testing), Pierrot (security), Archie (conformance) **Files reviewed:** `CLAUDE.md`, `.claude/agents/sato.md`, `.claude/agents/tara.md`, `.claude/agents/code-reviewer.md`, `.claude/agents/wei.md`, `docs/process/cross-repo-lessons.md` (changed); `docs/process/gotchas.md`, `docs/methodology/agent-notes.md` (context) **Verdict:** Approved with suggestions
+**Date:** 2026-06-06 **Reviewed by:** Vik (simplicity), Tara (testing), Pierrot (security), Archie (conformance) **Files reviewed:** `CLAUDE.md`, `.claude/agents/sato.md`, `.claude/agents/tara.md`, `.claude/agents/code-reviewer.md`, `.claude/agents/wei.md`, `docs/history/cross-repo-lessons.md` (changed); `docs/process/gotchas.md`, `docs/methodology/agent-notes.md` (context) **Verdict:** Approved with suggestions
 
 ## Context
 
-Wave 1 of the cross-repo self-improvement initiative implements five decisions from `docs/process/cross-repo-lessons.md` Section 2 (#3, #7, #1-reshaped, #5, #4). These are prose/process edits to framework Markdown — no application code, no tests. The unifying finding behind the wave is **silent subagent-output truncation**: a truncated agent message that reads "looks clean" is a false green that can ship a real bug, a hardcoded secret, or a missing authz check. Wave 1's response is a *file-based-report + completion-sentinel* discipline plus a coordinator rule to treat agent output as untrusted.
+Wave 1 of the cross-repo self-improvement initiative implements five decisions from `docs/history/cross-repo-lessons.md` Section 2 (#3, #7, #1-reshaped, #5, #4). These are prose/process edits to framework Markdown — no application code, no tests. The unifying finding behind the wave is **silent subagent-output truncation**: a truncated agent message that reads "looks clean" is a false green that can ship a real bug, a hardcoded secret, or a missing authz check. Wave 1's response is a *file-based-report + completion-sentinel* discipline plus a coordinator rule to treat agent output as untrusted.
 
 The review's load-bearing concern is the Wave 1 / Wave 2 boundary: Wave 2 (the parallel-spawn / input-sharding / per-lens fail-closed restructure of `code-reviewer.md`, audit gap #2, guardrails G1–G5) is gated behind ADRs and Pierrot's conditional veto-lift. Wave 1 must add only the sentinel *primitive* and explicitly defer the restructure.
 

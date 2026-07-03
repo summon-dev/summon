@@ -1,12 +1,12 @@
 ---
-agent-notes: { ctx: "ADR: outcome-graded benchmark, budget-matched control, slice-first phasing, causal-trace deferred; passed gate", deps: [CLAUDE.md, docs/process/ponytail-harness-review.md, docs/adrs/0004-summon-doctor.md, .claude/commands/grill.md, docs/tracking/2026-06-24-doctor-benchmark-gate-debate.md], state: active, last: "archie@2026-06-24" }
+agent-notes: { ctx: "ADR: outcome-graded benchmark, budget-matched control, slice-first phasing, causal-trace deferred; passed gate", deps: [CLAUDE.md, docs/history/ponytail-harness-review.md, docs/adrs/meta/0004-summon-doctor.md, .claude/commands/grill.md, docs/tracking/2026-06-24-doctor-benchmark-gate-debate.md], state: active, last: "archie@2026-06-24" }
 ---
 
 # ADR-0005: Behavioral Benchmark Architecture and the PROCESS-Grader Contract
 
 ## Status
 
-Accepted (2026-06-24) — human-approved after the Architecture Gate (Archie/Wei debate, three rounds; Wei holds no block). Revised from the seven-agent direction review recorded in `docs/process/ponytail-harness-review.md` (Tara/Debra/Wei/Pat lenses). **Tara grader sign-off still required before grader code is built** (a build-time gate, not an acceptance blocker). Implements the reframed form of GitHub issue #31. Its number is the input to issue #32b (positioning), which must not cite it until this benchmark produces a defensible figure.
+Accepted (2026-06-24) — human-approved after the Architecture Gate (Archie/Wei debate, three rounds; Wei holds no block). Revised from the seven-agent direction review recorded in `docs/history/ponytail-harness-review.md` (Tara/Debra/Wei/Pat lenses). **Tara grader sign-off still required before grader code is built** (a build-time gate, not an acceptance blocker). Implements the reframed form of GitHub issue #31. Its number is the input to issue #32b (positioning), which must not cite it until this benchmark produces a defensible figure.
 
 Debate record: docs/tracking/2026-06-24-doctor-benchmark-gate-debate.md
 

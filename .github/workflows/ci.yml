@@ -1,4 +1,4 @@
-# <!-- agent-notes: { ctx: "GitHub Actions CI pipeline", deps: [package.json, pnpm-workspace.yaml, scripts/check-canon.mjs], state: canonical, last: "ines@2026-06-15" } -->
+# <!-- agent-notes: { ctx: "GitHub Actions CI pipeline", deps: [package.json, pnpm-workspace.yaml, scripts/check-canon.mjs], state: canonical, last: "ines@2026-07-03" } -->
 
 name: CI
 
@@ -33,6 +33,9 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Check repo health (doctor)
+        run: pnpm check:doctor
 
       - name: Run tests
         run: pnpm test

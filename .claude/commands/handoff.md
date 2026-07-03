@@ -1,4 +1,4 @@
-<!-- agent-notes: { ctx: "session handoff for wave-based sprint execution", deps: [CLAUDE.md, docs/sprints/, docs/code-map.md], state: active, last: "coordinator@2026-07-03" } -->
+<!-- agent-notes: { ctx: "session handoff for wave-based sprint execution", deps: [CLAUDE.md, docs/code-map.md], state: active, last: "coordinator@2026-07-03" } -->
 Create a session handoff document so the next session can pick up where this one left off.
 
 ## Steps

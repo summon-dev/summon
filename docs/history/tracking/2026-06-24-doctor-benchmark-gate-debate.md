@@ -1,7 +1,7 @@
 ---
 agent-notes:
   ctx: "Architecture Gate debate record — ADR-0004 (doctor) + ADR-0005 (benchmark)"
-  deps: [docs/adrs/0004-summon-doctor.md, docs/adrs/0005-behavioral-benchmark.md, docs/process/ponytail-harness-review.md, docs/process/team-governance.md]
+  deps: [docs/adrs/meta/0004-summon-doctor.md, docs/adrs/meta/0005-behavioral-benchmark.md, docs/history/ponytail-harness-review.md, docs/process/team-governance.md]
   state: active
   last: "coordinator@2026-06-24"
 ---

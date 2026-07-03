@@ -20,7 +20,7 @@ Today, a large slice of what survives is Summon's *own* development exhaust, not
 
 - **Product ADRs** about building `summon-team` itself — 0004 (`doctor`), 0005 (behavioral benchmark), and 0006 (multi-runtime install, forthcoming). A user scaffolding a payments app inherits three ADRs debating *our* CLI's internals.
 - **Dev-history** — `docs/code-reviews/` and `docs/tracking/` (debate records, gate transcripts).
-- **War-story docs** — `docs/process/ponytail-harness-review.md` and `docs/process/cross-repo-lessons.md` (a specific multi-repo audit of *our* sibling projects).
+- **War-story docs** — `docs/history/ponytail-harness-review.md` and `docs/history/cross-repo-lessons.md` (a specific multi-repo audit of *our* sibling projects).
 - **Site design docs** — `docs/design/team-hero-sprites*.md` (marketing-sprite art bibles).
 - **A stale session snapshot** — `.claude/handoff.md`, dated 2026-06-29, regenerated per session by `/handoff`; it describes *this repo's* merge state and has no meaning downstream.
 - **The marketing `README.md`** — a sales page for Summon, shipped verbatim as the new project's README.
@@ -57,9 +57,9 @@ The test keys on **subject**, not location or format. A Markdown file, an ADR, a
 
 | File | Why meta |
 |------|----------|
-| `docs/adrs/0004-summon-doctor.md` | Designs *our* CLI's internals; irrelevant to a user's app. |
+| `docs/adrs/meta/0004-summon-doctor.md` | Designs *our* CLI's internals; irrelevant to a user's app. |
 | `docs/code-reviews/`, `docs/tracking/` | Records of *our* development sessions. |
-| `docs/process/ponytail-harness-review.md`, `cross-repo-lessons.md` | Audits of *our* sibling repos. |
+| `docs/history/ponytail-harness-review.md`, `cross-repo-lessons.md` | Audits of *our* sibling repos. |
 | `docs/design/team-hero-sprites*.md` | Art direction for *our* marketing site. |
 | `.claude/handoff.md` | A snapshot of *this repo's* session state. |
 | `README.md` (marketing) | A sales page for Summon the product. |
@@ -71,7 +71,7 @@ The `docs/sprints/` row is the test doing real work: the **directory concept** i
 
 We keep **one repo** and separate the two audiences by **zone**. The scaffolder's exclude mechanism (#45's `EXCLUDE_PATHS`, path-prefix based) drops the meta zones wholesale:
 
-- **`docs/history/`** — new dir. Absorbs all dev-history and war-story and design content: `docs/code-reviews/` → `docs/history/code-reviews/`, `docs/tracking/` → `docs/history/tracking/`, `docs/process/ponytail-harness-review.md` and `cross-repo-lessons.md` → `docs/history/`, `docs/design/` → `docs/history/design/`.
+- **`docs/history/`** — new dir. Absorbs all dev-history and war-story and design content: `docs/code-reviews/` → `docs/history/code-reviews/`, `docs/tracking/` → `docs/history/tracking/`, `docs/history/ponytail-harness-review.md` and `cross-repo-lessons.md` → `docs/history/`, `docs/design/` → `docs/history/design/`.
 - **`docs/adrs/meta/`** — new dir. Holds the product ADRs (0004, 0005, 0006) and this one (0007). **Canon ADRs stay in `docs/adrs/`** (0001 conventional-commits, 0002 tdd-workflow, 0003 project-risk-tiers) alongside `template.md`, and they ship.
 
 The scaffolder excludes `docs/history/` and `docs/adrs/meta/` via `EXCLUDE_PATHS`. That is the whole enforcement surface for *exclusion*: two path prefixes (plus any individually-classified meta file, per §1's individual-file rule), not a growing per-file guess-list.
@@ -99,8 +99,8 @@ Every meaningful `docs/` area and stray file, classified:
 | `docs/sprints/` (empty) | **Canon** | Ships as an empty scaffold dir |
 | `docs/code-reviews/` | **Meta** | → `docs/history/code-reviews/` |
 | `docs/tracking/` | **Meta** | → `docs/history/tracking/` |
-| `docs/process/ponytail-harness-review.md` | **Meta** | → `docs/history/` |
-| `docs/process/cross-repo-lessons.md` | **Meta** | → `docs/history/` |
+| `docs/history/ponytail-harness-review.md` | **Meta** | → `docs/history/` |
+| `docs/history/cross-repo-lessons.md` | **Meta** | → `docs/history/` |
 | `docs/design/` | **Meta** | → `docs/history/design/` |
 | `docs/adrs/` 0004, 0005 (+ 0006 when the multi-runtime branch lands) | **Meta** | → `docs/adrs/meta/` |
 | `.claude/handoff.md` | **Meta** | Removed + gitignored (§7) |
@@ -114,7 +114,7 @@ Two rows in this table are subject-test calls a folder-level rule would get wron
 
 ### 4. Sever the one canon→meta agent-notes dep (ratified)
 
-ADR-0003 is canon and ships. Its agent-notes `deps` today read `[CLAUDE.md, docs/process/cross-repo-lessons.md, docs/process/done-gate.md, docs/adrs/0002-tdd-workflow.md]` — and `cross-repo-lessons.md` becomes meta. Left alone, 0003 ships downstream carrying a `dep` to a file that **does not exist in the user's copy**, which is exactly the dangling reference the `health` registry's "agent-notes deps resolve" check (ADR-0004 §2) is built to fail. A canon file must not depend on a meta file.
+ADR-0003 is canon and ships. Its agent-notes `deps` today read `[CLAUDE.md, docs/history/cross-repo-lessons.md, docs/process/done-gate.md, docs/adrs/0002-tdd-workflow.md]` — and `cross-repo-lessons.md` becomes meta. Left alone, 0003 ships downstream carrying a `dep` to a file that **does not exist in the user's copy**, which is exactly the dangling reference the `health` registry's "agent-notes deps resolve" check (ADR-0004 §2) is built to fail. A canon file must not depend on a meta file.
 
 **Sever it.** Rewrite 0003's `deps` to drop `cross-repo-lessons.md`. Nothing is lost: 0003's Context cites the audit for two concrete deployments (`alpaca-trader`, `predictasaurv2`) as the motivating evidence for tiering. The **one line of rationale 0003 actually needs** — *"a single fixed ceremony over-serves throwaway projects and under-serves money-moving ones"* — is inlined into 0003's Context so the argument stands on its own, and the `dep` on the war-story is dropped. The war-story remains in `docs/history/` for anyone who wants the full audit; canon no longer *points* at it. (This is the only canon→meta `dep` in the repo today — see §5a.)
 
@@ -122,7 +122,7 @@ ADR-0003 is canon and ships. Its agent-notes `deps` today read `[CLAUDE.md, docs
 
 Cutting the zones creates two kinds of dangling reference. They are not the same problem and get different policies.
 
-**5a. HARD coupling — agent-notes `deps` that cross canon→meta.** These are machine-checked downstream: `checkAgentNotesDeps` **ships today** in the `health` registry (`packages/summon-team/src/doctor.ts`, in `runHealth`) and runs against the user's repo via `npx summon-team doctor`. It resolves every agent-notes `dep` under `.claude/`/`docs/` and errors on a missing target — with one deliberate suppression: a missing dep is **only** flagged when its immediate parent directory still exists downstream (an absent parent is read as "not-yet-generated," not a fault). That heuristic makes the break **precise and real** for the case that matters here: a canon file whose `dep` points at a meta file **pulled out of a still-present canon directory** — exactly 0003 → `docs/process/cross-repo-lessons.md` after the file moves to `docs/history/` (parent `docs/process/` still ships, target gone → **error on day one**). A `dep` written directly at a path *inside* an excluded zone (`docs/history/…`, `docs/adrs/meta/…`) is instead silently *suppressed* downstream (its parent dir was excluded) — not an error, but a latent dangling pointer that turns into one the moment the check tightens. Both are defects. Policy: **canon→meta `deps` are forbidden.** There is exactly one today (0003 → `cross-repo-lessons.md`); §4 severs it. The suppression is also why the pre-ship sensor belongs in `check-canon.mjs`, which sees *both* zones in-repo and catches every canon→meta edge deterministically, rather than relying on the downstream `doctor`, whose heuristic hides the in-zone half (§9). Meta→meta `deps` are **fine** — the two files move into the exclude zone *together*, so the reference never dangles (e.g. 0004's `deps` on `docs/tracking/…` and `ponytail-harness-review.md` are meta→meta and need no surgery). Meta→canon `deps` are **fine** — the canon target ships, but since the meta file itself never ships, its `deps` are never resolved downstream anyway. **Only canon→meta is a defect.**
+**5a. HARD coupling — agent-notes `deps` that cross canon→meta.** These are machine-checked downstream: `checkAgentNotesDeps` **ships today** in the `health` registry (`packages/summon-team/src/doctor.ts`, in `runHealth`) and runs against the user's repo via `npx summon-team doctor`. It resolves every agent-notes `dep` under `.claude/`/`docs/` and errors on a missing target — with one deliberate suppression: a missing dep is **only** flagged when its immediate parent directory still exists downstream (an absent parent is read as "not-yet-generated," not a fault). That heuristic makes the break **precise and real** for the case that matters here: a canon file whose `dep` points at a meta file **pulled out of a still-present canon directory** — exactly 0003 → `docs/history/cross-repo-lessons.md` after the file moves to `docs/history/` (parent `docs/process/` still ships, target gone → **error on day one**). A `dep` written directly at a path *inside* an excluded zone (`docs/history/…`, `docs/adrs/meta/…`) is instead silently *suppressed* downstream (its parent dir was excluded) — not an error, but a latent dangling pointer that turns into one the moment the check tightens. Both are defects. Policy: **canon→meta `deps` are forbidden.** There is exactly one today (0003 → `cross-repo-lessons.md`); §4 severs it. The suppression is also why the pre-ship sensor belongs in `check-canon.mjs`, which sees *both* zones in-repo and catches every canon→meta edge deterministically, rather than relying on the downstream `doctor`, whose heuristic hides the in-zone half (§9). Meta→meta `deps` are **fine** — the two files move into the exclude zone *together*, so the reference never dangles (e.g. 0004's `deps` on `docs/tracking/…` and `ponytail-harness-review.md` are meta→meta and need no surgery). Meta→canon `deps` are **fine** — the canon target ships, but since the meta file itself never ships, its `deps` are never resolved downstream anyway. **Only canon→meta is a defect.**
 
 **5b. SOFT coupling — prose mentions of meta paths in shipped canon docs.** Roughly ten shipped canon files *mention* meta paths in body text: `.claude/commands/` — kickoff, plan, tdd, code-review, sprint-boundary, handoff; and `docs/process/team-governance.md`, `docs/methodology/phases.md`, `docs/process/gotchas.md`, `docs/process/tracking-protocol.md`. Example: a command that says "see the debate record in `docs/tracking/…`." In a user's copy that becomes a link to a file they don't have. This is **not** machine-checked by `doctor` (prose links aren't `deps`), so it is cosmetic-but-real: a dead pointer erodes trust in the docs.
 
@@ -146,7 +146,7 @@ This does double duty: it stops shipping a sales page as the user's README **and
 
 ### 8. Where this ADR lives
 
-ADR-0007 is **meta** — it is about building Summon, and by its own test (§1) it does not help a stranger build their app. It is authored at `docs/adrs/0007-canon-meta-boundary.md` for review convenience (next to the ADRs it reasons about), and the follow-up PR **moves it to `docs/adrs/meta/0007-canon-meta-boundary.md`** with the other product ADRs. Its agent-notes `deps` point only at canon (`CLAUDE.md`, `template.md`, `0003`) and at code (`index.ts`, `check-canon.mjs`) — all meta→canon or meta→code, both allowed (§5a), so this ADR itself never creates a forbidden edge.
+ADR-0007 is **meta** — it is about building Summon, and by its own test (§1) it does not help a stranger build their app. It is authored at `docs/adrs/meta/0007-canon-meta-boundary.md` for review convenience (next to the ADRs it reasons about), and the follow-up PR **moves it to `docs/adrs/meta/0007-canon-meta-boundary.md`** with the other product ADRs. Its agent-notes `deps` point only at canon (`CLAUDE.md`, `template.md`, `0003`) and at code (`index.ts`, `check-canon.mjs`) — all meta→canon or meta→code, both allowed (§5a), so this ADR itself never creates a forbidden edge.
 
 ### 9. Anti-rot enforcement: extend `check-canon.mjs` with a boundary sensor (recommended)
 

@@ -200,6 +200,59 @@ describe("summon-team CLI", () => {
     expect(existsSync(join(projectDir, ".claude", "handoff.md"))).toBe(false);
   }, 30_000);
 
+  it("strips every meta path from a template that contains them", async () => {
+    // The REPO_ROOT tests assert the current tree ships clean, but they can't prove
+    // the *exclusion* fires — the meta files were already moved out. Build a synthetic
+    // template that DOES contain a file in each meta path (including a regenerated
+    // handoff.md, which the --local copy would otherwise pick up since cpSync ignores
+    // .gitignore), then assert the scaffold strips them all and keeps canon.
+    const cwd = makeTempDir();
+    const src = makeTempDir();
+    const metaPaths = [
+      "docs/history",
+      "docs/adrs/meta",
+      "docs/code-reviews",
+      "docs/tracking",
+      "docs/sprints",
+    ];
+
+    mkdirSync(join(src, ".claude"), { recursive: true });
+    writeFileSync(join(src, ".claude", "handoff.md"), "# stale session snapshot");
+    writeFileSync(join(src, ".claude", "keep.md"), "canon agent file");
+    for (const p of metaPaths) {
+      mkdirSync(join(src, ...p.split("/")), { recursive: true });
+      writeFileSync(join(src, ...p.split("/"), "x.md"), `meta under ${p}`);
+    }
+    mkdirSync(join(src, "docs", "methodology"), { recursive: true });
+    writeFileSync(join(src, "docs", "methodology", "phases.md"), "canon");
+    writeFileSync(join(src, "README.md"), "code you have to answer for later");
+    writeFileSync(
+      join(src, "README-template.md"),
+      "# [Your Project Name]\nBuilt with Summon"
+    );
+    writeFileSync(join(src, "CLAUDE.md"), "**Project Name:** Summon");
+
+    const result = await run(["--local", src, "excl"], { cwd });
+    expect(result.code).toBe(0);
+    const out = join(cwd, "excl");
+
+    // Every meta path (and the regenerated handoff) is stripped
+    for (const p of metaPaths) {
+      expect(existsSync(join(out, ...p.split("/")))).toBe(false);
+    }
+    expect(existsSync(join(out, ".claude", "handoff.md"))).toBe(false);
+
+    // Canon survives
+    expect(existsSync(join(out, ".claude", "keep.md"))).toBe(true);
+    expect(existsSync(join(out, "docs", "methodology", "phases.md"))).toBe(true);
+
+    // Marketing README is gone even though it was present; the stub took its place
+    const readme = readFileSync(join(out, "README.md"), "utf-8");
+    expect(readme).toContain("[Your Project Name]");
+    expect(readme).not.toContain("code you have to answer for later");
+    expect(existsSync(join(out, "README-template.md"))).toBe(false);
+  }, 30_000);
+
   it("rejects when target directory already exists and is non-empty", async () => {
     const cwd = makeTempDir();
     const projectName = "existing-project";

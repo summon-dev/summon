@@ -35,15 +35,30 @@ const EXCLUDE_FILES = new Set([
   "package.json",
 ]);
 
-// The meta zones (ADR-0007): Summon's own development exhaust and product ADRs —
-// framework-only, not template canon a user installs. `docs/history/` holds dev-history,
-// war-stories, and design docs; `docs/adrs/meta/` holds the product ADRs about building
-// summon-team itself. These are nested paths (not top-level names), so they're stripped
-// after copy/download rather than via the basename EXCLUDE_DIRS filter. Whole zones only:
-// the doctor suppresses a missing agent-notes dep when the parent dir is absent, so
-// removing an entire zone stays doctor-clean — and canon files must not dep into these
-// zones (check-canon.mjs fails CI on any canon->meta edge, ADR-0007 §9).
-const EXCLUDE_PATHS = ["docs/history", "docs/adrs/meta"];
+// Meta paths (ADR-0007): Summon's own development exhaust — framework-only, not
+// template canon a user installs. Nested paths (not top-level basenames), so they're
+// stripped after copy/download rather than via the basename EXCLUDE_DIRS filter.
+// Canon files must not dep into these (check-canon.mjs fails CI on any canon->meta
+// edge, ADR-0007 §9). rmSync is force+recursive, so a missing path is a safe no-op —
+// which is what makes the "generative dirs" entries a forward guard, not a present cut.
+const EXCLUDE_PATHS = [
+  // The two consolidated meta zones.
+  "docs/history", //     dev-history, war-stories, design docs
+  "docs/adrs/meta", //   product ADRs about building summon-team itself
+  // Generative dirs: the commands write the USER's own reviews/tracking/sprints here
+  // in their project (created on first write), but Summon's own are meta. Excluding
+  // them means a future self-hosted /code-review or /sprint-boundary can't drop fresh
+  // Summon meta into a shipped path. The user's project makes its own on demand.
+  "docs/code-reviews",
+  "docs/tracking",
+  "docs/sprints",
+  // Individual meta files. handoff is per-session scratch: cpSync (the --local path)
+  // ignores .gitignore, so a locally-regenerated handoff would otherwise be copied.
+  // README.md is the marketing page — excluded so it never ships even if the stub
+  // swap below is skipped; README-template.md (not listed) survives to become README.md.
+  ".claude/handoff.md",
+  "README.md",
+];
 
 // `summon-team doctor` — second invocation mode (ADR-0004). Runs the portable
 // health registry against the current working directory; downloads nothing, writes

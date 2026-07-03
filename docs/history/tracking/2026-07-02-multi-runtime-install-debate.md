@@ -1,8 +1,8 @@
-<!-- agent-notes: { ctx: "Architecture Gate debate record for ADR-0006 (multi-runtime install)", deps: [docs/adrs/0006-multi-runtime-install.md, .claude/agents/wei.md, docs/adrs/0004-summon-doctor.md], state: complete, last: "claude@2026-07-02" } -->
+<!-- agent-notes: { ctx: "Architecture Gate debate record for ADR-0006 (multi-runtime install)", deps: [docs/adrs/meta/0006-multi-runtime-install.md, .claude/agents/wei.md, docs/adrs/meta/0004-summon-doctor.md], state: complete, last: "claude@2026-07-02" } -->
 
 # Debate: Multi-Runtime Install, Manifest, and Generation-as-Projection
 
-**ADR:** docs/adrs/0006-multi-runtime-install.md **Date:** 2026-07-02 **Participants:** Archie (author) vs Wei (challenger), both invoked as standalone agents **Trigger:** ADR-0006 ratifies the design that ~13 open epic issues (#7, #8, #13, #16, #17, #18) cite as "ADR-0004 § Generation Model / § CLI Surface / § Additional Decisions #6 / OQ #7" — sections that do not exist in the ratified ADR-0004 (the doctor decision). The gate's job was to author the missing document.
+**ADR:** docs/adrs/meta/0006-multi-runtime-install.md **Date:** 2026-07-02 **Participants:** Archie (author) vs Wei (challenger), both invoked as standalone agents **Trigger:** ADR-0006 ratifies the design that ~13 open epic issues (#7, #8, #13, #16, #17, #18) cite as "ADR-0004 § Generation Model / § CLI Surface / § Additional Decisions #6 / OQ #7" — sections that do not exist in the ratified ADR-0004 (the doctor decision). The gate's job was to author the missing document.
 
 ## Round 1 — Wei's Challenges
 
