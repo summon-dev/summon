@@ -1,4 +1,4 @@
-// agent-notes: { ctx: "integration tests for summon-team CLI", deps: ["dist/index.js", "src/index.ts"], state: active, last: "sato@2026-07-02" }
+// agent-notes: { ctx: "integration tests for summon-team CLI", deps: ["dist/index.js", "src/index.ts"], state: active, last: "tara@2026-07-03" }
 
 import { execFile } from "node:child_process";
 import {
@@ -148,20 +148,56 @@ describe("summon-team CLI", () => {
     expect(existsSync(join(projectDir, ".git"))).toBe(true);
   }, 30_000);
 
-  it("excludes Summon's own development-history docs but keeps framework docs", async () => {
+  it("excludes the meta zones (docs/history, docs/adrs/meta) but keeps canon", async () => {
     const cwd = makeTempDir();
     const result = await run(["--local", REPO_ROOT, "history-test"], { cwd });
 
     expect(result.code).toBe(0);
     const projectDir = join(cwd, "history-test");
 
-    // Summon's own process exhaust is not part of a user's project
-    expect(existsSync(join(projectDir, "docs", "code-reviews"))).toBe(false);
-    expect(existsSync(join(projectDir, "docs", "tracking"))).toBe(false);
+    // The two meta zones (ADR-0007) — Summon's development exhaust — do not ship
+    expect(existsSync(join(projectDir, "docs", "history"))).toBe(false);
+    expect(existsSync(join(projectDir, "docs", "adrs", "meta"))).toBe(false);
 
-    // Framework docs the user DOES inherit are still present
+    // Canon docs the user DOES inherit are still present
     expect(existsSync(join(projectDir, "docs", "methodology"))).toBe(true);
     expect(existsSync(join(projectDir, "docs", "adrs", "template.md"))).toBe(true);
+    // Canon ADRs (0001-0003) ship from docs/adrs/; meta ADRs (0004+) do not
+    expect(
+      existsSync(join(projectDir, "docs", "adrs", "0003-project-risk-tiers.md"))
+    ).toBe(true);
+    expect(
+      existsSync(join(projectDir, "docs", "adrs", "0004-summon-doctor.md"))
+    ).toBe(false);
+  }, 30_000);
+
+  it("ships the project README stub, not Summon's marketing README", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--local", REPO_ROOT, "readme-test"], { cwd });
+
+    expect(result.code).toBe(0);
+    const projectDir = join(cwd, "readme-test");
+
+    // A README exists, but it's the project stub — not the marketing sales page
+    const readme = readFileSync(join(projectDir, "README.md"), "utf-8");
+    expect(readme).toContain("[Your Project Name]");
+    expect(readme).toContain("Summon");
+    // The marketing hero line must not leak into the user's project
+    expect(readme).not.toContain("code you have to answer for later");
+
+    // The template file itself is consumed — it does not linger in the project
+    expect(existsSync(join(projectDir, "README-template.md"))).toBe(false);
+  }, 30_000);
+
+  it("does not ship the session handoff snapshot", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--local", REPO_ROOT, "handoff-test"], { cwd });
+
+    expect(result.code).toBe(0);
+    const projectDir = join(cwd, "handoff-test");
+
+    // .claude/handoff.md is per-session meta scratch (ADR-0007 §7) — never shipped
+    expect(existsSync(join(projectDir, ".claude", "handoff.md"))).toBe(false);
   }, 30_000);
 
   it("rejects when target directory already exists and is non-empty", async () => {
