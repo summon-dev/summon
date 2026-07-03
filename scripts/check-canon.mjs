@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "coordinator@2026-07-03", key: ["8 checks: agent files, persona roster, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md"] }
+// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "coordinator@2026-07-03", key: ["8 checks: agent files, persona roster, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes"] }
 //
 // Fitness function for Summon's canon. Our agent/persona/process docs duplicate
 // facts across many files; the agent-notes protocol keeps them in sync by hand.
@@ -191,7 +191,16 @@ const isMetaTarget = (dep) =>
 const isCanonPath = (rel) =>
   !META_PREFIXES.some((pre) => rel.startsWith(pre)) && !META_FILES.has(rel);
 
+// This file SHIPS into scaffolded projects (it's the exemplar fitness function
+// retro.md/sprint-boundary.md/done-gate.md teach users to write). But checks #7 and
+// #8 assert Summon-repo-only invariants about the meta zones — which don't exist in a
+// user's project. Guard both on the meta zone's presence so check-canon runs clean
+// downstream (a scaffold has canon ADRs 0001-0003 + the 0008 example, a deliberate
+// gap where the excluded meta ADRs were — #8 must not read that as drift).
+const IS_SUMMON_REPO = existsSync(join(ROOT, "docs", "adrs", "meta"));
+
 function checkCanonMetaBoundary() {
+  if (!IS_SUMMON_REPO) return;
   // Canon files that can carry agent-notes: the shipped docs, agents, and commands,
   // plus the two root docs. (Meta zones are skipped — their deps are meta->*, allowed.)
   const canonRoots = [
@@ -224,6 +233,7 @@ function checkCanonMetaBoundary() {
 //    docs/adrs/ and docs/adrs/meta/. Turns the numbering-rot risk the meta split
 //    introduces into a machine-caught error. (template.md has no number — skipped.)
 function checkAdrNumbering() {
+  if (!IS_SUMMON_REPO) return;
   const dirs = [join(ROOT, "docs", "adrs"), join(ROOT, "docs", "adrs", "meta")];
   const seen = new Map();
   for (const dir of dirs) {

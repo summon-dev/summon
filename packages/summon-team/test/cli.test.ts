@@ -223,8 +223,20 @@ describe("summon-team CLI", () => {
       mkdirSync(join(src, ...p.split("/")), { recursive: true });
       writeFileSync(join(src, ...p.split("/"), "x.md"), `meta under ${p}`);
     }
+    // Repo infrastructure meta (Summon's CI, governance, gitignored scratch)
+    mkdirSync(join(src, ".github", "workflows"), { recursive: true });
+    writeFileSync(join(src, ".github", "workflows", "ci.yml"), "name: CI");
+    mkdirSync(join(src, ".playwright-mcp"), { recursive: true });
+    writeFileSync(join(src, ".playwright-mcp", "trace.zip"), "scratch");
+    for (const f of ["CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md", "LICENSE"]) {
+      writeFileSync(join(src, f), `Summon's ${f}`);
+    }
+    // Canon that must survive: methodology + the shipped scripts (fitness fn + debt harvest)
     mkdirSync(join(src, "docs", "methodology"), { recursive: true });
     writeFileSync(join(src, "docs", "methodology", "phases.md"), "canon");
+    mkdirSync(join(src, "scripts"), { recursive: true });
+    writeFileSync(join(src, "scripts", "check-canon.mjs"), "// fitness fn");
+    writeFileSync(join(src, "scripts", "harvest-debt.mjs"), "// debt harvest");
     writeFileSync(join(src, "README.md"), "code you have to answer for later");
     writeFileSync(
       join(src, "README-template.md"),
@@ -241,16 +253,48 @@ describe("summon-team CLI", () => {
       expect(existsSync(join(out, ...p.split("/")))).toBe(false);
     }
     expect(existsSync(join(out, ".claude", "handoff.md"))).toBe(false);
+    // Repo-infrastructure meta is stripped
+    expect(existsSync(join(out, ".github"))).toBe(false);
+    expect(existsSync(join(out, ".playwright-mcp"))).toBe(false);
+    for (const f of ["CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md", "LICENSE"]) {
+      expect(existsSync(join(out, f))).toBe(false);
+    }
 
-    // Canon survives
+    // Canon survives — including the two shipped scripts
     expect(existsSync(join(out, ".claude", "keep.md"))).toBe(true);
     expect(existsSync(join(out, "docs", "methodology", "phases.md"))).toBe(true);
+    expect(existsSync(join(out, "scripts", "check-canon.mjs"))).toBe(true);
+    expect(existsSync(join(out, "scripts", "harvest-debt.mjs"))).toBe(true);
 
     // Marketing README is gone even though it was present; the stub took its place
     const readme = readFileSync(join(out, "README.md"), "utf-8");
     expect(readme).toContain("[Your Project Name]");
     expect(readme).not.toContain("code you have to answer for later");
     expect(existsSync(join(out, "README-template.md"))).toBe(false);
+  }, 30_000);
+
+  it("shipped check-canon.mjs passes in a scaffolded (canon-only) project", async () => {
+    // check-canon.mjs ships (it's the exemplar fitness function). Its Summon-repo-only
+    // checks (#7 canon->meta boundary, #8 ADR numbering) must self-skip when there's no
+    // docs/adrs/meta — otherwise the deliberate 0004-0007 numbering gap (those ADRs are
+    // meta and excluded) would make a fresh user's very first check:canon run red.
+    const cwd = makeTempDir();
+    const result = await run(["--local", REPO_ROOT, "canon-check"], { cwd });
+    expect(result.code).toBe(0);
+    const projectDir = join(cwd, "canon-check");
+    expect(existsSync(join(projectDir, "scripts", "check-canon.mjs"))).toBe(true);
+
+    const check = await new Promise<{ code: number; out: string }>((res) => {
+      execFile(
+        "node",
+        [join(projectDir, "scripts", "check-canon.mjs")],
+        { cwd: projectDir },
+        (err, stdout, stderr) =>
+          res({ code: err?.code ?? 0, out: stdout.toString() + stderr.toString() })
+      );
+    });
+    expect(check.code).toBe(0);
+    expect(check.out).toContain("OK");
   }, 30_000);
 
   it("rejects when target directory already exists and is non-empty", async () => {
