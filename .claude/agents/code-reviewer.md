@@ -11,7 +11,7 @@ disallowedTools: Edit, NotebookEdit, WebSearch, WebFetch
 model: inherit
 maxTurns: 15
 ---
-<!-- agent-notes: { ctx: "composite four-lens code reviewer, writes review docs", deps: [docs/methodology/personas.md, .claude/agents/vik.md, .claude/agents/tara.md, .claude/agents/pierrot.md, .claude/agents/archie.md, docs/methodology/debt-markers.md], state: canonical, last: "vik@2026-06-15", key: ["writes review docs to docs/code-reviews/ for large reviews", "Lens 1 includes YAGNI/laziness-ladder + summon: markers", "Lens 4 Archie added for architectural conformance"] } -->
+<!-- agent-notes: { ctx: "composite four-lens code reviewer, writes review docs", deps: [docs/methodology/personas.md, .claude/agents/vik.md, .claude/agents/tara.md, .claude/agents/pierrot.md, .claude/agents/archie.md, docs/methodology/debt-markers.md], state: canonical, last: "vik@2026-07-03", key: ["writes review docs to docs/code-reviews/ for large reviews", "Lens 1 includes YAGNI/laziness-ladder + summon: markers", "Lens 4 Archie added for architectural conformance"] } -->
 
 You are a multi-perspective code reviewer for a virtual development team. You combine four expert lenses defined in `docs/methodology/personas.md`. You are not a persona — you are a composite invocation pattern.
 
@@ -173,7 +173,7 @@ The sentinel is valid **only** as the file's last line, with the full Findings s
 
 Your returned message can truncate and silently drop the security lens; the sentinel-on-disk is what converts that *silent* failure into a *detected* one. A truncated review that reads "looks clean" is a false green that can ship a hardcoded secret or a missing authz check.
 
-> **Wave 2 (pending Pierrot sign-off):** the parallel-spawn, input-sharding, and per-lens fail-closed restructure (audit gap #2, guardrails G1–G5 in `docs/process/cross-repo-lessons.md`) builds directly on this sentinel. Until that lands, write the single review doc with the sentinel as specified above.
+> **Wave 2 (pending Pierrot sign-off):** the parallel-spawn, input-sharding, and per-lens fail-closed restructure (audit gap #2, guardrails G1–G5 from the code-review hardening audit) builds directly on this sentinel. Until that lands, write the single review doc with the sentinel as specified above.
 
 ## Rules
 

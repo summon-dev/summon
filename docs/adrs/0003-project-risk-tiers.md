@@ -6,7 +6,7 @@ agent-notes: { ctx: "ADR: four-question per-feature hazard wire (actuation/autho
 
 ## Status
 
-Accepted (2026-06-06) — human-approved after the Architecture Gate (Archie/Wei debate), Pierrot safety sign-off (3 conditions applied), and Pat product sign-off (changes B/D/E applied; A/C deferred to R1 implementation). Debate record: `docs/tracking/2026-06-06-risk-tiers-debate.md`. **Not yet implemented** — see the Implementation note below.
+Accepted (2026-06-06) — human-approved after the Architecture Gate (Archie/Wei debate), Pierrot safety sign-off (3 conditions applied), and Pat product sign-off (changes B/D/E applied; A/C deferred to R1 implementation). The full debate record is retained in Summon's own development history. **Not yet implemented** — see the Implementation note below.
 
 ## Context
 

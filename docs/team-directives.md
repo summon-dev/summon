@@ -59,7 +59,7 @@ Add directives when:
 
 ## Design & UX (Dani)
 
-- **Team hero sprites live as `site/src/assets/team/<slug>.webp`.** Generated externally per the art bible (`docs/design/team-hero-sprites.md`), exported to WebP at display sizes, and dropped into the assets folder; `TeamGrid.astro` renders a placeholder until each one lands. _Why:_ keeps generated binaries out of the build path and the page green before the art exists. (Convention, not an ADR — no alternatives analysis needed.)
+- **Team hero sprites live as `site/src/assets/team/<slug>.webp`.** Generated externally per the team hero-sprite art bible, exported to WebP at display sizes, and dropped into the assets folder; `TeamGrid.astro` renders a placeholder until each one lands. _Why:_ keeps generated binaries out of the build path and the page green before the art exists. (Convention, not an ADR — no alternatives analysis needed.)
 - **Accent text on a fixed-dark panel must clear WCAG AA (4.5:1).** Lift dark brand accents with `color-mix(in srgb, var(--accent), white 42%)` rather than hand-picking lighter hexes. _Why:_ keeps the palette anchored to the bible while staying legible.
 
 <!-- Dani: add more design conventions here.

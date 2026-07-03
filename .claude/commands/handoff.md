@@ -1,4 +1,4 @@
-<!-- agent-notes: { ctx: "session handoff for wave-based sprint execution", deps: [CLAUDE.md, docs/sprints/, docs/code-map.md], state: active, last: "coordinator@2026-03-31" } -->
+<!-- agent-notes: { ctx: "session handoff for wave-based sprint execution", deps: [CLAUDE.md, docs/sprints/, docs/code-map.md], state: active, last: "coordinator@2026-07-03" } -->
 Create a session handoff document so the next session can pick up where this one left off.
 
 ## Steps
@@ -79,7 +79,7 @@ Create a session handoff document so the next session can pick up where this one
 
 7. **Update MEMORY.md.** Ensure the session memory file has current sprint status and any new patterns discovered.
 
-8. **Commit the handoff.** If there are uncommitted changes, ask the user if they want to commit before creating the handoff. Then commit the handoff file itself.
+8. **Offer to commit outstanding work.** If there are uncommitted code or doc changes, ask the user whether to commit them before the session ends. The handoff file itself is **not** committed — `.claude/handoff.md` is gitignored per-session scratch (ADR-0007 §7). It stays a local file that `/resume` reads at the next session on this machine; it does not travel through git. A contributor who needs the baton on another machine copies the file across deliberately.
 
 ## Important
 
