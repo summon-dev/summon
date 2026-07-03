@@ -17,5 +17,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - 16-item Done Gate checklist for work item completion
 - Integration adapters for GitHub Projects and Jira
 - Scaffold templates for web monorepo, CLI, static site, and AI tool projects
-- Progressive disclosure: Starter Tier (5 agents) and Full Tier (16 agents)
 - Unified Cloud agent covering architecture, cost, and network diagnostics

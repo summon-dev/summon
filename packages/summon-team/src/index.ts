@@ -35,6 +35,15 @@ const EXCLUDE_FILES = new Set([
   "package.json",
 ]);
 
+// Summon's own development-history — process exhaust from building the framework,
+// not template canon a user installs. These are nested paths (not top-level names),
+// so they're stripped after copy/download rather than via the EXCLUDE_DIRS filter.
+// Whole directories only: the doctor suppresses missing agent-notes deps when the
+// parent dir is absent, so removing the whole dir stays doctor-clean, whereas
+// removing individual files (docs/process/*-review.md) that ADRs still depend on
+// would surface as broken wiring downstream.
+const EXCLUDE_PATHS = ["docs/code-reviews", "docs/tracking"];
+
 // `summon-team doctor` — second invocation mode (ADR-0004). Runs the portable
 // health registry against the current working directory; downloads nothing, writes
 // nothing. Exit 0 = healthy, non-zero = at least one check failed (the v1 contract).
@@ -193,6 +202,11 @@ async function main() {
   for (const file of EXCLUDE_FILES) {
     const fullPath = resolve(targetDir, file);
     if (existsSync(fullPath)) rmSync(fullPath, { force: true });
+  }
+
+  for (const rel of EXCLUDE_PATHS) {
+    const fullPath = resolve(targetDir, rel);
+    if (existsSync(fullPath)) rmSync(fullPath, { recursive: true, force: true });
   }
 
   // Reset CLAUDE.md to template state so /quickstart detects a fresh project
