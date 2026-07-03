@@ -11,8 +11,7 @@ agent-notes:
 <!-- Ines owns this document. Audited before every release/deployment. -->
 <!-- If a config value isn't documented here, it shouldn't exist. -->
 
-**Project:** [Project Name]
-**Last audited:** [Date]
+**Project:** [Project Name] **Last audited:** [Date]
 
 ## Environment Variables
 

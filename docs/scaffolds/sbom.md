@@ -10,10 +10,7 @@ agent-notes:
 <!-- This file is maintained by Pierrot. Update it whenever dependencies change. -->
 <!-- Sato must notify Pierrot after adding, removing, or upgrading any dependency. -->
 
-**Project:** [Project Name]
-**Last updated:** [Date]
-**Package manager:** [npm / pip / cargo / etc.]
-**Lock file:** [package-lock.json / requirements.txt / Cargo.lock / etc.]
+**Project:** [Project Name] **Last updated:** [Date] **Package manager:** [npm / pip / cargo / etc.] **Lock file:** [package-lock.json / requirements.txt / Cargo.lock / etc.]
 
 ## Direct Dependencies
 

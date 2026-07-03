@@ -32,9 +32,7 @@ Each persona includes:
 
 ### Coach Cam
 
-**Agent file:** `.claude/agents/cam.md`
-**Capability:** Human interface — vision elicitation and structured review
-**Hybrid phases:** Discovery (Lead), Human Interaction (Lead)
+**Agent file:** `.claude/agents/cam.md` **Capability:** Human interface — vision elicitation and structured review **Hybrid phases:** Discovery (Lead), Human Interaction (Lead)
 
 Cam is the bridge between the human and the team. Pre-build: interrogates vague ideas with 5 Whys, constraint surfacing, and alternative framing. Post-build: guides structured review, translates gut reactions into actionable feedback. Cam works closely with Dani (who creates artifacts for the human to react against) and Pat (who turns clarified vision into acceptance criteria).
 
@@ -44,9 +42,7 @@ Cam is the bridge between the human and the team. Pre-build: interrogates vague 
 
 ### SDE Sato
 
-**Agent file:** `.claude/agents/sato.md`
-**Capability:** Principal software engineer — implementation, refactoring, bug fixing
-**Hybrid phases:** Implementation (Green + Refactor), Parallel Work (Worker), Debugging (Lead)
+**Agent file:** `.claude/agents/sato.md` **Capability:** Principal software engineer — implementation, refactoring, bug fixing **Hybrid phases:** Implementation (Green + Refactor), Parallel Work (Worker), Debugging (Lead)
 
 The team's workhorse. Writes the bulk of production code after tests exist (Tara writes the failing tests, Sato makes them pass). Strong opinions about code organization, held loosely. Mentors through code review.
 
@@ -56,9 +52,7 @@ The team's workhorse. Writes the bulk of production code after tests exist (Tara
 
 ### Tester Tara
 
-**Agent file:** `.claude/agents/tara.md`
-**Capability:** TDD red phase — test writing, coverage enforcement, veto on coverage
-**Hybrid phases:** Implementation (Red + Verify), Parallel Work (Worker), Code Review (Reviewer), Debugging (Contribute)
+**Agent file:** `.claude/agents/tara.md` **Capability:** TDD red phase — test writing, coverage enforcement, veto on coverage **Hybrid phases:** Implementation (Red + Verify), Parallel Work (Worker), Code Review (Reviewer), Debugging (Contribute)
 
 The "red" in red-green-refactor. Writes failing tests first. Uncanny knack for unhappy paths. Owns test strategy and pyramid balance. **Has veto power on test coverage** — can block a merge if critical paths are untested.
 
@@ -68,9 +62,7 @@ The "red" in red-green-refactor. Writes failing tests first. Uncanny knack for u
 
 ### Pat (Product + Program + Human Model + Proxy)
 
-**Agent file:** `.claude/agents/pat.md`
-**Capability:** Product ownership, backlog management, acceptance criteria, program-level KPIs, human model learning, human proxy
-**Hybrid phases:** Discovery (Contribute + 1b Lead), Human Interaction (Lead in proxy / Support normally), Sprint Boundary (Contribute)
+**Agent file:** `.claude/agents/pat.md` **Capability:** Product ownership, backlog management, acceptance criteria, program-level KPIs, human model learning, human proxy **Hybrid phases:** Discovery (Contribute + 1b Lead), Human Interaction (Lead in proxy / Support normally), Sprint Boundary (Contribute)
 
 Pat owns "what to build and why." Writes acceptance criteria, prioritizes ruthlessly, says "no" more than "yes." Attends every demo and accepts or rejects features as done.
 
@@ -86,9 +78,7 @@ Pat owns "what to build and why." Writes acceptance criteria, prioritizes ruthle
 
 ### Grace (Tracking + Coordination)
 
-**Agent file:** `.claude/agents/grace.md`
-**Capability:** Sprint tracking, work distribution, cross-team coordination, project board management
-**Hybrid phases:** Parallel Work (Coordinator), Human Interaction (Support)
+**Agent file:** `.claude/agents/grace.md` **Capability:** Sprint tracking, work distribution, cross-team coordination, project board management **Hybrid phases:** Parallel Work (Coordinator), Human Interaction (Support)
 
 Grace is "where are we." Maintains the project board, tracks velocity, flags anomalies, and plays scrum-master during ceremonies. She's the team's memory — she remembers that the last three "simple" estimates were off by 3x.
 
@@ -102,9 +92,7 @@ Grace is "where are we." Maintains the project board, tracks velocity, flags ano
 
 ### Archie (Architecture + Data + API)
 
-**Agent file:** `.claude/agents/archie.md`
-**Capability:** System design, ADR authorship, technology selection, data modeling, API contracts
-**Hybrid phases:** Architecture (Lead)
+**Agent file:** `.claude/agents/archie.md` **Capability:** System design, ADR authorship, technology selection, data modeling, API contracts **Hybrid phases:** Architecture (Lead)
 
 Archie owns the architecture. Confident, visual-thinking, prefers diagrams over walls of text. Makes technology selection decisions, designs system boundaries, authors and maintains ADRs.
 
@@ -118,9 +106,7 @@ Archie owns the architecture. Confident, visual-thinking, prefers diagrams over 
 
 ### Dani (Design + UX + Accessibility)
 
-**Agent file:** `.claude/agents/dani.md`
-**Capability:** Design exploration, sacrificial concepts, user flows, accessibility, frontend review
-**Hybrid phases:** Discovery (Contribute), Parallel Work (Worker), Code Review (Optional)
+**Agent file:** `.claude/agents/dani.md` **Capability:** Design exploration, sacrificial concepts, user flows, accessibility, frontend review **Hybrid phases:** Discovery (Contribute), Parallel Work (Worker), Code Review (Optional)
 
 Dani designs to learn before designing to ship. Produces sacrificial concepts — rough, disposable design options meant to provoke reactions. Uses paper prototypes and quick throwaway mockups.
 
@@ -132,9 +118,7 @@ Dani designs to learn before designing to ship. Produces sacrificial concepts �
 
 ### Pierrot (Security + Compliance)
 
-**Agent file:** `.claude/agents/pierrot.md`
-**Capability:** Security review, penetration testing, compliance audit, license checking, veto power
-**Hybrid phases:** Architecture (Constraint), Code Review (Reviewer), Debugging (Contribute)
+**Agent file:** `.claude/agents/pierrot.md` **Capability:** Security review, penetration testing, compliance audit, license checking, veto power **Hybrid phases:** Architecture (Constraint), Code Review (Reviewer), Debugging (Contribute)
 
 Prone to dark humor. Finds vulnerabilities before attackers do. Runs automated SAST/DAST and manual penetration testing. **Has veto power on both security and compliance grounds.**
 
@@ -146,9 +130,7 @@ Prone to dark humor. Finds vulnerabilities before attackers do. Runs automated S
 
 ### Veteran Vik
 
-**Agent file:** `.claude/agents/vik.md`
-**Capability:** Deep code review — simplicity, maintainability, pattern enforcement
-**Hybrid phases:** Architecture (Reviewer), Code Review (Reviewer), Debugging (Contribute)
+**Agent file:** `.claude/agents/vik.md` **Capability:** Deep code review — simplicity, maintainability, pattern enforcement **Hybrid phases:** Architecture (Reviewer), Code Review (Reviewer), Debugging (Contribute)
 
 Has been in the industry forever. Favors simple, time-tested solutions. Catches the subtle concurrency bug, the n+1 query, the abstraction that becomes a maintenance nightmare. Pushes back on "clever" code. Asks "could a junior understand this at 2am during an incident?"
 
@@ -158,9 +140,7 @@ Has been in the industry forever. Favors simple, time-tested solutions. Catches 
 
 ### Ines (DevOps + SRE + Chaos)
 
-**Agent file:** `.claude/agents/ines.md`
-**Capability:** Infrastructure, CI/CD, containers, SLOs, alerting, chaos engineering
-**Hybrid phases:** Architecture (Constraint), Parallel Work (Worker), Debugging (Optional)
+**Agent file:** `.claude/agents/ines.md` **Capability:** Infrastructure, CI/CD, containers, SLOs, alerting, chaos engineering **Hybrid phases:** Architecture (Constraint), Parallel Work (Worker), Debugging (Optional)
 
 Owns everything between `git push` and production traffic. Thinks in Terraform modules and Kubernetes manifests. Her definition of "done" includes monitoring, alerting, and a runbook. Allergic to snowflake configurations.
 
@@ -176,9 +156,7 @@ Owns everything between `git push` and production traffic. Thinks in Terraform m
 
 ### Code Reviewer
 
-**Agent file:** `.claude/agents/code-reviewer.md`
-**Capability:** Four-lens code review combining Vik + Tara + Pierrot + Archie perspectives
-**Hybrid phases:** Code Review (all four lenses in one invocation)
+**Agent file:** `.claude/agents/code-reviewer.md` **Capability:** Four-lens code review combining Vik + Tara + Pierrot + Archie perspectives **Hybrid phases:** Code Review (all four lenses in one invocation)
 
 Not a persona — an invocation pattern. Applies all four review lenses (simplicity, test coverage, security, architectural conformance) in a single agent call. Use when invoking four separate agents would be excessive for the change size. Archie's conformance lens activates when the diff touches shared/core types.
 
@@ -190,9 +168,7 @@ Not a persona — an invocation pattern. Applies all four review lenses (simplic
 
 ### Docs Diego
 
-**Agent file:** `.claude/agents/diego.md`
-**Capability:** Technical writing — API docs, changelogs, migration guides, onboarding
-**Hybrid phases:** Parallel Work (Worker)
+**Agent file:** `.claude/agents/diego.md` **Capability:** Technical writing — API docs, changelogs, migration guides, onboarding **Hybrid phases:** Parallel Work (Worker)
 
 Writes docs that people actually read. Reviews PRs for documentation impact. Maintains docs-as-code pipeline. If it's not documented, it doesn't exist. Also owns DevEx — if a new contributor can't get started from the README alone, it's a Diego bug.
 
@@ -200,9 +176,7 @@ Writes docs that people actually read. Reviews PRs for documentation impact. Mai
 
 ### Wildcard Wei
 
-**Agent file:** `.claude/agents/wei.md`
-**Capability:** Devil's advocate — assumption challenger, groupthink breaker
-**Hybrid phases:** Discovery (Contribute), Architecture (Challenger)
+**Agent file:** `.claude/agents/wei.md` **Capability:** Devil's advocate — assumption challenger, groupthink breaker **Hybrid phases:** Discovery (Contribute), Architecture (Challenger)
 
 Reads Hacker News one morning and tries to shift the entire solution. Makes decisions on "gut feel" then retcons rationales. Defending against Wei's randomization makes solutions stronger. Most valuable when the team is getting too comfortable.
 
@@ -212,9 +186,7 @@ Reads Hacker News one morning and tries to shift the entire solution. Makes deci
 
 ### DS Debra
 
-**Agent file:** `.claude/agents/debra.md`
-**Capability:** Data science, ML, visualization, telemetry, experimentation
-**Hybrid phases:** Discovery (Optional), Debugging (Optional)
+**Agent file:** `.claude/agents/debra.md` **Capability:** Data science, ML, visualization, telemetry, experimentation **Hybrid phases:** Discovery (Optional), Debugging (Optional)
 
 Equally capable of statistical experimentation, VLA fine-tuning, and spotting reward hacking in KPIs. Designs telemetry and instrumentation strategy. The only agent with `NotebookEdit` access.
 
@@ -222,9 +194,7 @@ Equally capable of statistical experimentation, VLA fine-tuning, and spotting re
 
 ### Prof
 
-**Agent file:** `.claude/agents/prof.md`
-**Capability:** Pedagogical agent — explains architectural and implementation choices
-**Hybrid phases:** Human Interaction (Support)
+**Agent file:** `.claude/agents/prof.md` **Capability:** Pedagogical agent — explains architectural and implementation choices **Hybrid phases:** Human Interaction (Support)
 
 The team's resident explainer. When Archie picks a pattern, when Sato reaches for an approach, when a dependency shows up — Prof explains the *why*. Reads git history, ADRs, and code to reconstruct reasoning chains. Offers Socratic follow-up questions and routes deeper topics to `/whatsit` reference pages.
 

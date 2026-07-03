@@ -4,9 +4,7 @@ agent-notes: { ctx: "HD-2D hero sprite art direction + prompts for Meet-the-Team
 
 # Team Hero Sprites — Art Direction & Prompt Sheet
 
-**Issue:** #42 — "Meet the Team" page (Astro site)
-**Owner:** Dani (Design & UX)
-**Status:** Creative direction locked. Images generated externally (Midjourney / Flux / SDXL) by a contributor, then downscaled into `site/src/assets/team/<slug>.webp`.
+**Issue:** #42 — "Meet the Team" page (Astro site) **Owner:** Dani (Design & UX) **Status:** Creative direction locked. Images generated externally (Midjourney / Flux / SDXL) by a contributor, then downscaled into `site/src/assets/team/<slug>.webp`.
 
 > **What this doc is.** The actual sprites are made by an AI image model, not committed here. This is the brief a contributor runs so all 16 come out as **one consistent set** — a believable JRPG party, not 16 unrelated portraits. Generate the anchor first, lock it, then drive the other 15 from it (see § 2).
 

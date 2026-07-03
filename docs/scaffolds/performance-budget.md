@@ -11,8 +11,7 @@ agent-notes:
 <!-- Vik owns performance review during code review. Ines verifies at pre-release. -->
 <!-- Created during kickoff or first sprint. Updated when requirements change. -->
 
-**Project:** [Project Name]
-**Last reviewed:** [Date]
+**Project:** [Project Name] **Last reviewed:** [Date]
 
 ## Response Time Targets
 

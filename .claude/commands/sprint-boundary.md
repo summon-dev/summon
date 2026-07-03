@@ -250,8 +250,7 @@ Once the gate passes:
 1. **Create `sprint:N+1` label** if it doesn't exist.
 2. **Carry forward items:** Apply `sprint:N+1` label to all carried-forward issues.
 3. **Include tech debt items** that Pat prioritized for paydown.
-4. **Sprint planning:** Invoke Pat for prioritization of the next sprint's backlog. For each item, identify whether it requires the Architecture Gate (see CLAUDE.md § Architecture Gate) and note it in the sprint plan.
-   4b. **Product context refresh:** Pat reads `docs/product-context.md` and the retro document from Step 1. If priorities have shifted, proxy decisions were corrected by the human, or the retro surfaced product-level insights, Pat updates `docs/product-context.md`. Log changes in the Correction Log table.
+4. **Sprint planning:** Invoke Pat for prioritization of the next sprint's backlog. For each item, identify whether it requires the Architecture Gate (see CLAUDE.md § Architecture Gate) and note it in the sprint plan. 4b. **Product context refresh:** Pat reads `docs/product-context.md` and the retro document from Step 1. If priorities have shifted, proxy decisions were corrected by the human, or the retro surfaced product-level insights, Pat updates `docs/product-context.md`. Log changes in the Correction Log table.
 5. **Update board:** Move next-sprint items to **Ready** status on the project board using the board status commands (see `docs/integrations/github-projects.md`). Each item transitions individually — do not batch-update.
 6. **Announce:** Summarize the next sprint's scope to the user. Include which items require the Architecture Gate (ADR + Wei debate before implementation).
 

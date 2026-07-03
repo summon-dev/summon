@@ -41,8 +41,7 @@ A note on Summon's docs specifically: because the whole team writes in the same 
 
 The single most reliable tell. Target zero per doc; one per long doc is permitted only when no cleaner punctuation choice exists. Parentheses, semicolons, periods, commas with conjunctions, and split sentences carry every aside the prose needs.
 
-Bad: *The board item — and this matters — is not optional.*
-Better: *The board item is not optional, and that matters.* / *The board item is not optional (and that matters).*
+Bad: *The board item — and this matters — is not optional.* Better: *The board item is not optional, and that matters.* / *The board item is not optional (and that matters).*
 
 ### 1.2 The "X — Y — Z" em-dash triplet
 
@@ -60,8 +59,7 @@ Confident-sounding model rhythm. Replace with varied sentence lengths, conjoined
 
 Two short sentences where the second negates or contrasts the first. This is endemic in Summon's docs.
 
-Caught in-repo (`team-directives.md`): *"Gotchas say 'don't touch the stove.' Directives say 'we cook with gas, not electric.'"*
-Caught in-repo (CLAUDE.md, paraphrased pattern): *"The vocabulary is new. The work is old."*
+Caught in-repo (`team-directives.md`): *"Gotchas say 'don't touch the stove.' Directives say 'we cook with gas, not electric.'"* Caught in-repo (CLAUDE.md, paraphrased pattern): *"The vocabulary is new. The work is old."*
 
 The contrastive thought is usually fine; the symmetric prose shape is the tell. Break it: one longer interleaved sentence, asymmetric clause lengths, or a single sentence with a conjunction. (The mnemonic phrasings in `team-directives.md` are a borderline case — they aid recall, which is a real function. Rule them against the directives file, but do not let the shape spread to docs where it is pure decoration.)
 

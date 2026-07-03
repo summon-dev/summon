@@ -2,9 +2,7 @@
 
 ## Project Overview
 
-**Project Name:** Summon
-**Description:** An AI-powered virtual team framework for Claude Code. Gives solo developers a full engineering team of specialized agents with real methodology — architecture reviews, TDD, code review, sprint management.
-**Tech Stack:** Claude Code agents (Markdown) · Astro + Tailwind (site — planned) · Node.js (CLI — planned)
+**Project Name:** Summon **Description:** An AI-powered virtual team framework for Claude Code. Gives solo developers a full engineering team of specialized agents with real methodology — architecture reviews, TDD, code review, sprint management. **Tech Stack:** Claude Code agents (Markdown) · Astro + Tailwind (site — planned) · Node.js (CLI — planned)
 
 **Codebase map:** `docs/code-map.md` — read this first to understand the package structure, public APIs, and data flow.
 
@@ -42,8 +40,7 @@ Every non-excluded file must have agent-notes metadata. See `docs/methodology/ag
 | Debugging | Sato | Blackboard with Tara, Vik, Pierrot |
 | Sprint Boundary | Grace | `/sprint-boundary` (mandatory) |
 
-**Full details:** Agent roster, persona triggers, debate protocol, voice rules → `docs/process/team-governance.md`
-**Doc ownership:** Who maintains what → `docs/process/doc-ownership.md`
+**Full details:** Agent roster, persona triggers, debate protocol, voice rules → `docs/process/team-governance.md` **Doc ownership:** Who maintains what → `docs/process/doc-ownership.md`
 
 ## Critical Rules
 
@@ -106,8 +103,7 @@ Commit and push after every reasonable chunk of work. One commit per issue. Conv
 <!-- project-number: -->
 <!-- project-owner: -->
 
-**Adapter docs:** `docs/integrations/README.md`
-**Status flow:** Backlog → Ready → In Progress → In Review → Done
+**Adapter docs:** `docs/integrations/README.md` **Status flow:** Backlog → Ready → In Progress → In Review → Done
 
 Board commands, pre-flight checks, and setup instructions are in the active adapter file. Grace manages board status. Pat manages priorities.
 

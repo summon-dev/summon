@@ -20,8 +20,7 @@ After all checks, print a summary line: **"N passed, N warnings, N failures"**.
 
 Verify that all expected agent definition files exist in `.claude/agents/`.
 
-Expected files (16):
-`archie.md`, `cam.md`, `cloud.md`, `code-reviewer.md`, `dani.md`, `debra.md`, `diego.md`, `grace.md`, `ines.md`, `pat.md`, `pierrot.md`, `prof.md`, `sato.md`, `tara.md`, `vik.md`, `wei.md`
+Expected files (16): `archie.md`, `cam.md`, `cloud.md`, `code-reviewer.md`, `dani.md`, `debra.md`, `diego.md`, `grace.md`, `ines.md`, `pat.md`, `pierrot.md`, `prof.md`, `sato.md`, `tara.md`, `vik.md`, `wei.md`
 
 ```bash
 # List .claude/agents/*.md and compare against expected list
@@ -38,8 +37,7 @@ ls .claude/agents/*.md 2>/dev/null
 
 Verify that all expected command files exist in `.claude/commands/`.
 
-Expected files (23):
-`adr.md`, `cloud-review.md`, `cloud-update.md`, `code-review.md`, `design.md`, `devcontainer.md`, `doctor.md`, `handoff.md`, `kickoff.md`, `pin-versions.md`, `plan.md`, `quickstart.md`, `restack.md`, `resume.md`, `retro.md`, `review.md`, `scaffold-ai-tool.md`, `scaffold-cli.md`, `scaffold-static-site.md`, `scaffold-web-monorepo.md`, `sprint-boundary.md`, `tdd.md`, `whatsit.md`
+Expected files (23): `adr.md`, `cloud-review.md`, `cloud-update.md`, `code-review.md`, `design.md`, `devcontainer.md`, `doctor.md`, `handoff.md`, `kickoff.md`, `pin-versions.md`, `plan.md`, `quickstart.md`, `restack.md`, `resume.md`, `retro.md`, `review.md`, `scaffold-ai-tool.md`, `scaffold-cli.md`, `scaffold-static-site.md`, `scaffold-web-monorepo.md`, `sprint-boundary.md`, `tdd.md`, `whatsit.md`
 
 ```bash
 # List .claude/commands/*.md and compare against expected list
