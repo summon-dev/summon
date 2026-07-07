@@ -1,4 +1,4 @@
-// agent-notes: { ctx: "summon doctor — portable health registry, run on-demand against cwd (ADR-0004)", deps: ["src/index.ts", "docs/adrs/meta/0004-summon-doctor.md"], state: active, last: "sato@2026-07-03" }
+// agent-notes: { ctx: "summon doctor — portable health registry, run on-demand against cwd (ADR-0004)", deps: ["src/index.ts", "docs/adrs/meta/0004-summon-doctor.md"], state: active, last: "sato@2026-07-07" }
 //
 // The `health` registry per ADR-0004: "is THIS project's Summon install wired
 // correctly?" — run downstream via `npx summon-team@latest doctor`, against cwd,
@@ -200,8 +200,116 @@ function checkCommandRefs(root: string): CheckResult {
   };
 }
 
+// Resolve the glossary, honoring the docs/scaffolds indirection (as depResolves
+// does for deps): docs/glossary.md may live at docs/scaffolds/glossary.md until a
+// scaffold command moves it into place. Returns the resolved absolute path, or null.
+function resolveGlossary(root: string): string | null {
+  const primary = join(root, "docs", "glossary.md");
+  if (existsSync(primary)) return primary;
+  const scaffolded = join(root, "docs", "scaffolds", "glossary.md");
+  if (existsSync(scaffolded)) return scaffolded;
+  return null;
+}
+
+// Parse `**Term**:` headings at line granularity (ADR-0009 §4 glossary format). A
+// heading is a line that, once trimmed, is a bold span immediately followed by a
+// colon — so a bold word in prose without a colon (`**important**`) and an
+// `_Avoid_:` synonym line are NOT headings. The dedup key is the term trimmed and
+// lower-cased; `term` preserves first-seen casing for human-readable detail text.
+function parseGlossaryTerms(text: string): { term: string; key: string }[] {
+  const out: { term: string; key: string }[] = [];
+  for (const raw of text.split(/\r?\n/)) {
+    const m = raw.trim().match(/^\*\*(.+?)\*\*\s*:/);
+    if (!m) continue;
+    const term = m[1].trim();
+    out.push({ term, key: term.toLowerCase() });
+  }
+  return out;
+}
+
+// Health check (c): the ubiquitous-language glossary (ADR-0009). Locate it at
+// docs/glossary.md (scaffolds fallback), read CLAUDE.md for a `docs/glossary.md`
+// link, and gate on three conditions:
+//   - error (blocking): a duplicate `**Term**:` heading — the deterministic
+//     failure mode ADR-0009 §5 exists to catch (two definitions of one term);
+//   - error (blocking): CLAUDE.md links docs/glossary.md but no glossary exists
+//     (dangling wiring — a promised doc that isn't there);
+//   - degraded (non-blocking): glossary present and clean but not linked from
+//     CLAUDE.md (present-but-unwired — a warning, not a gate).
+// Absent-and-unlinked is a clean skip, not a fault: a glossary is optional.
+//
+// This check is deliberately UNGUARDED — it runs in the user's downstream project
+// with no IS_SUMMON_REPO/isSummonProject gate. That is the entire point (ADR-0009
+// §5, answering Wei C2): the duplicate-term gate protects the *consumer's* domain
+// language, so it must fire against their glossary, not only Summon's own repo.
+export function checkGlossary(root: string): CheckResult {
+  const id = "glossary";
+  const glossaryPath = resolveGlossary(root);
+  const claudePath = join(root, "CLAUDE.md");
+  const claudeExists = existsSync(claudePath);
+  const linked =
+    claudeExists && readFileSync(claudePath, "utf8").includes("docs/glossary.md");
+
+  // Absent glossary: dangling wiring is a fault; otherwise a clean skip.
+  if (glossaryPath === null) {
+    if (linked) {
+      return {
+        id,
+        verdict: "error",
+        detail:
+          "CLAUDE.md links docs/glossary.md but no glossary file exists (dangling wiring)",
+        evidence: [{ kind: "file", ref: "CLAUDE.md -> docs/glossary.md" }],
+        schemaVersion: DOCTOR_SCHEMA_VERSION,
+      };
+    }
+    return {
+      id,
+      verdict: "ok",
+      detail: "no glossary present and nothing links to one",
+      evidence: [],
+      schemaVersion: DOCTOR_SCHEMA_VERSION,
+    };
+  }
+
+  const rel = relative(root, glossaryPath);
+  const terms = parseGlossaryTerms(readFileSync(glossaryPath, "utf8"));
+  const seen = new Map<string, string>(); // dedup key -> first-seen term casing
+  for (const { term, key } of terms) {
+    if (seen.has(key)) {
+      const first = seen.get(key)!;
+      return {
+        id,
+        verdict: "error",
+        detail: `glossary defines the term "${first}" more than once — merge the duplicate headings`,
+        evidence: [{ kind: "file", ref: `${rel} (duplicate term: ${first})` }],
+        schemaVersion: DOCTOR_SCHEMA_VERSION,
+      };
+    }
+    seen.set(key, term);
+  }
+
+  // Present and clean but unwired from CLAUDE.md: a warning, not a gate.
+  if (claudeExists && !linked) {
+    return {
+      id,
+      verdict: "degraded",
+      detail: `glossary present at ${rel} but not linked from CLAUDE.md — add a docs/glossary.md link so the team finds it`,
+      evidence: [{ kind: "file", ref: rel }],
+      schemaVersion: DOCTOR_SCHEMA_VERSION,
+    };
+  }
+
+  return {
+    id,
+    verdict: "ok",
+    detail: `glossary present at ${rel} with ${seen.size} unique term heading(s)`,
+    evidence: [],
+    schemaVersion: DOCTOR_SCHEMA_VERSION,
+  };
+}
+
 // v1 health registry. Grows by observed need (ADR-0004 Vik YAGNI guard).
-export const HEALTH_CHECKS = [checkAgentNotesDeps, checkCommandRefs];
+export const HEALTH_CHECKS = [checkAgentNotesDeps, checkCommandRefs, checkGlossary];
 
 export function runHealth(root: string): CheckResult[] {
   return HEALTH_CHECKS.map((check) => check(root));

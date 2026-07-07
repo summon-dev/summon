@@ -1,4 +1,4 @@
-// agent-notes: { ctx: "unit + integration tests for summon-team doctor health registry", deps: ["src/doctor.ts", "src/index.ts"], state: active, last: "tara@2026-06-24" }
+// agent-notes: { ctx: "unit + integration tests for summon-team doctor health registry", deps: ["src/doctor.ts", "src/index.ts"], state: active, last: "claude@2026-07-07" }
 
 import { execFile } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -199,6 +199,153 @@ describe("doctor command-refs health check", () => {
     });
     const c = runHealth(root).find((r) => r.id === "command-refs");
     expect(c?.verdict).toBe("ok");
+  });
+});
+
+// ---- unit: glossary health check (ADR-0009 §5) -----------------------------
+
+// A realistic §4-format glossary body: `**Term**:` headings, each followed by a
+// one-line definition and an `_Avoid_:` synonym list. Kept close to the ADR's
+// worked example so the parser is exercised against the shape it will really see.
+const GLOSSARY_OK = `# Glossary
+
+**Order**:
+A customer's request to purchase one or more items, priced at time of placement.
+_Avoid_: purchase, transaction, cart
+
+**Invoice**:
+A request for payment issued after an Order is fulfilled.
+_Avoid_: bill, receipt
+`;
+
+// CLAUDE.md that DOES wire the glossary into the doc index (the string the check
+// scans for). Contains no backtick /command tokens, so command-refs stays ok.
+const CLAUDE_LINKED =
+  "# project\n\n| Doc | Purpose |\n|-----|---------|\n| docs/glossary.md | domain terms |\n";
+// CLAUDE.md that exists but does NOT mention docs/glossary.md (present-but-unwired).
+const CLAUDE_UNLINKED = "# project\n\nNo doc index here.\n";
+
+const glossaryResult = (root: string) =>
+  runHealth(root).find((r) => r.id === "glossary");
+
+describe("doctor glossary health check", () => {
+  it("passes a present glossary with unique headings that is linked from CLAUDE.md", () => {
+    const root = makeProject({
+      "CLAUDE.md": CLAUDE_LINKED,
+      "docs/glossary.md": GLOSSARY_OK,
+    });
+    const results = runHealth(root);
+    const g = results.find((r) => r.id === "glossary");
+    expect(g?.verdict).toBe("ok");
+    expect(exitCodeFor(results)).toBe(0);
+  });
+
+  it("errors and blocks when a **Term**: heading is duplicated (names the term)", () => {
+    const root = makeProject({
+      "CLAUDE.md": CLAUDE_LINKED,
+      "docs/glossary.md":
+        `# Glossary\n\n` +
+        `**Order**:\nA customer's request to purchase items.\n_Avoid_: cart\n\n` +
+        `**Invoice**:\nA request for payment.\n_Avoid_: bill\n\n` +
+        `**Order**:\nA duplicated heading — the deterministic failure mode.\n_Avoid_: purchase\n`,
+    });
+    const results = runHealth(root);
+    const g = results.find((r) => r.id === "glossary");
+    expect(g?.verdict).toBe("error");
+    expect(g?.detail).toContain("Order");
+    expect(g?.evidence.some((e) => e.ref.includes("glossary.md"))).toBe(true);
+    expect(exitCodeFor(results)).toBe(1);
+  });
+
+  it("detects a duplicate heading case-insensitively (**Order**: vs **order**:)", () => {
+    const root = makeProject({
+      "CLAUDE.md": CLAUDE_LINKED,
+      "docs/glossary.md":
+        `# Glossary\n\n` +
+        `**Order**:\nA customer's request to purchase items.\n_Avoid_: cart\n\n` +
+        `**order**:\nSame term, different case — must collide.\n_Avoid_: purchase\n`,
+    });
+    const g = glossaryResult(root);
+    expect(g?.verdict).toBe("error");
+    expect(exitCodeFor(runHealth(root))).toBe(1);
+  });
+
+  it("detects a duplicate heading across surrounding whitespace (** Order **: vs **Order**:)", () => {
+    // Pins the parser's trim() normalization (Tara review thin-spot): a padded
+    // heading must fold to the same dedup key, so a refactor dropping trim() fails here.
+    const root = makeProject({
+      "CLAUDE.md": CLAUDE_LINKED,
+      "docs/glossary.md":
+        `# Glossary\n\n` +
+        `**Order**:\nA customer's request to purchase items.\n_Avoid_: cart\n\n` +
+        `** Order **:\nPadded heading — must collide with the unpadded one.\n_Avoid_: purchase\n`,
+    });
+    const g = glossaryResult(root);
+    expect(g?.verdict).toBe("error");
+    expect(exitCodeFor(runHealth(root))).toBe(1);
+  });
+
+  it("degrades (non-blocking) when the glossary is present but not linked from CLAUDE.md", () => {
+    const root = makeProject({
+      "CLAUDE.md": CLAUDE_UNLINKED,
+      "docs/glossary.md": GLOSSARY_OK,
+    });
+    const results = runHealth(root);
+    const g = results.find((r) => r.id === "glossary");
+    expect(g?.verdict).toBe("degraded");
+    expect(g?.detail).toMatch(/link/i);
+    expect(exitCodeFor(results)).toBe(0); // present-but-unwired is a warning, not a gate
+  });
+
+  it("errors and blocks when CLAUDE.md links a glossary that is absent (dangling wiring)", () => {
+    const root = makeProject({
+      "CLAUDE.md": CLAUDE_LINKED, // points at docs/glossary.md ...
+      // ... but no glossary file exists anywhere
+      "docs/other.md": "# unrelated\n",
+    });
+    const results = runHealth(root);
+    const g = results.find((r) => r.id === "glossary");
+    expect(g?.verdict).toBe("error");
+    expect(exitCodeFor(results)).toBe(1);
+  });
+
+  it("passes cleanly when no glossary exists and nothing links to one (not-a-fault)", () => {
+    const root = makeProject({
+      "CLAUDE.md": CLAUDE_UNLINKED, // no glossary, no link to one
+      "docs/other.md": "# unrelated\n",
+    });
+    const results = runHealth(root);
+    const g = results.find((r) => r.id === "glossary");
+    expect(g?.verdict).toBe("ok");
+    expect(exitCodeFor(results)).toBe(0);
+  });
+
+  it("resolves the glossary via the docs/scaffolds indirection", () => {
+    const root = makeProject({
+      "CLAUDE.md": CLAUDE_LINKED, // links docs/glossary.md
+      "docs/scaffolds/glossary.md": GLOSSARY_OK, // but it lives under scaffolds/ pre-move
+    });
+    const results = runHealth(root);
+    const g = results.find((r) => r.id === "glossary");
+    expect(g?.verdict).toBe("ok");
+    expect(exitCodeFor(results)).toBe(0);
+  });
+
+  it("does not treat bold-without-colon prose or _Avoid_: lines as term headings", () => {
+    const root = makeProject({
+      "CLAUDE.md": CLAUDE_LINKED,
+      "docs/glossary.md":
+        `# Glossary\n\n` +
+        `**Order**:\nA customer's request to purchase items.\n_Avoid_: purchase, cart\n\n` +
+        // bold word reusing the term but WITHOUT a colon — not a heading, must not
+        // register as a second "Order" and trip the duplicate check:
+        `When you place an **Order** you receive confirmation — this is **important** context.\n\n` +
+        `**Invoice**:\nA request for payment issued after an Order is fulfilled.\n_Avoid_: bill\n`,
+    });
+    const results = runHealth(root);
+    const g = results.find((r) => r.id === "glossary");
+    expect(g?.verdict).toBe("ok"); // exactly two unique headings: Order, Invoice
+    expect(exitCodeFor(results)).toBe(0);
   });
 });
 

@@ -1,9 +1,9 @@
 ---
 agent-notes:
   ctx: "who owns which docs, update rules"
-  deps: [CLAUDE.md]
+  deps: [CLAUDE.md, docs/glossary.md, docs/adrs/0009-ubiquitous-language-glossary.md]
   state: active
-  last: "vik@2026-07-03"
+  last: "claude@2026-07-07"
 ---
 # Document Ownership
 
@@ -24,9 +24,23 @@ Extracted from CLAUDE.md to reduce context window load. Referenced by CLAUDE.md 
 | Changelog | Diego | `CHANGELOG.md` | Releases |
 | AI-tells catalog | Diego | `docs/process/ai-tells-catalog.md` | New convergence patterns observed; calibration of exceptions |
 | Code map | Coordinator | `docs/code-map.md` | New packages, modules, or significant API changes |
+| Glossary (domain vocabulary) | Archie (arbitrate) / Cam (capture) | `docs/glossary.md` | New domain terms surface in Discovery/Architecture; overloaded or competing terms |
 | Team directives | All agents | `docs/team-directives.md` | New conventions established during work |
 | ADRs | Archie | `docs/adrs/` | Significant architectural decisions |
 | Product context | Pat | `docs/product-context.md` | Kickoff Phase 1b, sprint boundaries, human corrections |
+
+## The Single-Source Rule (glossary vs code-map vs agent-notes vs spec docs)
+
+Four artifacts describe "the project," and it must be obvious which one owns a given fact. A term is defined in exactly one home; every other place references it bare and, at most, links the home (ADR-0009 §3). A pointer is not a definition, so it creates no drift.
+
+| To learn… | Read | Owns |
+|-----------|------|------|
+| what a **domain word** means (Order, Invoice) | `docs/glossary.md` | the user's *domain* vocabulary |
+| what a **process term** means (proof grade, wave, agent-notes) | its spec doc (`done-gate.md`, `phases.md`, `agent-notes.md`, `team-governance.md`) | Summon's *methodology* vocabulary |
+| **where** something is built / how data flows | `docs/code-map.md` | modules, packages, APIs |
+| whether to **open a given file** | that file's agent-notes | one file's purpose and deps |
+
+Practical consequence: the glossary holds **domain terms only** — never Summon's own process terms (those stay in their spec docs and are referenced bare). When prose elsewhere needs a term defined in another home, it writes the coined noun plainly and links the home doc rather than re-defining it. `docs/glossary.md`'s duplicate-heading invariant is enforced downstream by the `summon doctor` glossary check.
 
 ## Dependency Management Rules
 
