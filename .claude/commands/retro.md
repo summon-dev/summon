@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "kaizen retro that encodes fixes as sensors, not just issues", deps: [docs/methodology/personas.md, CLAUDE.md, scripts/check-canon.mjs, docs/methodology/debt-markers.md], state: active, last: "grace@2026-06-15" } -->
+---
+description: "Kaizen retro that encodes each fix as a sensor, not just a logged issue."
+---
+<!-- agent-notes: { ctx: "kaizen retro that encodes fixes as sensors, not just issues", deps: [docs/methodology/personas.md, CLAUDE.md, scripts/check-canon.mjs, docs/methodology/debt-markers.md], state: active, last: "claude@2026-07-07" } -->
 Reflect on the work done in this sprint/session. Consider:
 
 1. What went well?

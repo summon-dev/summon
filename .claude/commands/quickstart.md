@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "fast 5-min onboarding, skips full kickoff ceremony", deps: [CLAUDE.md, .claude/commands/kickoff.md, docs/methodology/personas.md], state: active, last: "pat@2026-03-21" } -->
+---
+description: "Fast onboarding from template to working code in about five minutes; skips full kickoff."
+---
+<!-- agent-notes: { ctx: "fast 5-min onboarding, skips full kickoff ceremony", deps: [CLAUDE.md, .claude/commands/kickoff.md, docs/methodology/personas.md], state: active, last: "claude@2026-07-07" } -->
 Quick-start this project: $ARGUMENTS
 
 This is the fast path — get from template to working code in ~5 minutes. Use `/kickoff` instead if you want full discovery with architecture debate, sacrificial concepts, and board setup.

@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "pin dependency versions, update SBOM + decisions", deps: [docs/sbom/sbom.md, docs/sbom/dependency-decisions.md], state: active, last: "pierrot@2026-02-15" } -->
+---
+description: "Pin dependency versions and regenerate the SBOM and dependency-decisions doc."
+---
+<!-- agent-notes: { ctx: "pin dependency versions, update SBOM + decisions", deps: [docs/sbom/sbom.md, docs/sbom/dependency-decisions.md], state: active, last: "claude@2026-07-07" } -->
 Pin all dependency versions and update the SBOM and dependency documentation.
 
 This command does three things: pins versions in package manager files, regenerates the SBOM, and updates the dependency decisions doc. Run it after adding/removing/upgrading dependencies, or on demand to lock down the current state.

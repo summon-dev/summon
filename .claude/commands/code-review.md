@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "multi-lens code review shorthand, delegates to code-reviewer agent", deps: [.claude/agents/code-reviewer.md, docs/process/tracking-protocol.md], state: active, last: "coordinator@2026-03-31" } -->
+---
+description: "Run the multi-lens code review (Vik, Tara, Pierrot, Archie) on the current changes."
+---
+<!-- agent-notes: { ctx: "multi-lens code review shorthand, delegates to code-reviewer agent", deps: [.claude/agents/code-reviewer.md, docs/process/tracking-protocol.md], state: active, last: "claude@2026-07-07" } -->
 Run a multi-perspective code review on the current changes.
 
 This command delegates to the **code-reviewer agent** (`.claude/agents/code-reviewer.md`), which is the canonical definition of the multi-lens review process. Invoke it as a subagent.

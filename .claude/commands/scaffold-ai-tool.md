@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "AI/data-centric tool scaffold workflow", deps: [CLAUDE.md], state: active, last: "sato@2026-02-12" } -->
+---
+description: "Scaffold an AI or data-centric tool project."
+---
+<!-- agent-notes: { ctx: "AI/data-centric tool scaffold workflow", deps: [CLAUDE.md], state: active, last: "claude@2026-07-07" } -->
 Scaffold an AI / data-centric tool: $ARGUMENTS
 
 You are setting up this repository as an AI or data-centric application. Follow these steps:

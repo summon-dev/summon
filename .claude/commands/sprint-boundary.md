@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "mandatory sprint boundary: retro + sweep + gate + passes", deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/scaffolds/tech-debt.md, docs/scaffolds/performance-budget.md, docs/methodology/debt-markers.md], state: active, last: "grace@2026-06-15" } -->
+---
+description: "Mandatory sprint-boundary workflow: retro, debt sweep, done-gate, and operational passes."
+---
+<!-- agent-notes: { ctx: "mandatory sprint boundary: retro + sweep + gate + passes", deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/scaffolds/tech-debt.md, docs/scaffolds/performance-budget.md, docs/methodology/debt-markers.md], state: active, last: "claude@2026-07-07" } -->
 Run the mandatory sprint boundary workflow for: $ARGUMENTS
 
 This is the **canonical end-of-sprint process**. It must be run at every sprint boundary — it is NOT optional and should NOT require the user to trigger it manually. When Grace detects that the sprint's work is complete (all sprint items are Done or explicitly deferred), this workflow triggers automatically.

@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "interrogate a claim of done until it rests on real proof", deps: [docs/process/done-gate.md, .claude/agents/wei.md, .claude/agents/tara.md], state: active, last: "vik@2026-06-15" } -->
+---
+description: "Interrogate a claim of done until it rests on named proof, not confidence."
+---
+<!-- agent-notes: { ctx: "interrogate a claim of done until it rests on real proof", deps: [docs/process/done-gate.md, .claude/agents/wei.md, .claude/agents/tara.md], state: active, last: "claude@2026-07-07" } -->
 Interrogate and defend the definition of done for: $ARGUMENTS
 
 (No argument: grill the current work item / uncommitted change.)

@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "sacrificial concept design exploration", deps: [docs/methodology/personas.md, .claude/agents/dani.md], state: active, last: "dani@2026-02-12" } -->
+---
+description: "Explore a design with sacrificial concepts before committing to an implementation."
+---
+<!-- agent-notes: { ctx: "sacrificial concept design exploration", deps: [docs/methodology/personas.md, .claude/agents/dani.md], state: active, last: "claude@2026-07-07" } -->
 Run a design exploration with sacrificial concepts for: $ARGUMENTS
 
 This follows Dani's approach (see `docs/methodology/personas.md`). The goal is to explore the design space before committing to an implementation.

@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "multi-lens cloud deployment readiness review for any platform", deps: [.claude/agents/cloud.md], state: active, last: "coordinator@2026-03-30" } -->
+---
+description: "Multi-lens cloud deployment-readiness review (architecture, cost, enterprise) for AWS, Azure, or GCP."
+---
+<!-- agent-notes: { ctx: "multi-lens cloud deployment readiness review for any platform", deps: [.claude/agents/cloud.md], state: active, last: "claude@2026-07-07" } -->
 Run a multi-lens review of cloud deployment readiness: $ARGUMENTS
 
 This invokes the Cloud agent to review the current project's cloud setup through three lenses — architecture, cost, and enterprise readiness. Adapts to AWS, Azure, or GCP based on what's in the repo.
