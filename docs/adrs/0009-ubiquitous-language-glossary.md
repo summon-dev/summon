@@ -6,7 +6,7 @@ agent-notes: { ctx: "ADR: adopt a domain glossary (docs/glossary.md) seeded with
 
 ## Status
 
-Accepted (2026-07-07) — ratified by the human after the Architecture Gate. Archie authored; Wei challenged as a standalone agent (six numbered challenges, five techniques); C1, C2, C3, C4, C5 conceded and reflected below, C6 dissolved once C1+C4 landed. The design changed materially from Round 1 — the "one artifact serves both framings" spine is retracted (§Retracted). Debate recorded at [`docs/tracking/2026-07-07-context-glossary-debate.md`](../tracking/2026-07-07-context-glossary-debate.md). **OQ1 resolved at ratification: build the structural `health` check** (the human accepted Archie's argument over a possible YAGNI cut).
+Accepted (2026-07-07) — ratified by the human after the Architecture Gate. Archie authored; Wei challenged as a standalone agent (six numbered challenges, five techniques); C1, C2, C3, C4, C5 conceded and reflected below, C6 dissolved once C1+C4 landed. The design changed materially from Round 1 — the "one artifact serves both framings" spine is retracted (§Retracted). The full Archie ↔ Wei debate is retained in Summon's development history. **OQ1 resolved at ratification: build the structural `health` check** (the human accepted Archie's argument over a possible YAGNI cut).
 
 **This ADR is the spec, not the build.** It decides *whether* and *how* Summon adopts a domain glossary. The `docs/glossary.md` fictional-domain seed, the CLAUDE.md doc-index entry, the `doc-ownership.md` row, the structural check in the portable `health` registry, and the coined-term de-duplication pass across canon prose are a **single follow-up implementation PR**, sequenced after acceptance. Nothing here moves a file or edits code.
 
