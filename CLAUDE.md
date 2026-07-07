@@ -64,7 +64,7 @@ If blocked by environment, tools, permissions, or you've tried twice — ask. Do
 Before any workflow that touches the project board (sprint-boundary, kickoff, resume, handoff), run the pre-flight check from your active tracking adapter at `docs/integrations/README.md`. If any check fails, STOP and ask the user to fix it.
 
 ### Don't Skip the Done Gate
-Every work item passes the gate before closing. Full checklist at `docs/process/done-gate.md`. Each gate item carries a **proof grade** (deterministic / inferential / human-judgement) — the agent's say-so is not proof. When a claim's grade is inferential or human, or coverage looks thin, run `/grill` to interrogate it before closing.
+Every work item passes the gate before closing. Full checklist at `docs/process/done-gate.md`. Each gate item carries a **proof grade** (the three grades and how to assign them: `docs/process/done-gate.md`) — the agent's say-so is not proof. When a claim's grade is inferential or human, or coverage looks thin, run `/grill` to interrogate it before closing.
 
 ### Don't Skip Agents
 When a situation triggers multiple personas, invoke ALL of them. Overlapping coverage is intentional.
@@ -127,6 +127,7 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 | Doc | Purpose |
 |-----|---------|
 | `docs/code-map.md` | Package structure, public APIs, data flow — **read first** |
+| `docs/glossary.md` | Project domain vocabulary (ubiquitous language) — one opinionated word per concept |
 | `docs/methodology/phases.md` | 7-phase team methodology |
 | `docs/methodology/personas.md` | 16-agent persona catalog |
 | `docs/methodology/agent-notes.md` | Agent-notes protocol spec |
