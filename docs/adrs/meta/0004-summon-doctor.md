@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "ADR: summon doctor on-demand vs cwd, canon-vs-health split, deferred --json envelope (internal shape decided)", deps: [CLAUDE.md, docs/history/ponytail-harness-review.md, scripts/check-canon.mjs, packages/summon-team/src/index.ts, packages/summon-team/package.json, docs/adrs/0003-project-risk-tiers.md, docs/adrs/meta/0005-behavioral-benchmark.md, docs/tracking/2026-06-24-doctor-benchmark-gate-debate.md], state: active, last: "archie@2026-06-24" }
+agent-notes: { ctx: "ADR: summon doctor on-demand vs cwd, canon-vs-health split, deferred --json envelope (internal shape decided)", deps: [CLAUDE.md, docs/history/ponytail-harness-review.md, scripts/check-canon.mjs, packages/summon-team/src/index.ts, packages/summon-team/package.json, docs/adrs/0003-project-risk-tiers.md, docs/adrs/meta/0005-behavioral-benchmark.md, docs/history/tracking/2026-06-24-doctor-benchmark-gate-debate.md], state: active, last: "claude@2026-07-07" }
 ---
 
 # ADR-0004: `summon doctor` — Home, Check-Registry Split, and the Deferred `--json` Envelope
@@ -8,7 +8,7 @@ agent-notes: { ctx: "ADR: summon doctor on-demand vs cwd, canon-vs-health split,
 
 Accepted (2026-06-24) — human-approved after the Architecture Gate (Archie/Wei debate, three rounds; Wei holds no block). Revised from the seven-agent direction review recorded in `docs/history/ponytail-harness-review.md` (Archie/Vik/Tara lenses). Implements the descoped form of GitHub issue #30. **Not yet implemented** — this ADR is the spec; the on-demand `summon-team doctor` invocation mode, the `health` registry, and the cheap canon checks are built in the implementation step that follows acceptance.
 
-Debate record: docs/tracking/2026-06-24-doctor-benchmark-gate-debate.md
+Debate record: docs/history/tracking/2026-06-24-doctor-benchmark-gate-debate.md
 
 ## Context
 
