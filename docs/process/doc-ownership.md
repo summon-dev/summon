@@ -23,6 +23,7 @@ Extracted from CLAUDE.md to reduce context window load. Referenced by CLAUDE.md 
 | Config manifest | Ines | `docs/config-manifest.md` | New env vars, feature flags, config files |
 | Changelog | Diego | `CHANGELOG.md` | Releases |
 | AI-tells catalog | Diego | `docs/process/ai-tells-catalog.md` | New convergence patterns observed; calibration of exceptions |
+| Review lenses | Ines (operational) / Archie (conformance) | `docs/process/review-lenses.md` | A reusable review lens gains, loses, or re-scopes a check |
 | Code map | Coordinator | `docs/code-map.md` | New packages, modules, or significant API changes |
 | Glossary (domain vocabulary) | Archie (arbitrate) / Cam (capture) | `docs/glossary.md` | New domain terms surface in Discovery/Architecture; overloaded or competing terms |
 | Team directives | All agents | `docs/team-directives.md` | New conventions established during work |

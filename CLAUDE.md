@@ -135,6 +135,7 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 | `docs/process/team-governance.md` | Triggers, debate protocol, architecture gate, voice rules |
 | `docs/process/done-gate.md` | 16-item Done Gate checklist |
 | `docs/process/operational-baseline.md` | Cross-cutting operational concerns checklist |
+| `docs/process/review-lenses.md` | Canonical reusable review-lens checklists (operational, conformance) |
 | `docs/process/doc-ownership.md` | Who owns which docs, update triggers |
 | `docs/process/gotchas.md` | Implementation patterns and known pitfalls |
 | `docs/process/ai-tells-catalog.md` | AI-tell catalog for keeping Summon's own docs from reading as machine-built |
