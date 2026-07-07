@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "tech stack reevaluation workflow", deps: [CLAUDE.md, docs/adrs/], state: active, last: "archie@2026-02-12" } -->
+---
+description: "Re-evaluate and update the project's tech-stack choices, recording the decision."
+---
+<!-- agent-notes: { ctx: "tech stack reevaluation workflow", deps: [CLAUDE.md, docs/adrs/], state: active, last: "claude@2026-07-07" } -->
 Reconsider and update the project's tech stack: $ARGUMENTS
 
 The user wants to re-evaluate some or all of the current tech stack choices. Follow these steps:

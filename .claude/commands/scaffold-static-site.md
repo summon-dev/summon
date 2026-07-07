@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "static site scaffold for GitHub Pages", deps: [CLAUDE.md], state: active, last: "sato@2026-02-12" } -->
+---
+description: "Scaffold a static site for GitHub Pages."
+---
+<!-- agent-notes: { ctx: "static site scaffold for GitHub Pages", deps: [CLAUDE.md], state: active, last: "claude@2026-07-07" } -->
 Scaffold a static site for GitHub Pages: $ARGUMENTS
 
 You are setting up this repository as a static website suitable for GitHub Pages hosting. Follow these steps:

@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "resume from previous session handoff", deps: [CLAUDE.md], state: active, last: "coordinator@2026-07-03" } -->
+---
+description: "Resume work from a previous session's handoff document."
+---
+<!-- agent-notes: { ctx: "resume from previous session handoff", deps: [CLAUDE.md], state: active, last: "claude@2026-07-07" } -->
 Resume from a previous session's handoff.
 
 ## Steps

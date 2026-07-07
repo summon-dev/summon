@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "web/mobile monorepo scaffold workflow", deps: [CLAUDE.md], state: active, last: "sato@2026-02-12" } -->
+---
+description: "Scaffold a web or mobile monorepo (pnpm/Turbo, Next.js)."
+---
+<!-- agent-notes: { ctx: "web/mobile monorepo scaffold workflow", deps: [CLAUDE.md], state: active, last: "claude@2026-07-07" } -->
 Scaffold a web/mobile monorepo: $ARGUMENTS
 
 You are setting up this repository as a web or mobile monorepo. Follow these steps:

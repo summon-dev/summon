@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "create new ADR from template", deps: [docs/adrs/template.md], state: active, last: "archie@2026-02-12" } -->
+---
+description: "Create a new Architecture Decision Record from the template, numbered automatically."
+---
+<!-- agent-notes: { ctx: "create new ADR from template", deps: [docs/adrs/template.md], state: active, last: "claude@2026-07-07" } -->
 Create a new Architecture Decision Record for: $ARGUMENTS
 
 Steps:

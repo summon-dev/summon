@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "strict TDD implementation workflow", deps: [docs/adrs/0002-tdd-workflow.md], state: active, last: "coordinator@2026-03-31" } -->
+---
+description: "Strict red-green-refactor TDD workflow; Tara writes failing tests before Sato implements."
+---
+<!-- agent-notes: { ctx: "strict TDD implementation workflow", deps: [docs/adrs/0002-tdd-workflow.md], state: active, last: "claude@2026-07-07" } -->
 Implement the following using strict TDD: $ARGUMENTS
 
 Follow this cycle for each piece of behavior:

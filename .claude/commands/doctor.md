@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "read-only project health check, 8 diagnostics", deps: [CLAUDE.md, .claude/agents/, .claude/commands/, docs/methodology/agent-notes.md], state: active, last: "sato@2026-03-21" } -->
+---
+description: "Read-only health check of the Summon project setup; inspects but never modifies."
+---
+<!-- agent-notes: { ctx: "read-only project health check, 8 diagnostics", deps: [CLAUDE.md, .claude/agents/, .claude/commands/, docs/methodology/agent-notes.md], state: active, last: "claude@2026-07-07" } -->
 Run a health check on the Summon project setup. This command is **read-only** — it inspects but never modifies files, config, or state.
 
 ---

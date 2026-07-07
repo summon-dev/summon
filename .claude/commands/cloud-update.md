@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "refresh cloud landscape research files", deps: [docs/research/aws-landscape.md, docs/research/azure-landscape.md, docs/research/gcp-landscape.md, .claude/agents/cloud.md], state: active, last: "sato@2026-03-30" } -->
+---
+description: "Refresh the cloud service landscape research files before a major cloud decision."
+---
+<!-- agent-notes: { ctx: "refresh cloud landscape research files", deps: [docs/research/aws-landscape.md, docs/research/azure-landscape.md, docs/research/gcp-landscape.md, .claude/agents/cloud.md], state: active, last: "claude@2026-07-07" } -->
 Research and update the cloud service landscape for: $ARGUMENTS
 
 This command refreshes the cloud knowledge files that the cloud specialist agents depend on. Run it when you suspect the landscape has changed — new services, pricing changes, deprecated features, or before a major architecture decision.

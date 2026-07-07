@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "CLI project scaffold workflow", deps: [CLAUDE.md], state: active, last: "sato@2026-02-12" } -->
+---
+description: "Scaffold a command-line tool project."
+---
+<!-- agent-notes: { ctx: "CLI project scaffold workflow", deps: [CLAUDE.md], state: active, last: "claude@2026-07-07" } -->
 Scaffold a CLI project: $ARGUMENTS
 
 You are setting up this repository as a CLI tool. Follow these steps:

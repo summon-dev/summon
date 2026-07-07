@@ -1,4 +1,7 @@
-<!-- agent-notes: { ctx: "devcontainer setup for any stack", deps: [CLAUDE.md], state: active, last: "ines@2026-02-12" } -->
+---
+description: "Set up a reproducible devcontainer for this project's detected tech stack."
+---
+<!-- agent-notes: { ctx: "devcontainer setup for any stack", deps: [CLAUDE.md], state: active, last: "claude@2026-07-07" } -->
 Set up a devcontainer for this project: $ARGUMENTS
 
 You are configuring a development container so this project can be developed in a consistent, reproducible environment. This command is typically run AFTER the tech stack has been chosen (via scaffolding or manual setup).
