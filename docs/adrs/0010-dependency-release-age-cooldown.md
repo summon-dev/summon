@@ -1,12 +1,12 @@
 ---
-agent-notes: { ctx: "ADR: N-day release-age cooldown on newly adopted dependency versions to blunt supply-chain attacks; native PM enforcement preferred; explicit logged override; scope = direct deps at add/upgrade", deps: [CLAUDE.md, docs/adrs/template.md, docs/adrs/0003-project-risk-tiers.md, .claude/commands/pin-versions.md, docs/process/done-gate.md, docs/team-directives.md, docs/sbom/dependency-decisions.md, .claude/agents/pierrot.md], state: proposed, last: "claude@2026-07-09" }
+agent-notes: { ctx: "ADR: N-day release-age cooldown on newly adopted dependency versions to blunt supply-chain attacks; native PM enforcement preferred; explicit logged override; scope = direct deps at add/upgrade", deps: [CLAUDE.md, docs/adrs/template.md, docs/adrs/0003-project-risk-tiers.md, .claude/commands/pin-versions.md, docs/process/done-gate.md, docs/team-directives.md, docs/sbom/dependency-decisions.md, .claude/agents/pierrot.md], state: accepted, last: "claude@2026-07-09" }
 ---
 
 # ADR-0010: Dependency Release-Age Cooldown
 
 ## Status
 
-Proposed (2026-07-09) — awaiting ratification. This ADR and its implementation surfaces ship together in one PR for review; **merging the PR ratifies the decision.** Archie authored the topology, Pierrot supplied the threat rationale and owns enforcement, and Wei challenged the window (which set the default to 3 days, not 7). The `pin-versions.md` step, the done-gate sub-item, the `team-directives.md` line, and the `pierrot.md` ownership bullet are the *implementation* of this decision, not substitutes for it — the reasoning and the number live here.
+Accepted (2026-07-09) — ratified by the human on merge of the implementation PR. Archie authored the topology, Pierrot supplied the threat rationale and owns enforcement, and Wei challenged the window (which set the default to 3 days, not 7). The `pin-versions.md` step, the done-gate sub-item, the `team-directives.md` line, and the `pierrot.md` ownership bullet are the *implementation* of this decision, not substitutes for it — the reasoning and the number live here.
 
 ## Context
 
