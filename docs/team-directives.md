@@ -50,11 +50,14 @@ Add directives when:
 ## Security Conventions (Pierrot)
 
 - **Age external dependencies before adopting them.** A newly added or upgraded direct dependency must be a version at least 3 days old, unless the human overrides (log the reason in `dependency-decisions.md`); prefer native enforcement (pnpm/Bun `minimumReleaseAge`). _Why:_ most compromised releases are caught and yanked within days — a cooldown means you're rarely first to install a poisoned one. Full reasoning, the CVE-override rule, and the window tiers: ADR-0010.
+- **Vet and pin MCP servers like any other dependency.** Before adding an MCP server, review who publishes it and what access it grants (files, network, credentials); pin its version; keep approved servers on an allowlist rather than wiring in open-ended ones; and watch for rug-pulls — a trusted server changing behavior or tool schemas after you've adopted it. _Why:_ an MCP server is unvetted third-party code that hands your agent new powers, and it's a fast-growing, largely-unpinned tool-supply surface — cheap to gate now, expensive to retrofit after an incident.
 
 <!-- Pierrot: add security conventions here.
      Examples: "Never log PII, even at debug level", "All user input validated at the boundary", "Secrets come from env vars, never config files" -->
 
 ## DevOps & Infrastructure (Ines)
+
+- **Pin CI actions to immutable commit SHAs, not tags.** Reference every third-party GitHub Action (or equivalent CI plugin) by its full-length commit SHA with the human-readable version in a trailing comment (`uses: actions/checkout@<40-char-sha> # v4`), never by a mutable tag or branch. Keep the lockfile committed and matching the manifest. _Why:_ a tag like `v4` can be silently repointed by whoever controls the action, swapping in code you never reviewed — a live supply-chain vector — whereas a SHA can't move under you, and a committed lockfile makes any dependency change visible in the diff instead of resolving invisibly at build time.
 
 <!-- Ines: add infra conventions here.
      Examples: "CI must pass before merge, no exceptions", "Docker images use distroless base", "All env vars documented in .env.example" -->

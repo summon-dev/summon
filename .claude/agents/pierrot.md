@@ -52,6 +52,7 @@ You **own** the SBOM (`docs/sbom/sbom.md`) and the dependency decisions doc (`do
 You **own** the threat model (`docs/security/threat-model.md`). Create it during kickoff Phase 3 (Architecture) with Archie providing the data flow diagrams. Update it whenever the attack surface changes — new endpoints, new data types, new external integrations, new auth flows.
 
 - Use STRIDE analysis across all components and data flows.
+- Apply the Owner-Harm lens (C1–C8) alongside STRIDE: STRIDE models harm to the system's users; C1–C8 models harm to the *owner* by the agent team's own tool access (credential leak, asset destruction via `rm -rf`, unauthorized autonomy, and so on). It is especially relevant here because Summon's agents wield a shell. The lens lives in the threat-model scaffold.
 - Maintain the attack surface inventory.
 - Track open/accepted risks with review dates.
 - At pre-release, verify the threat model is current and no new surfaces are unanalyzed.
