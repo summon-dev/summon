@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "low-ceremony project conventions, positive rules", deps: [CLAUDE.md, docs/process/gotchas.md], state: active, last: "diego@2026-07-03" }
+agent-notes: { ctx: "low-ceremony project conventions, positive rules", deps: [CLAUDE.md, docs/process/gotchas.md, docs/adrs/0010-dependency-release-age-cooldown.md], state: active, last: "claude@2026-07-09" }
 ---
 
 # Team Directives
@@ -48,6 +48,8 @@ Add directives when:
      Examples: "README quick-start must work in under 5 minutes", "Changelog entries use past tense", "API docs include a curl example for every endpoint" -->
 
 ## Security Conventions (Pierrot)
+
+- **Age external dependencies before adopting them.** A newly added or upgraded direct dependency must be a version at least 3 days old, unless the human overrides (log the reason in `dependency-decisions.md`); prefer native enforcement (pnpm/Bun `minimumReleaseAge`). _Why:_ most compromised releases are caught and yanked within days — a cooldown means you're rarely first to install a poisoned one. Full reasoning, the CVE-override rule, and the window tiers: ADR-0010.
 
 <!-- Pierrot: add security conventions here.
      Examples: "Never log PII, even at debug level", "All user input validated at the boundary", "Secrets come from env vars, never config files" -->
