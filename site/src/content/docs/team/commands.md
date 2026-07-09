@@ -54,6 +54,6 @@ Every command is a `.md` file in `.claude/commands/` — Claude Code discovers t
 |---------|-------------|
 | `/cloud-review` | Multi-lens cloud deployment readiness review |
 | `/cloud-update` | Refresh cloud landscape research |
-| `/pin-versions` | Pin dependency versions, update SBOM |
+| `/pin-versions` | Pin dependency versions, enforce the release-age cooldown, update SBOM |
 | `/whatsit` | Tech/concept scout — explain or discover technologies |
 | `/retro` | Kaizen retrospective with GitHub Issues for findings |

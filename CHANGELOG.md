@@ -18,3 +18,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Integration adapters for GitHub Projects and Jira
 - Scaffold templates for web monorepo, CLI, static site, and AI tool projects
 - Unified Cloud agent covering architecture, cost, and network diagnostics
+- Supply-chain hardening: dependency release-age cooldown (ADR-0010, 3-day default enforced via `pin-versions` and Done Gate), CI actions pinned to commit SHAs, MCP-server vetting directive, an owner-harm (C1–C8) threat-model lens, and a `security-intake.md` routing guide for future security learnings

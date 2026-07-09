@@ -3,7 +3,7 @@ agent-notes:
   ctx: "who owns which docs, update rules"
   deps: [CLAUDE.md, docs/glossary.md, docs/adrs/0009-ubiquitous-language-glossary.md]
   state: active
-  last: "claude@2026-07-07"
+  last: "claude@2026-07-09"
 ---
 # Document Ownership
 
@@ -14,7 +14,7 @@ Extracted from CLAUDE.md to reduce context window load. Referenced by CLAUDE.md 
 | Doc | Owner | Path | Update trigger |
 |-----|-------|------|---------------|
 | SBOM + dependency decisions | Pierrot | `docs/sbom/sbom.md`, `docs/sbom/dependency-decisions.md` | Dependency add/remove/upgrade |
-| Threat model | Pierrot | `docs/security/threat-model.md` | New endpoints, data types, integrations, auth flows |
+| Threat model | Pierrot | `docs/security/threat-model.md` | New endpoints, data types, integrations, auth flows; new owner-harm (C1–C8) or tool-supply surface |
 | Performance budget | Vik (review) / Ines (verify) | `docs/performance-budget.md` | System evolution |
 | Test strategy | Tara | `docs/test-strategy.md` | New test patterns or coverage targets |
 | Technical debt | Grace (track) / Pat (prioritize) | `docs/tech-debt.md` | Sprint boundaries, shortcuts taken |
@@ -24,6 +24,7 @@ Extracted from CLAUDE.md to reduce context window load. Referenced by CLAUDE.md 
 | Changelog | Diego | `CHANGELOG.md` | Releases |
 | AI-tells catalog | Diego | `docs/process/ai-tells-catalog.md` | New convergence patterns observed; calibration of exceptions |
 | Review lenses | Ines (operational) / Archie (conformance) | `docs/process/review-lenses.md` | A reusable review lens gains, loses, or re-scopes a check |
+| Security intake routing | Pierrot / Archie | `docs/process/security-intake.md` | A new security learning needs routing, or an intake surface (ADR/directive/gate/threat-model) is added |
 | Code map | Coordinator | `docs/code-map.md` | New packages, modules, or significant API changes |
 | Glossary (domain vocabulary) | Archie (arbitrate) / Cam (capture) | `docs/glossary.md` | New domain terms surface in Discovery/Architecture; overloaded or competing terms |
 | Team directives | All agents | `docs/team-directives.md` | New conventions established during work |
