@@ -93,9 +93,10 @@ A newly added dependency has to age at least three days before Summon adopts it.
   <Card title="MCP-server vetting" icon="random">
     Review a server before adding it, pin its version, keep an allowlist, and watch for rug-pulls, where a trusted server ships a hostile update.
   </Card>
+  <Card title="Owner-harm threat lens" icon="warning">
+    The agent holds your shell. STRIDE models harm to your users; the C1–C8 lens models harm to *you*, its operator: `rm -rf` on real data, a leaked credential, an action nobody authorized.
+  </Card>
 </CardGrid>
-
-> **The agent holds your shell.** The owner-harm lens (C1–C8) names the ways it can harm *you*, its operator, not just your users: `rm -rf` on real data, a leaked credential, an action nobody authorized.
 
 <Aside type="caution" title="Necessary, not sufficient">
 A seatbelt against fast, opportunistic attacks, not an airbag. It does nothing against a package that was malicious from its first release, or a patient backdoor. Pair it with audit and your own judgement. See [the reasoning in ADR-0010](https://github.com/summon-dev/summon/blob/main/docs/adrs/0010-dependency-release-age-cooldown.md).
