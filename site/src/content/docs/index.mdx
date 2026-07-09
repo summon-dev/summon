@@ -35,7 +35,7 @@ hero:
       icon: external
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
 
 <p class="what-is">Summon is a drop-in framework for <a href="https://claude.ai/code">Claude Code</a>. It installs agent definitions, slash commands, and process docs into your project. No runtime. No dependencies. Just markdown.</p>
 
@@ -76,6 +76,30 @@ The uncomfortable part is the actual point: this happened *in the Summon repo*, 
     ADRs written before the code they govern. Six months on, "why is it like this, and who agreed?" has an answer in the git log.
   </Card>
 </CardGrid>
+
+---
+
+## Rarely the first to install a poisoned package
+
+A newly added dependency has to age at least three days before Summon adopts it. Most supply-chain compromises are caught and yanked within days, so you're usually not the one who installs the poisoned version.
+
+<CardGrid>
+  <Card title="Release-age cooldown" icon="puzzle">
+    New or upgraded dependencies must be at least three days old before adoption, unless a human logs the override. Prefers the package manager's native `minimumReleaseAge`, which ages transitive dependencies too where available.
+  </Card>
+  <Card title="SHA-pinned CI" icon="approve-check-circle">
+    CI actions pinned to exact commit SHAs, not mutable tags. A `v4` tag can be silently repointed to code you never reviewed. A lockfile-drift guard flags dependency files that shift with no commit behind them.
+  </Card>
+  <Card title="MCP-server vetting" icon="random">
+    Review a server before adding it, pin its version, keep an allowlist, and watch for rug-pulls, where a trusted server ships a hostile update.
+  </Card>
+</CardGrid>
+
+> **The agent holds your shell.** The owner-harm lens (C1–C8) names the ways it can harm *you*, its operator, not just your users: `rm -rf` on real data, a leaked credential, an action nobody authorized.
+
+<Aside type="caution" title="Necessary, not sufficient">
+A seatbelt against fast, opportunistic attacks, not an airbag. It does nothing against a package that was malicious from its first release, or a patient backdoor. Pair it with audit and your own judgement. See [the reasoning in ADR-0010](https://github.com/summon-dev/summon/blob/main/docs/adrs/0010-dependency-release-age-cooldown.md).
+</Aside>
 
 ---
 

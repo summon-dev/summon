@@ -130,6 +130,7 @@ Plus 6 more specialists: cloud ops, SRE, data science, UX/design, documentation,
 - **TDD enforced** — failing tests before code
 - **Multi-lens code review** — simplicity, test quality, and security in parallel, plus Archie's architectural-conformance lens when the change touches core types
 - **Adversarial debate** — Wei challenges assumptions; Pierrot has security veto
+- **Supply-chain hardening** — a release-age cooldown ages new dependencies before adoption, CI actions pinned to commit SHAs, MCP servers vetted, and an owner-harm threat lens for the agent holding your shell; honest about the attacks it does not stop
 - **Sprint boundaries** — retrospectives, velocity tracking, kaizen
 - **Done gate** — 16-item checklist before any work item closes
 
