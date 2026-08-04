@@ -1,18 +1,18 @@
 ---
-agent-notes: { ctx: "ADR: Fable-era direction — enforce methodology via harness primitives in-repo; reject standalone control-plane rewrite; gated 2026-07-24 (Archie 14, Wei 8)", deps: [CLAUDE.md, docs/adrs/template.md, docs/history/codex_rewrite_design_doc.md, docs/adrs/meta/0006-multi-runtime-install.md, docs/adrs/meta/0007-canon-meta-boundary.md, docs/process/done-gate.md, docs/process/team-governance.md, docs/process/security-intake.md, packages/summon-team/src/doctor.ts, scripts/check-canon.mjs], state: proposed, last: "claude@2026-07-24" }
+agent-notes: { ctx: "ADR: Fable-era direction — enforce methodology via harness primitives in-repo; reject standalone control-plane rewrite; gated 2026-07-24 (Archie 14, Wei 8)", deps: [CLAUDE.md, docs/adrs/template.md, docs/adrs/meta/0006-multi-runtime-install.md, docs/adrs/meta/0007-canon-meta-boundary.md, docs/process/done-gate.md, docs/process/team-governance.md, docs/process/security-intake.md, packages/summon-team/src/doctor.ts, scripts/check-canon.mjs], state: accepted, last: "claude@2026-08-04" }
 ---
 
 # ADR-0012: Executable Canon — Enforce Methodology via Harness Primitives, Not a Standalone Control Plane
 
 ## Status
 
-Proposed (2026-07-24) — awaiting human ratification. This ADR is the **direction, not the build**: it decides *where* Summon's next-generation enforcement lives (in this repo, on the agent harness's own primitives) and *what is rejected* (a standalone external supervisor). The individual translations are implementation work items sequenced after ratification per the Sequencing section.
+Accepted (2026-08-04) — ratified by the human, who also directed that the codex reference doc not be carried in the repo (see Context). This ADR is the **direction, not the build**: it decides *where* Summon's next-generation enforcement lives (in this repo, on the agent harness's own primitives) and *what is rejected* (a standalone external supervisor). The individual translations are implementation work items sequenced after ratification per the Sequencing section.
 
 **Gate record.** Architecture Gate completed 2026-07-24. Archie reviewed (14 findings: 2 Critical, 8 Important, 4 Minor — both Criticals were placement/composition defects in the first draft, repaired in this revision). Wei challenged (8 objections: 6 demanded amendments, all incorporated; 1 mechanical fix, applied; the persona-retirement attack was argued and **withdrawn** conditional on the revisit trigger now in sub-decision F). Point-by-point dispositions: `docs/history/tracking/2026-07-24-adr-0012-executable-canon-debate.md`. This ADR is **meta** by ADR-0007 §1's subject test (it is about building Summon) and lives in `docs/adrs/meta/` accordingly — the first draft sat in canon, which Archie and Wei each independently flagged as a violation of the boundary ADR it cites.
 
 ## Context
 
-**The provocation.** `docs/history/codex_rewrite_design_doc.md` (moved to the history zone with this ADR — it is third-party reference material, not canon, and must not scaffold into user projects) is a 2,609-line design for rebuilding Summon as a standalone Python control plane. Provenance matters for weighing it: it was authored by **OpenAI's Codex CLI** on 2026-07-15 — not by this project's agents — in answer to a prompt about *Codex's* tier differences, and it targets Codex's SDK, sandbox, and protocol surface throughout. It is a serious, well-researched document, and this ADR treats it as a hostile-friendly external review: its diagnosis is accepted, its prescription is not.
+**The provocation.** A 2,609-line design document for rebuilding Summon as a standalone Python control plane. Provenance matters for weighing it: it was authored by **OpenAI's Codex CLI** on 2026-07-15 — not by this project's agents — in answer to a prompt about *Codex's* tier differences, and it targets Codex's SDK, sandbox, and protocol surface throughout. The document itself is deliberately not carried in this repo — the human dropped it at ratification; it remains readable in PR #69's commit history, and the section and decision numbers this ADR cites (§5.4, D1, D6, D8, §19.1, §26.4) refer to that external document. It is a serious, well-researched document, and this ADR treats it as a hostile-friendly external review: its diagnosis is accepted, its prescription is not.
 
 **The diagnosis is verified.** The doc's §5.4 limitations were checked against this repo on 2026-07-24 and hold up:
 
@@ -110,6 +110,6 @@ Per Wei: the rejected doc carried reversal criteria (§27); the ADR rejecting it
 
 ### Neutral
 
-- The codex doc lives at `docs/history/codex_rewrite_design_doc.md` — third-party reference material in the non-shipping zone, preserved as this ADR's analyzed input.
+- The codex doc is not carried in this repo — the human dropped it at ratification (2026-08-04) rather than preserve a 2,609-line third-party artifact in-tree. It remains readable in PR #69's commit history; this ADR's citations (§/D numbers) refer to that external document.
 - Nothing here changes the phase model, the persona catalog, or the tracking workflow; this ADR relocates *enforcement*, not *methodology*.
 - The standalone-product path (Alternative B) remains open to anyone — including a future Summon spin-off — as a separate venture with its own cost-benefit; this ADR only decides it is not Summon.
