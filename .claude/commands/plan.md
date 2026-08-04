@@ -25,7 +25,7 @@ Create or update a plan document in `docs/plans/`. The plan should include:
 4. **Approach** — Step-by-step implementation plan following TDD. Gated items must show Architecture phase before Implementation phase.
 5. **Personas involved** — Which Summon agents should be consulted during implementation? (See `docs/methodology/personas.md`.) Include Wei for any gated items.
 6. **Open Questions** — Anything that needs clarification before starting.
-7. **Not Yet Specified** — Questions you can tell are coming but cannot yet phrase precisely, because they hang on questions still open. See below.
+7. **Not Yet Specified** — Questions you can see coming but cannot yet word precisely, because what they depend on is itself undecided. See below.
 8. **Out of Scope** — Work consciously ruled outside this plan's goal, each with the reason. See below.
 9. **Acceptance Criteria** — How we'll know the work is done.
 
@@ -33,20 +33,20 @@ Check existing ADRs and plans for context before writing. Add agent-notes frontm
 
 ### Not Yet Specified vs. a work item
 
-A plan that lists only what it knows overstates its own confidence. **Not Yet Specified** is the deliberate record of what remains unclear — in scope, just not sharp enough to act on.
+A plan that lists only what it knows overstates its own confidence. **Not Yet Specified** is where that admission goes: inside the goal, but still too blurry to act on.
 
-The test is whether you can **state the question precisely now — not whether you can answer it now**:
+Sort by **whether the question can be phrased sharply today** — being unable to answer it is not what puts it here:
 
-- **Make it a work item** when the question is already sharp, even if it is blocked and nothing can start on it yet.
-- **Leave it in Not Yet Specified** when you cannot yet phrase it that sharply.
+- **Make it a work item** when you can already write the question down precisely, even if it is blocked and nobody can start on it.
+- **Leave it in Not Yet Specified** when the question is still too blurry to write down that way.
 
-Do not pre-slice the unclear into item-sized pieces — one entry may later become several items, or none. Resolving an item is what makes the next questions specifiable; when that happens, promote them to real work items and delete them from this section so each lives in exactly one place.
+Resist carving this section into item-shaped fragments. A single entry may later turn into three work items, or evaporate into none. As earlier items resolve and a question comes into focus, promote it to a real work item and remove it from here, so it never lives in two places at once.
 
 ### Out of Scope
 
-Unclarity only ever gathers *toward* the goal. Work past the goal is not unclear, it is **out of scope**, and it gets recorded rather than silently dropped: one line for the gist plus why it is out. Scope, not sharpness, lands it here.
+This section is about the goal's edge, not about clarity. Something can be perfectly well understood and still sit outside what this plan set out to do — record it in one line with the reason it is out, rather than dropping it silently and letting it resurface as a question nobody remembers answering.
 
-Out-of-scope entries never graduate into work items. They return only if the goal itself is redrawn, and then as a fresh plan. If an existing work item turns out to sit past the goal, close it and record one line here rather than completing it — a scope boundary is not a step on the route.
+Nothing here is ever promoted to a work item. If the goal itself is redrawn later, these come back as input to a *new* plan, not as resumed work in this one. And when an existing work item turns out to sit past the goal, close it and leave a line here — finishing it would be work the goal never asked for.
 
 _Both sections adapt conventions from [mattpocock/skills](https://github.com/mattpocock/skills) (`wayfinder`), MIT © 2026 Matt Pocock._
 

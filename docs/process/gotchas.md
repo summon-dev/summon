@@ -3,7 +3,7 @@ agent-notes:
   ctx: "implementation gotchas and established patterns"
   deps: [CLAUDE.md]
   state: active
-  last: "coordinator@2026-07-02"
+  last: "claude@2026-08-04"
 ---
 # Known Patterns and Gotchas
 
@@ -38,6 +38,12 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 ## Architecture Patterns (Archie)
 
 - **YAGNI vs. Planned Capabilities (the Drift Trap).** YAGNI says don't build abstractions for hypothetical futures. But when a future capability is architecturally planned (has an ADR, appears in the architecture doc, is on the roadmap), the abstraction boundary that enables it is a **current requirement**, not speculation. Using consumer-specific concepts in a shared type because "we only support X today" is not YAGNI — it's tech debt against a planned capability. **Detection signal:** a shared/core type contains concepts specific to one consumer while the architecture plans for multiple consumers. **Fix:** use format-neutral representations in shared types; consumer-specific conversions happen at the boundary (in the consumer, not in Core).
+
+- **Wide refactors (expand → migrate → contract).** The directive is in `docs/team-directives.md` § API & Interface Conventions; these are its mechanics. Some changes are trivial in concept and enormous in reach — giving a column a new name, tightening the type of a symbol half the codebase imports. The edit itself is a one-liner; the fallout lands everywhere at once. Vertical slicing cannot help, because the change is not a thin path down through the layers, it is a single layer spread wide, and there is no subset of it that compiles on its own. Stage it in three moves instead:
+  - **Expand.** Introduce the replacement next to what it replaces, changing no callers. The tree is untouched and everything still builds.
+  - **Migrate.** Move callers over in groups small enough to review — a package at a time, a directory at a time. Every group is its own work item, each waiting on the expand. Since the original is still present throughout, the build survives every group.
+  - **Contract.** Remove the original once no caller references it, in a closing item that waits on all the migration groups.
+  - **If a group can't compile on its own** — the change is indivisible across a package seam — point the whole set at a shared branch and one closing verify item, and let that item be the only place green is promised. Write that down in the plan. A red window nobody announced is indistinguishable from a broken build.
 
 <!-- Archie: add additional architectural constraints, integration point knowledge, and
      schema evolution notes here. Patterns that informed past ADRs but aren't worth a standalone ADR themselves. -->
