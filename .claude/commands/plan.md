@@ -1,7 +1,7 @@
 ---
 description: "Produce an implementation plan, scanning first for architecture decisions needing a gate."
 ---
-<!-- agent-notes: { ctx: "implementation planning workflow", deps: [docs/methodology/personas.md, docs/methodology/phases.md], state: active, last: "claude@2026-07-07" } -->
+<!-- agent-notes: { ctx: "implementation planning workflow", deps: [docs/methodology/personas.md, docs/methodology/phases.md], state: active, last: "claude@2026-08-04" } -->
 I need to plan the implementation of: $ARGUMENTS
 
 Before writing the plan, ensure the goal is well-understood. If the request is vague, first run through Coach Cam elicitation (see `docs/methodology/personas.md`) or use `/kickoff` for full discovery.
@@ -25,9 +25,30 @@ Create or update a plan document in `docs/plans/`. The plan should include:
 4. **Approach** — Step-by-step implementation plan following TDD. Gated items must show Architecture phase before Implementation phase.
 5. **Personas involved** — Which Summon agents should be consulted during implementation? (See `docs/methodology/personas.md`.) Include Wei for any gated items.
 6. **Open Questions** — Anything that needs clarification before starting.
-7. **Acceptance Criteria** — How we'll know the work is done.
+7. **Not Yet Specified** — Questions you can tell are coming but cannot yet phrase precisely, because they hang on questions still open. See below.
+8. **Out of Scope** — Work consciously ruled outside this plan's goal, each with the reason. See below.
+9. **Acceptance Criteria** — How we'll know the work is done.
 
 Check existing ADRs and plans for context before writing. Add agent-notes frontmatter per `docs/methodology/agent-notes.md`.
+
+### Not Yet Specified vs. a work item
+
+A plan that lists only what it knows overstates its own confidence. **Not Yet Specified** is the deliberate record of what remains unclear — in scope, just not sharp enough to act on.
+
+The test is whether you can **state the question precisely now — not whether you can answer it now**:
+
+- **Make it a work item** when the question is already sharp, even if it is blocked and nothing can start on it yet.
+- **Leave it in Not Yet Specified** when you cannot yet phrase it that sharply.
+
+Do not pre-slice the unclear into item-sized pieces — one entry may later become several items, or none. Resolving an item is what makes the next questions specifiable; when that happens, promote them to real work items and delete them from this section so each lives in exactly one place.
+
+### Out of Scope
+
+Unclarity only ever gathers *toward* the goal. Work past the goal is not unclear, it is **out of scope**, and it gets recorded rather than silently dropped: one line for the gist plus why it is out. Scope, not sharpness, lands it here.
+
+Out-of-scope entries never graduate into work items. They return only if the goal itself is redrawn, and then as a fresh plan. If an existing work item turns out to sit past the goal, close it and record one line here rather than completing it — a scope boundary is not a step on the route.
+
+_Both sections adapt conventions from [mattpocock/skills](https://github.com/mattpocock/skills) (`wayfinder`), MIT © 2026 Matt Pocock._
 
 ## Tracking Artifact
 

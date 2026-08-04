@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md], state: canonical, last: "sato@2026-03-30" }
+agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md], state: canonical, last: "claude@2026-08-04" }
 ---
 
 # Hybrid Team Methodology
@@ -155,9 +155,22 @@ The coordinator's job is to recognize phase transitions and assemble the right t
 
 **How it works:** Shared "blackboard" — a debugging document where agents post hypotheses, observations, and evidence. Tara writes a failing test that reproduces the bug. Sato investigates and fixes. Vik contributes pattern-based intuition. Any agent can contribute if they spot something.
 
+**Entry gate — a loop that goes red before any hypothesis.** The blackboard opens only once someone can name **one command they have already run at least once**, pasting the invocation and its output, that is:
+
+- **Red-capable** — it drives the actual bug code path and asserts the *user's exact symptom*, so it can go red on this bug and green once fixed. "Runs without erroring" is not red-capable.
+- **Deterministic** — same verdict every run. For intermittent bugs the bar is a pinned, high reproduction rate, not a clean repro; keep raising the rate until it is debuggable.
+- **Fast** — seconds, not minutes.
+- **Agent-runnable** — runnable unattended.
+
+Reading code to build a theory before that command exists is the failure this gate prevents. If no loop can be built, say so explicitly, list what was tried, and ask the human for a reproducing environment, a captured artifact, or permission to instrument — do not proceed to hypotheses without a loop.
+
+**Minimise before hypothesising.** Once red, shrink the repro to the smallest scenario that still goes red — cut inputs, config, and steps one at a time, re-running after each cut. Done when every remaining element is load-bearing. A minimal repro shrinks the hypothesis space and becomes the regression test.
+
+**When no correct seam exists for the regression test, that is itself the finding.** If the only available seam is too shallow to exercise the real bug pattern, a test there gives false confidence. Record it and route it to Archie's conformance lens — the architecture is preventing the bug from being locked down.
+
 **Backlog scan:** Before designing new diagnostic tooling, Tara and Sato check the backlog for features that could help diagnose or reproduce the bug. A planned "preview" feature, "debug panel," "export" capability, or "logging enhancement" may already solve the diagnostic need. If found, flag it to Pat for dual-duty pull-forward consideration.
 
-**Transition to next phase:** When the bug is fixed and the regression test passes.
+**Transition to next phase:** When the bug is fixed and the regression test passes — verified by re-running the entry-gate loop against the original, un-minimised scenario.
 
 ---
 
