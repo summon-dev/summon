@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "low-ceremony project conventions, positive rules", deps: [CLAUDE.md, docs/process/gotchas.md, docs/adrs/0010-dependency-release-age-cooldown.md], state: active, last: "claude@2026-07-09" }
+agent-notes: { ctx: "low-ceremony project conventions, positive rules", deps: [CLAUDE.md, docs/process/gotchas.md, docs/adrs/0010-dependency-release-age-cooldown.md], state: active, last: "claude@2026-08-04" }
 ---
 
 # Team Directives
@@ -37,12 +37,15 @@ Add directives when:
 
 ## API & Interface Conventions (Archie)
 
+- **Sequence a wide refactor as expand → migrate → contract, not as a vertical slice.** _Why:_ vertical slicing assumes a narrow change through many layers; a wide refactor is the inverse — one layer across many call sites — and forcing it into a tracer bullet guarantees a red build with no safe stopping point. Mechanics (batch sizing, blocking edges, the integration-branch fallback): `docs/process/gotchas.md` § Wide refactors. (Adapted from `to-tickets`, [mattpocock/skills](https://github.com/mattpocock/skills), MIT © 2026 Matt Pocock.)
+
 <!-- Archie: add API design conventions here.
      Examples: "All CLI commands support --json output", "Config files use TOML, not YAML", "Public functions have docstrings, private don't" -->
 
 ## Documentation Conventions (Diego)
 
 - **Don't hard-wrap Markdown prose.** Write one logical line per paragraph and let the editor and renderer soft-wrap it; never insert manual newlines to hit a column width. Lists, tables, code fences, and frontmatter keep their own line structure. _Why:_ hard wraps make diffs lie — a three-word edit reflows the whole paragraph, so `git blame` and PR diffs show lines changed that weren't. Soft-wrapped prose diffs at the sentence, not the column.
+- **Prune agent-facing prose against the no-op test, on files you're already editing.** When you touch an agent or command file, check each sentence in isolation: does it change behavior versus what the model would do by default? If not, delete the whole sentence rather than trimming words from it. Prefer stating the target behavior over prohibiting the wrong one — naming a banned behavior makes it *more* available to the model, not less, so keep a prohibition only where no positive phrasing exists, and always name the behaviour you want alongside it. _Why:_ agent prose is Summon's actual shipped artifact, and lines that restate the default cost tokens and attention while changing nothing. Applies opportunistically — this is an editing standard, not a licence to open a repo-wide rewrite. (Adapted from `writing-great-skills`, [mattpocock/skills](https://github.com/mattpocock/skills), MIT © 2026 Matt Pocock.)
 
 <!-- Diego: add documentation conventions here.
      Examples: "README quick-start must work in under 5 minutes", "Changelog entries use past tense", "API docs include a curl example for every endpoint" -->

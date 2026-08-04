@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "canonical checklists for reusable review lenses; single source for persona + composite reviewer", deps: [CLAUDE.md, docs/process/operational-baseline.md], state: canonical, last: "claude@2026-07-07" }
+agent-notes: { ctx: "canonical checklists for reusable review lenses; single source for persona + composite reviewer", deps: [CLAUDE.md, docs/process/operational-baseline.md], state: canonical, last: "claude@2026-08-04" }
 ---
 
 # Review Lenses
@@ -42,3 +42,17 @@ Two lenses do **not** live here because they already have a single home: Vik's s
 4. **Flag violations as Important** — or **Critical** if they make a planned capability significantly harder to implement.
 
 **Detection signal:** a shared type imports or references a consumer-specific namespace, uses consumer-specific units without conversion, or exposes properties only one consumer would use.
+
+### Module Depth Sub-Lens
+
+**Owner:** Archie. Applies when the diff introduces, moves, or reshapes a module boundary — a new abstraction, an extracted helper, a new indirection layer, or a change to what a module exposes.
+
+- **Delete it in your head.** Inline the module at every call site and see what happens to the total complexity. If it drops, the module was only forwarding calls and should go. If the same logic springs back up in four different callers, the module was doing real work. A wrapper you can delete for free is worse than nothing — it costs a name, an import, and a hop.
+- **Tests enter the same way callers do.** There is one way in, and both use it. When a test can only set up or assert by reaching around the module's front door, that is a report about the module's shape, not about the test — write the finding against the shape.
+- **Measure leverage, not line counts.** The question is how much a caller gets back for the amount they have to learn. Counting implementation lines against interface lines rewards a bloated body, which is backwards. What you want flagged is a wide, demanding entry point guarding very little; the remedy is to move work inward, never to pad what is already there.
+
+**Read "interface" broadly.** It covers everything a caller has to know to get the call right — the signature, yes, but equally the invariants they must uphold, the order operations have to happen in, how it fails, what configuration it presumes, and how it performs under load. Two required-but-undocumented call orderings make an interface wide no matter how short the signature is.
+
+**Speculative boundaries are Vik's, not this lens's.** "An interface with one implementation" is already a named YAGNI violation in `.claude/agents/vik.md` § Simplicity & YAGNI Lens; it stays there. This lens judges the *shape* of a boundary that earns its place — not whether it should exist.
+
+_Adapted from [mattpocock/skills](https://github.com/mattpocock/skills) (`codebase-design`), MIT © 2026 Matt Pocock; the deep-module framing originates with Ousterhout, whose lines-ratio definition of depth is deliberately rejected above._

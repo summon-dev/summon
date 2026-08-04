@@ -3,7 +3,7 @@ agent-notes:
   ctx: "who owns which docs, update rules"
   deps: [CLAUDE.md, docs/glossary.md, docs/adrs/0009-ubiquitous-language-glossary.md]
   state: active
-  last: "claude@2026-07-09"
+  last: "claude@2026-08-04"
 ---
 # Document Ownership
 
@@ -28,6 +28,7 @@ Extracted from CLAUDE.md to reduce context window load. Referenced by CLAUDE.md 
 | Code map | Coordinator | `docs/code-map.md` | New packages, modules, or significant API changes |
 | Glossary (domain vocabulary) | Archie (arbitrate) / Cam (capture) | `docs/glossary.md` | New domain terms surface in Discovery/Architecture; overloaded or competing terms |
 | Team directives | All agents | `docs/team-directives.md` | New conventions established during work |
+| Attributions | Diego (record) / Pierrot (license terms) | `docs/attributions.md` | Third-party material is adopted, adapted, or declined |
 | ADRs | Archie | `docs/adrs/` | Significant architectural decisions |
 | Product context | Pat | `docs/product-context.md` | Kickoff Phase 1b, sprint boundaries, human corrections |
 

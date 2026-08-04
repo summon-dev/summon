@@ -3,7 +3,7 @@ agent-notes:
   ctx: "implementation gotchas and established patterns"
   deps: [CLAUDE.md]
   state: active
-  last: "coordinator@2026-07-02"
+  last: "claude@2026-08-04"
 ---
 # Known Patterns and Gotchas
 
@@ -39,6 +39,12 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 
 - **YAGNI vs. Planned Capabilities (the Drift Trap).** YAGNI says don't build abstractions for hypothetical futures. But when a future capability is architecturally planned (has an ADR, appears in the architecture doc, is on the roadmap), the abstraction boundary that enables it is a **current requirement**, not speculation. Using consumer-specific concepts in a shared type because "we only support X today" is not YAGNI — it's tech debt against a planned capability. **Detection signal:** a shared/core type contains concepts specific to one consumer while the architecture plans for multiple consumers. **Fix:** use format-neutral representations in shared types; consumer-specific conversions happen at the boundary (in the consumer, not in Core).
 
+- **Wide refactors (expand → migrate → contract).** The directive is in `docs/team-directives.md` § API & Interface Conventions; these are its mechanics. Some changes are trivial in concept and enormous in reach — giving a column a new name, tightening the type of a symbol half the codebase imports. The edit itself is a one-liner; the fallout lands everywhere at once. Vertical slicing cannot help, because the change is not a thin path down through the layers, it is a single layer spread wide, and there is no subset of it that compiles on its own. Stage it in three moves instead:
+  - **Expand.** Introduce the replacement next to what it replaces, changing no callers. The tree is untouched and everything still builds.
+  - **Migrate.** Move callers over in groups small enough to review — a package at a time, a directory at a time. Every group is its own work item, each waiting on the expand. Since the original is still present throughout, the build survives every group.
+  - **Contract.** Remove the original once no caller references it, in a closing item that waits on all the migration groups.
+  - **If a group can't compile on its own** — the change is indivisible across a package seam — point the whole set at a shared branch and one closing verify item, and let that item be the only place green is promised. Write that down in the plan. A red window nobody announced is indistinguishable from a broken build.
+
 <!-- Archie: add additional architectural constraints, integration point knowledge, and
      schema evolution notes here. Patterns that informed past ADRs but aren't worth a standalone ADR themselves. -->
 
@@ -69,6 +75,8 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 - **Quick-Test Bypass anti-pattern.** The coordinator writes tests directly "to save time" instead of invoking Tara. The tests look reasonable but miss text content assertions, edge cases, and structural invariants. They become the committed suite and the gaps become permanent. **Detection signal:** test code appears in the coordinator's response with no Tara agent invocation. **Fix:** always invoke Tara for test authoring. Even for exploratory/diagnostic tests, hand them to Tara for review before committing. See `docs/process/team-governance.md` § Quick-Test Bypass for the full pattern.
 
 - **"Invoke the team" means spawn subagents (Solo-Coordinator anti-pattern).** When the human uses language like "invoke the team", "use the team", "have Cam look at this", or names any persona, the coordinator MUST spawn those agents via the Task tool. The coordinator doing the work inline — even if the output is good — violates the explicit human request. **Detection signal:** the human asked for a named persona or "the team" but no Task tool calls with `subagent_type` matching a persona appear in the response. **Fix:** parse the request for persona names or team-level language, then spawn the appropriate agents before doing any work.
+
+- **Template-blind PR anti-pattern.** `.github/pull_request_template.md` is applied by GitHub **only** to pull requests opened through the web UI. A PR created through the API — `create_pull_request`, `gh pr create`, or any MCP GitHub tool — takes whatever body string it is given and silently ignores the template. Nothing errors, and the resulting PR usually looks fine, which is the whole problem: the sections that go missing are the ones whose absence is invisible. A body with no **Tracking** line doesn't announce that the change is an orphan; a body with no **Decided without asking** reads exactly like one where nothing was decided unilaterally; a body with no **Third-party material** looks identical to a PR that borrowed nothing. **Detection signal:** a PR body was passed to an API call and does not carry the template's headings. **Fix:** read `.github/pull_request_template.md` before composing the body and populate its sections — treat it as the layout, and delete only the sections that genuinely don't apply. The template is a convention the author has to honour, not a mechanism that enforces itself.
 
 - **Use scripts for stable logic, commands for evolving knowledge.** Static scripts are ideal when the rules are well-defined and unlikely to change. But when automation requires understanding things that change externally — evolving formats, shifting best practices, new API conventions — prefer a Claude Code command over a script. Commands bring current understanding (and can web-search) on every run.
 

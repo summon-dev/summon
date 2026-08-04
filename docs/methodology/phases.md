@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md], state: canonical, last: "sato@2026-03-30" }
+agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md], state: canonical, last: "claude@2026-08-04" }
 ---
 
 # Hybrid Team Methodology
@@ -147,17 +147,44 @@ The coordinator's job is to recognize phase transitions and assemble the right t
 | Role | Agent | Responsibility |
 |------|-------|---------------|
 | Lead | **Sato** | Hypothesis generation, fix implementation |
-| Contribute | **Tara** | Reproduce via failing test |
+| Gate | **Tara** | Owns the reproducer as pre-work; verifies the entry gate under her coverage veto |
 | Contribute | **Vik** | Pattern recognition, root cause intuition |
 | Contribute | **Pierrot** | Security-related root causes |
 | Optional | **Ines** | Infrastructure-related root causes |
 | Optional | **Debra** | Data/ML-related root causes |
 
-**How it works:** Shared "blackboard" — a debugging document where agents post hypotheses, observations, and evidence. Tara writes a failing test that reproduces the bug. Sato investigates and fixes. Vik contributes pattern-based intuition. Any agent can contribute if they spot something.
+**How it works:** Shared "blackboard" — a debugging document where agents post hypotheses, observations, and evidence. Tara's reproducer is **pre-work, not a blackboard activity** — it is the entry gate below, and the blackboard opens once it is met. From there Sato investigates and fixes, Vik contributes pattern-based intuition, and any agent can contribute if they spot something.
+
+**Entry gate — a loop that goes red before any hypothesis.** Forming a theory by reading source, before anything reproduces the fault, is precisely the failure this gate exists to stop.
+
+**Owners:** Tara and Sato jointly, as pre-work before the blackboard opens — Tara builds the reproducer (her Phase 6 role), Sato consumes it. **Verifier:** Tara, under her coverage veto. The lead does not self-certify his own entry gate.
+
+The blackboard opens once the pasted evidence shows **two runs of one command** — red on the bug, green on a control:
+
+- **Red on the bug** _(deterministic — the paste exists or it doesn't)_ — invocation and output, showing the assertion's **actual vs expected**, plus one line: "red because `<observed>` instead of `<expected>`." This excludes red-for-the-wrong-reason: an unrelated pre-existing failure, an import error, or a typo in the harness.
+- **Green on a control** _(deterministic)_ — the same command against a known-good input, an adjacent non-buggy case, or the pre-bug revision. Without this, an unconditionally-red loop (`assert false`, a URL that 404s regardless) satisfies every other bullet. A loop never shown to go green is not a loop.
+- **Repeatable** _(deterministic)_ — three identical verdicts back to back for a reliable bug, or a stated `k/N` rate for an intermittent one. A single run evidences nothing about repeatability. Intermittent bugs are not held to a clean repro; they are held to a measured, pinned rate high enough to debug against.
+- **Fast** _(deterministic)_ — elapsed time visible in the paste (run under `time`, or include the runner's own duration). Seconds, not minutes.
+- **Asserts the user's symptom** _(inferential, sometimes human-judgement — this is the bullet to scrutinise)_ — quote the symptom **verbatim from the bug report** beside the assertion, so any drift between what was reported and what is checked is visible to a reader. An agent cannot verify this equivalence about itself; the quote makes it reviewable, not proven.
+
+**Two escape hatches, both carrying an evidence burden.** If no loop can be built, say so explicitly, list what was tried, and ask the human for a reproducing environment, a captured artifact, or permission to instrument. If the loop is built but the symptom mapping is uncertain, escalate the same way — do not proceed on a guess about what the user meant.
+
+**Minimise before hypothesising.** Once red, strip the reproduction down — remove inputs, config, and steps one at a time, re-running after each removal and keeping only what the failure depends on. Stop when nothing further can be removed without the loop going green. A smaller reproduction leaves fewer suspects for the hypothesis stage and is the thing you commit as the regression test.
+
+**Hypotheses are blackboard-wide, not the lead's alone.** Every participant posting to the blackboard generates **3–5 ranked, falsifiable** hypotheses before any is tested, each stating its prediction ("if X is the cause, changing Y makes the bug disappear"). A hypothesis with no stated prediction is a vibe — sharpen or discard it. Produce the whole ranked set before testing any of it — stopping at the first idea that sounds right anchors the entire investigation on it.
+
+**When no correct seam exists for the regression test, that is itself the finding** — but the claim is expensive to make, not free. An agent that passed the entry gate has already built something that drives the bug path and asserts the symptom, so the real question is rarely "does a seam exist" and almost always "is this loop committable as a test?" To invoke the clause you must name the seams considered and why each is too shallow, show the loop you did build and what specifically blocks committing it, and file it as a tracked item on Archie's conformance lens rather than a blackboard line that evaporates. **It never removes the obligation to commit something:** a shallow test plus a documented gap carrying a `summon:` debt marker beats nothing.
+
+_The entry gate and minimisation rule adapt conventions from [mattpocock/skills](https://github.com/mattpocock/skills) (`diagnosing-bugs`), MIT © 2026 Matt Pocock._
 
 **Backlog scan:** Before designing new diagnostic tooling, Tara and Sato check the backlog for features that could help diagnose or reproduce the bug. A planned "preview" feature, "debug panel," "export" capability, or "logging enhancement" may already solve the diagnostic need. If found, flag it to Pat for dual-duty pull-forward consideration.
 
-**Transition to next phase:** When the bug is fixed and the regression test passes.
+**Transition to next phase:** all four, verified by Tara:
+
+1. The regression test is **committed to the suite** — not a throwaway script or a `/tmp` harness. A fixed bug with no committed test is unprotected and free to regress.
+2. That test is shown **failing on the pre-fix revision** and passing on the fix. This is the entry gate's control run at the other end, and it is what makes the test's red meaningful.
+3. The **full suite is green**, per Done Gate item 1 — a fix that repairs the repro while breaking three other behaviours has not transitioned.
+4. The entry-gate loop is re-run against the **original, un-minimised** scenario. State explicitly what that scenario does *not* reproduce from the reported environment (data volume, concurrency, the user's config) — re-running the same command through the same assertion cannot detect an oracle that was wrong from the start.
 
 ---
 

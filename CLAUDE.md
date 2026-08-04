@@ -97,6 +97,8 @@ When the human declares unavailability, Pat answers product questions using `doc
 ### Commit Discipline
 Commit and push after every reasonable chunk of work. One commit per issue. Conventional commits format.
 
+When opening a pull request, check for `.github/pull_request_template.md`; if the repo has one, read it and populate its sections. GitHub applies that template only to PRs opened in the web UI — a PR created through the API or `gh` takes the body you hand it and ignores the template silently. See `docs/process/gotchas.md` § Process (template-blind PR).
+
 ## Tracking
 
 <!-- tracking-adapter: github-projects -->
@@ -141,6 +143,7 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 | `docs/process/gotchas.md` | Implementation patterns and known pitfalls |
 | `docs/process/ai-tells-catalog.md` | AI-tell catalog for keeping Summon's own docs from reading as machine-built |
 | `docs/team-directives.md` | Low-ceremony project conventions ("always X" / "prefer Y") |
+| `docs/attributions.md` | Third-party material Summon draws on, and what was taken |
 | `docs/integrations/README.md` | Active tracking adapter and setup |
 | `docs/process/tracking-protocol.md` | Phase tracking artifact protocol |
 | `docs/adrs/` | Architecture Decision Records |
