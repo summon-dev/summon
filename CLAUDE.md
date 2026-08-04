@@ -97,7 +97,7 @@ When the human declares unavailability, Pat answers product questions using `doc
 ### Commit Discipline
 Commit and push after every reasonable chunk of work. One commit per issue. Conventional commits format.
 
-When opening a pull request, read `.github/pull_request_template.md` and populate its sections. GitHub applies that template only to PRs opened in the web UI — a PR created through the API or `gh` takes the body you hand it and ignores the template silently. See `docs/process/gotchas.md` § Process (template-blind PR).
+When opening a pull request, check for `.github/pull_request_template.md`; if the repo has one, read it and populate its sections. GitHub applies that template only to PRs opened in the web UI — a PR created through the API or `gh` takes the body you hand it and ignores the template silently. See `docs/process/gotchas.md` § Process (template-blind PR).
 
 ## Tracking
 
