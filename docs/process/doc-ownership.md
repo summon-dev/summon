@@ -15,6 +15,7 @@ Extracted from CLAUDE.md to reduce context window load. Referenced by CLAUDE.md 
 |-----|-------|------|---------------|
 | SBOM + dependency decisions | Pierrot | `docs/sbom/sbom.md`, `docs/sbom/dependency-decisions.md` | Dependency add/remove/upgrade |
 | Threat model | Pierrot | `docs/security/threat-model.md` | New endpoints, data types, integrations, auth flows; new owner-harm (C1–C8) or tool-supply surface |
+| Design profile | The human (Dani cites) | `docs/design-profile.md` | A visual decision is made that outlives one PR. Dani never authors House rules (ADR-0013 §5 rule 4) |
 | Performance budget | Vik (review) / Ines (verify) | `docs/performance-budget.md` | System evolution |
 | Test strategy | Tara | `docs/test-strategy.md` | New test patterns or coverage targets |
 | Technical debt | Grace (track) / Pat (prioritize) | `docs/tech-debt.md` | Sprint boundaries, shortcuts taken |

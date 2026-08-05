@@ -42,6 +42,14 @@ Summon's `docs/glossary.md` (ADR-0009) also originates from a 2026-07-07 audit o
 - `setup-pre-commit` — instructs `husky lint-staged prettier` with no versions plus `npx husky init`, which would resolve to whatever is latest at run time. Summon's release-age cooldown (ADR-0010) and dependency scan (ADR-0011) forbid that for our own installs; upstream is under no obligation to know or follow Summon's ADRs.
 - `wizard` — writes captured API keys to a plaintext `.env` without asserting the file is gitignored. Writing a key to a local `.env` is ordinary practice, and the skill does several things right (hidden input, pushing CI secrets via `gh secret set` rather than to disk); it is declined because secret handling is a surface Summon should design deliberately rather than inherit, not because the code is careless. It is also marked in-progress upstream.
 
+## design-notes (sibling repo, same author)
+
+- **Source:** `../design-notes` — a personal, unpublished cross-repo design catalog by this project's author.
+- **License:** n/a (same author). Recorded for traceability, not obligation.
+- **Reviewed at:** 2026-08-05, for ADR-0013.
+- **Nature of use:** **ideas only, no expression.** Graded by diffing the two files read (`references/TEMPLATE.md`, `principles/web/anti-patterns.md`) against ADR-0013's output; no shared phrasing, no shared structure. Taken: (a) that a design profile is a portable artifact worth a fixed shape — Summon's shape is its own, derived from `.claude/agents/dani.md`, and the upstream 9-section list was read and declined section by section in ADR-0013 §3; (b) that a design consultation must cite a repo path for every claim, which ADR-0013 §1 reuses as a citation discipline.
+- **Deliberately not taken:** the `BAN:` anti-pattern list and the distilled `principles/web/` rules. Two reasons, and the second is the binding one. First, they are perishable taste rules with no maintainer inside Summon. Second, **provenance**: that file's own header credits "impeccable's detector rules, taste-skill's ban list, and our own tells," so copying it into shipped canon would launder two third parties' expression through a sibling repo — the attribution obligation would be to parties we never reviewed and cannot cite. Also not taken: `inspirations/` and `references/`, a personal catalog that is non-portable by construction, and the `design-consult` skill, whose own Notes state it "lives ONLY in design-notes."
+
 ## Prior art acknowledged in canon
 
 These shape Summon's methodology without any of their text being carried:
