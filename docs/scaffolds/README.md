@@ -9,6 +9,7 @@ These are **stub files** that get moved to `docs/` during scaffolding or kickoff
 | File | Deploys to | Owner |
 |------|-----------|-------|
 | `code-map.md` | `docs/code-map.md` | Coordinator |
+| `design-profile.md` | `docs/design-profile.md` | The human (Dani cites, never authors House rules) |
 | `config-manifest.md` | `docs/config-manifest.md` | Ines |
 | `performance-budget.md` | `docs/performance-budget.md` | Vik (review), Ines (verify) |
 | `tech-debt.md` | `docs/tech-debt.md` | Grace (tracks), Pat (prioritizes) |
