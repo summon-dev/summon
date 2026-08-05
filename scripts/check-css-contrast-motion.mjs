@@ -9,6 +9,14 @@
 // users. It checks two rules that happen to be statically decidable, and its
 // silence means nothing. See ADR-0013 § 6, slice A.
 //
+// IT DOES NOT DETECT THE DEFECT IT WAS PARTLY JUSTIFIED BY. Issue #86 (two hero
+// accents below 3:1 as a hover border) is invisible here: those colours arrive
+// from a JS frontmatter array through an inline `style` attribute and are
+// consumed via `color-mix()`, none of which is statically resolvable. This
+// catches that *shape* when the value is a literal — a weaker claim. #86 stays
+// open and stays slice B's or a human's. See `docs/process/gotchas.md`
+// § "A sensor's reach is not its justification's reach".
+//
 // Exit 0 always, unless --strict is passed. Advisory by ratification.
 
 import { readFileSync } from "node:fs";
