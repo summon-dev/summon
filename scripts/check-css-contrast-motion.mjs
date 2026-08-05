@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 // agent-notes: { ctx: "static CSS contrast + reduced-motion checker (ADR-0013 §6 slice A)", deps: [docs/adrs/0013-design-authority.md, .claude/agents/dani.md], state: active, last: "claude@2026-08-06", key: ["ADVISORY ONLY — exit 0 unless --strict; may NOT be wired into Done Gate item 8 (ADR-0013 §6 binding constraint)", "checks exactly two things: statically resolvable contrast pairs, and motion declarations lacking reduced-motion coverage", "ancestor-scoped pairing within one file — NOT co-declaration, which the gate proved finds ~1/35th of real pairs", "motion split from paint per WCAG SC 2.3.3's colour/opacity exclusion", "zero dependencies, stdlib only, like check-canon.mjs"] }
 //
-//   node scripts/check-css-contrast-motion.mjs site/src/**/*.css site/src/**/*.astro
+//   node scripts/check-css-contrast-motion.mjs src/styles/global.css src/components/Card.astro
+//
+// Takes explicit paths, as axe-cli and pa11y do. Avoid `**` unless your shell has
+// globstar enabled — an unexpanded glob would otherwise arrive as a literal path;
+// the script exits 2 rather than reporting "0 findings" when nothing was readable.
+// In a scaffolded project this script ships but the root package.json does not,
+// so invoke it directly rather than via `pnpm check:css`.
 //
 // WHAT THIS IS NOT. This is not an accessibility floor and must not be described
 // as one. It passes green on a page with no alt text, unlabeled inputs, div click
@@ -20,6 +26,7 @@
 // Exit 0 always, unless --strict is passed. Advisory by ratification.
 
 import { readFileSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 
 // ── colour ───────────────────────────────────────────────────────────────────
 
@@ -69,14 +76,86 @@ function stripComments(css) {
  * At-rules are recursed into so nested rules are seen; @media conditions are
  * carried down only far enough to answer "is this inside reduced-motion".
  */
-function parseRules(css, inReducedMotion = false, out = []) {
+/** Split a rule body into its own declarations and any nested rule blocks. */
+function splitBody(body) {
+  let declText = "";
+  const nested = [];
+  let i = 0;
+  while (i < body.length) {
+    const open = body.indexOf("{", i);
+    if (open === -1) {
+      declText += body.slice(i);
+      break;
+    }
+    // The prelude of a nested rule starts after the last `;` before its `{`.
+    const chunk = body.slice(i, open);
+    const cut = chunk.lastIndexOf(";");
+    declText += chunk.slice(0, cut + 1);
+    const prelude = chunk.slice(cut + 1).trim();
+    let depth = 1;
+    let j = open + 1;
+    while (j < body.length && depth > 0) {
+      if (body[j] === "{") depth++;
+      else if (body[j] === "}") depth--;
+      j++;
+    }
+    nested.push({ prelude, body: body.slice(open + 1, j - 1) });
+    i = j;
+  }
+  return { declText, nested };
+}
+
+/** Compose a nested selector against its parent (`&` explicit or implied). */
+function composeSelector(parent, child) {
+  if (!parent) return child;
+  return child.includes("&")
+    ? child.replace(/&/g, parent)
+    : `${parent} ${child}`;
+}
+
+function parseDeclarations(text) {
+  const decls = new Map();
+  // Split on `;` only outside quotes — a `content: "a;b"` must stay one declaration.
+  const parts = [];
+  let buf = "";
+  let quote = null;
+  for (const ch of text) {
+    if (quote) {
+      if (ch === quote) quote = null;
+      buf += ch;
+    } else if (ch === '"' || ch === "'") {
+      quote = ch;
+      buf += ch;
+    } else if (ch === ";") {
+      parts.push(buf);
+      buf = "";
+    } else buf += ch;
+  }
+  parts.push(buf);
+
+  for (const part of parts) {
+    const idx = part.indexOf(":");
+    if (idx === -1) continue;
+    const prop = part.slice(0, idx).trim().toLowerCase();
+    const value = part.slice(idx + 1).trim();
+    if (prop && value && /^[-a-z]+$/.test(prop)) decls.set(prop, value);
+  }
+  return decls;
+}
+
+/**
+ * Flatten a stylesheet into { selector, decls, inReducedMotion } records.
+ * Order is preserved, because the cascade's last-wins rule depends on it.
+ * Native nesting is composed rather than skipped — a nested rule that silently
+ * yielded nothing would hide real defects behind a syntax choice.
+ */
+function parseRules(css, inReducedMotion = false, out = [], parentSelector = "") {
   let i = 0;
   const src = css;
   while (i < src.length) {
     const open = src.indexOf("{", i);
     if (open === -1) break;
     const prelude = src.slice(i, open).trim();
-    // Find the matching close brace for this block.
     let depth = 1;
     let j = open + 1;
     while (j < src.length && depth > 0) {
@@ -88,20 +167,22 @@ function parseRules(css, inReducedMotion = false, out = []) {
 
     if (prelude.startsWith("@")) {
       const reduced = inReducedMotion || /prefers-reduced-motion\s*:\s*reduce/.test(prelude);
-      // Only at-rules that contain rules are worth recursing into.
-      if (/\{/.test(body)) parseRules(body, reduced, out);
+      if (/\{/.test(body)) parseRules(body, reduced, out, parentSelector);
     } else if (prelude) {
-      const decls = new Map();
-      for (const part of body.split(";")) {
-        const idx = part.indexOf(":");
-        if (idx === -1) continue;
-        const prop = part.slice(0, idx).trim().toLowerCase();
-        const value = part.slice(idx + 1).trim();
-        if (prop && value && !/\{/.test(prop)) decls.set(prop, value);
-      }
-      for (const selector of prelude.split(",")) {
-        const s = selector.trim();
-        if (s) out.push({ selector: s, decls, inReducedMotion });
+      const { declText, nested } = splitBody(body);
+      const decls = parseDeclarations(declText);
+      const selectors = prelude
+        .split(",")
+        .map((s) => composeSelector(parentSelector, s.trim()))
+        .filter(Boolean);
+      for (const selector of selectors) out.push({ selector, decls, inReducedMotion });
+      for (const child of nested) {
+        if (child.prelude.startsWith("@")) {
+          const reduced = inReducedMotion || /prefers-reduced-motion\s*:\s*reduce/.test(child.prelude);
+          parseRules(`${child.prelude}{${child.body}}`, reduced, out, selectors[0] ?? parentSelector);
+        } else {
+          parseRules(`${child.prelude}{${child.body}}`, inReducedMotion, out, selectors[0] ?? parentSelector);
+        }
       }
     }
     i = j;
@@ -112,9 +193,18 @@ function parseRules(css, inReducedMotion = false, out = []) {
 /** Every custom property declared anywhere in the file. */
 export function collectTokens(css) {
   const tokens = new Map();
+  // A token redefined under a theme selector (`:root` vs `[data-theme="light"]`)
+  // has no single static value. We keep the last, but remember that it is
+  // ambiguous so findings that depend on it can be reported as such rather than
+  // asserted against one arbitrary theme.
+  const ambiguous = new Set();
   for (const m of stripComments(css).matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)) {
-    tokens.set(m[1], m[2].trim());
+    const name = m[1];
+    const value = m[2].trim();
+    if (tokens.has(name) && tokens.get(name) !== value) ambiguous.add(name);
+    tokens.set(name, value);
   }
+  tokens.ambiguous = ambiguous;
   return tokens;
 }
 
@@ -240,16 +330,25 @@ export function parseMarkup(source) {
   return elements;
 }
 
-/** Parse one compound selector (`.a.b`, `article.card`, `h3:hover`). */
+/**
+ * Parse one compound selector (`.a.b`, `article.card`, `h3:hover`).
+ * `unsupported` is set for constructs we cannot evaluate — an id or attribute
+ * we have no data for. Those must fail closed: a compound that matched
+ * *everything* fabricated contrast failures against unrelated backgrounds.
+ */
 function parseCompound(part) {
   const base = part.replace(/::?[\w-]+(\([^)]*\))?/g, ""); // drop pseudo-classes/elements
   const classes = [...base.matchAll(/\.([\w-]+)/g)].map((m) => m[1]);
   const tagMatch = /^([a-zA-Z][\w-]*)/.exec(base);
-  return { tag: tagMatch ? tagMatch[1].toLowerCase() : null, classes };
+  const tag = tagMatch ? tagMatch[1].toLowerCase() : null;
+  const unsupported = /[#[]/.test(base);
+  return { tag, classes, unsupported };
 }
 
 function compoundMatches(compound, node) {
+  if (compound.unsupported) return false;
   if (compound.tag && compound.tag !== node.tag) return false;
+  if (!compound.tag && compound.classes.length === 0) return false; // never match-all
   return compound.classes.every((c) => node.classes.includes(c));
 }
 
@@ -311,30 +410,41 @@ export function findContrastFindings(css, elements = null) {
 
   const findings = [];
   const seen = new Set();
+  const usesAmbiguous = (raw) =>
+    [...(tokens.ambiguous ?? [])].some((name) => String(raw ?? "").includes(name));
+
   const record = (f) => {
-    const key = `${f.selector}|${f.property}|${f.fg}|${f.bg}`;
-    if (seen.has(key)) return;
+    const key = `${f.selector}|${f.property}`;
+    if (seen.has(key)) return; // one verdict per rule+property, never two
     seen.add(key);
     findings.push(f);
   };
-  const make = (selector, prop, fg, bg, bgSelector) => {
+  const make = (selector, prop, fg, bg, bgSelector, extra = {}) => {
     const { threshold, criterion } = FOREGROUND.get(prop);
     const ratio = contrastRatio(fg, bg);
-    return { selector, property: prop, fg, bg, bgSelector, ratio, threshold, criterion, passes: ratio >= threshold };
+    return {
+      selector, property: prop, fg, bg, bgSelector, ratio, threshold, criterion,
+      passes: ratio >= threshold, ...extra,
+    };
   };
 
-  // Preferred path: real DOM ancestry from the markup.
-  if (elements && elements.length > 0) {
+  // Preferred path: real DOM ancestry from the markup. When it is available it is
+  // authoritative — the selector-string fallback below must not also report, or a
+  // single element gets two contradictory verdicts.
+  const haveMarkup = Boolean(elements && elements.length > 0);
+  if (haveMarkup) {
     for (const el of elements) {
-      // Nearest background wins: the element itself, then outwards.
+      // Nearest background wins; within one element, the LAST declaration wins,
+      // because that is what the cascade does.
       let bg = null;
       let bgSelector = null;
+      let viaDynamicClass = false;
       for (const node of [el, ...el.ancestors]) {
         for (const cand of backgrounds) {
           if (matchesSelector(cand.selector, node)) {
             bg = cand.bg;
             bgSelector = cand.selector;
-            break;
+            viaDynamicClass = Boolean(node.dynamicClasses);
           }
         }
         if (bg) break;
@@ -343,25 +453,38 @@ export function findContrastFindings(css, elements = null) {
       for (const rule of rules) {
         if (!matchesSelector(rule.selector, el)) continue;
         for (const prop of FOREGROUND.keys()) {
-          const fg = resolveColor(rule.decls.get(prop), tokens);
-          if (fg) record(make(rule.selector, prop, fg, bg, bgSelector));
+          const raw = rule.decls.get(prop);
+          const fg = resolveColor(raw, tokens);
+          if (!fg) continue;
+          record(make(rule.selector, prop, fg, bg, bgSelector, {
+            viaDynamicClass,
+            ambiguousToken: usesAmbiguous(raw) || usesAmbiguous(bgSelector),
+          }));
         }
       }
     }
+    return findings;
   }
 
-  // Fallback, and the only path for a bare stylesheet with no markup: pair on
-  // selector-string ancestry (`.card` bases `.card h3` and `.card:hover`).
+  // The only path for a bare stylesheet with no markup: pair on selector-string
+  // ancestry (`.card` bases `.card h3` and `.card:hover`).
   for (const rule of rules) {
     for (const prop of FOREGROUND.keys()) {
-      const fg = resolveColor(rule.decls.get(prop), tokens);
+      const raw = rule.decls.get(prop);
+      const fg = resolveColor(raw, tokens);
       if (!fg) continue;
       let best = null;
       for (const cand of backgrounds) {
         if (!isAncestorSelector(cand.selector, rule.selector)) continue;
-        if (!best || cand.selector.length > best.selector.length) best = cand;
+        // Longest selector is the specificity proxy; on a tie the later
+        // declaration wins, per the cascade.
+        if (!best || cand.selector.length >= best.selector.length) best = cand;
       }
-      if (best) record(make(rule.selector, prop, fg, best.bg, best.selector));
+      if (best) {
+        record(make(rule.selector, prop, fg, best.bg, best.selector, {
+          ambiguousToken: usesAmbiguous(raw),
+        }));
+      }
     }
   }
   return findings;
@@ -421,6 +544,8 @@ function main(argv) {
 
   let failures = 0;
   let pairsChecked = 0;
+  let readable = 0;
+  const unreadable = [];
 
   for (const file of files) {
     let css;
@@ -430,10 +555,11 @@ function main(argv) {
       css = extractCss(source, file);
       // A single-file component carries its own DOM ancestry; a bare .css does not.
       if (!/\.css$/i.test(file)) elements = parseMarkup(source);
-    } catch (err) {
-      console.error(`  ! ${file}: ${err.message}`);
+    } catch {
+      unreadable.push(file);
       continue;
     }
+    readable++;
     if (!css.trim()) continue;
 
     const contrast = findContrastFindings(css, elements);
@@ -461,8 +587,19 @@ function main(argv) {
     }
   }
 
+  // "0 findings" over zero readable files is a false green, and an unexpanded
+  // glob (no `globstar`) arrives here as a literal path that does not exist.
+  // Refuse to summarise that as a pass.
+  if (readable === 0) {
+    console.log(`\nno readable input: ${unreadable.length} path(s) could not be read.`);
+    for (const f of unreadable.slice(0, 5)) console.log(`  ! ${f}`);
+    console.log("nothing was checked — this is not a pass. Check the paths (an unexpanded glob lands here).");
+    return 2;
+  }
+  for (const f of unreadable) console.log(`  ! unreadable, skipped: ${f}`);
+
   console.log(
-    `\ncss contrast+motion: ${failures} finding(s) across ${files.length} file(s); ${pairsChecked} contrast pair(s) statically resolved.`
+    `\ncss contrast+motion: ${failures} finding(s) across ${readable} readable file(s); ${pairsChecked} contrast pair(s) statically resolved.`
   );
   console.log(
     "advisory — a static check cannot see alt text, labels, keyboard paths, landmarks, or heading order. Silence here is not a pass."
@@ -470,6 +607,10 @@ function main(argv) {
   return strict && failures > 0 ? 1 : 0;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// `import.meta.url` is percent-encoded and `process.argv[1]` is not, so comparing
+// them directly makes the script a silent no-op — exit 0, no output — whenever its
+// own path contains a space or a non-ASCII character. Summon scaffolds into
+// arbitrary user directories, so that is a false green waiting to happen.
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   process.exit(main(process.argv.slice(2)));
 }

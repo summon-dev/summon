@@ -40,6 +40,14 @@ test("contrastRatio: reproduces the values the gate verified by hand", () => {
   assert.equal(contrastRatio("#9f1239", "#0f172a").toFixed(2), "2.23");
 });
 
+test("contrastRatio: matches WCAG's own published reference pairs", () => {
+  // Independent of this repo's palette, so the arithmetic is pinned to the
+  // standard rather than over-fitted to colours we happen to ship.
+  assert.equal(contrastRatio("#ffffff", "#767676").toFixed(2), "4.54"); // the canonical AA boundary grey
+  assert.equal(contrastRatio("#000000", "#ffffff").toFixed(2), "21.00");
+  assert.equal(contrastRatio("#777777", "#777777").toFixed(2), "1.00"); // identical colours
+});
+
 test("contrastRatio: accepts 3-digit hex", () => {
   assert.equal(contrastRatio("#fff", "#000"), contrastRatio("#ffffff", "#000000"));
 });
@@ -201,6 +209,80 @@ test("findContrastFindings: uses markup ancestry to pair across sibling class se
   assert.equal(findings.length, 1, "selector-prefix matching alone would find zero here");
   assert.equal(findings[0].bg, "#0f172a");
   assert.equal(findings[0].passes, true); // 16.3:1
+});
+
+// ── regressions from the 2026-08-06 review ───────────────────────────────────
+//
+// A false positive costs this tool more than a false negative: its header already
+// concedes that silence means nothing, so a missed defect spends no credibility
+// while a fabricated one spends all of it. Most of these are false positives.
+
+test("I1: the LAST background wins, as the cascade says", () => {
+  const f = findContrastFindings(".a{background:#000000}.a{background:#ffffff}.a{color:#111111}");
+  assert.equal(f.length, 1);
+  assert.equal(f[0].bg, "#ffffff");
+  assert.equal(f[0].passes, true, "reporting 1.11:1 here is a fabricated failure");
+});
+
+test("I2: markup ancestry wins outright; the selector fallback does not also report", () => {
+  const css = ".outer{background:#ffffff} .card{background:#000000} .outer .t{color:#111111} .card .t{color:#111111}";
+  const els = parseMarkup(`<div class="outer"><p class="t">x</p></div>`);
+  const f = findContrastFindings(css, els);
+  assert.equal(f.length, 1, "two contradictory verdicts for one element is the bug");
+  assert.equal(f[0].bg, "#ffffff");
+  assert.equal(f[0].passes, true);
+});
+
+test("I3: an #id or [attr] compound must not match everything", () => {
+  const el = parseMarkup(`<main class="wrap"><div class="btn">x</div></main>`).find((e) =>
+    e.classes.includes("btn")
+  );
+  assert.equal(matchesSelector("#sidebar .btn", el), false, "#sidebar is not in this element's ancestry");
+  assert.equal(matchesSelector("[data-x] .btn", el), false);
+  // ...and therefore no fabricated finding.
+  const f = findContrastFindings(
+    "#sidebar .btn{background:#0f172a} .btn{color:#1e293b}",
+    parseMarkup(`<main class="wrap"><div class="btn">x</div></main>`)
+  );
+  assert.equal(f.length, 0);
+});
+
+test("I4: native CSS nesting is not silently invisible", () => {
+  const f = findContrastFindings(`.card { background:#0f172a; & h3 { color:#334155; } }`);
+  assert.equal(f.length, 1, "a real ~1.7:1 defect must not vanish because of nesting syntax");
+  assert.equal(f[0].passes, false);
+});
+
+test("I4b: a nested rule without & still composes as a descendant", () => {
+  const f = findContrastFindings(`.card { background:#0f172a; h3 { color:#334155; } }`);
+  assert.equal(f.length, 1);
+});
+
+test("M1: a token redefined under a theme selector does not clobber the base globally", () => {
+  // Both definitions exist; we must not silently resolve every var(--fg) to the last one.
+  const css = `:root{--fg:#ffffff}[data-theme="light"]{--fg:#111111}.p{background:#000000;color:var(--fg)}`;
+  const f = findContrastFindings(css);
+  assert.ok(f.length >= 1);
+  assert.equal(f[0].ambiguousToken, true, "a multiply-defined token must be flagged, not guessed");
+});
+
+test("M2: a semicolon inside a string does not end the declaration", () => {
+  const css = `.a{background:#0f172a}.a::after{content:"a;b";color:#1e293b}`;
+  const f = findContrastFindings(css);
+  assert.equal(f.length, 1, "the color declaration must survive the quoted semicolon");
+  assert.equal(f[0].fg, "#1e293b");
+});
+
+test("M3: a comment marker inside a string is not treated as a comment", () => {
+  const css = `.a{background:#0f172a}.a::after{content:"/*";color:#1e293b}`;
+  assert.equal(findContrastFindings(css).length, 1);
+});
+
+test("motion: declarations inside a reduced-motion block are the mitigation, not a finding", () => {
+  const { motion } = findMotionFindings(
+    `@media (prefers-reduced-motion: reduce) { .c { transform: none; } }`
+  );
+  assert.equal(motion.length, 0);
 });
 
 // ── file handling ────────────────────────────────────────────────────────────
