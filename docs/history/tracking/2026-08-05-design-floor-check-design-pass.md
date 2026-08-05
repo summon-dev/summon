@@ -1,14 +1,16 @@
 ---
-agent-notes: { ctx: "design pass for design-floor-check (#75); falsifies ADR-0013 §6 sequencing on dependency cost", deps: [docs/adrs/0013-design-authority.md, docs/adrs/meta/0012-executable-canon.md, docs/process/done-gate.md, packages/summon-team/src/index.ts, scripts/check-canon.mjs], state: active, last: "claude@2026-08-05" }
+agent-notes: { ctx: "design pass for design-floor-check (#75) + the gate that partly refuted it; cost claims corrected, ordering upheld", deps: [docs/adrs/0013-design-authority.md, docs/adrs/meta/0012-executable-canon.md, docs/process/done-gate.md, packages/summon-team/src/index.ts, scripts/check-canon.mjs], state: active, last: "claude@2026-08-05", key: ["§1 sound and applied; §5's reorder REFUTED by Wei (W1/W2/W5) and withdrawn", "the false-negative finding (§6 W3) is the most important output", "page discovery resolved: URLs as arguments"] }
 ---
 
 # Design pass: `design-floor-check` (#75)
+
+> **Read this first — outcome after the gate.** This pass was written, then challenged by Wei and ruled on by Archie. **Its factual finding held; its conclusion did not.** §§ 1–2 are sound and are now applied to ADR-0013 as a cost amendment. **§ 5's recommendation to reorder § 6 was refuted and is withdrawn** — see § 6. The single most valuable thing to come out of the whole exercise is not in the original pass at all: it is Wei's **false-negative** finding at § 6 (W3), which constrains the very slice this pass proposed. §§ 3–5 are preserved unedited below so the reasoning that failed stays legible; read them against § 6, not on their own.
 
 ADR-0013 § 6 ships `design-floor-check` first, on the claim that it is *"smaller than everything else in this ADR."* Its own Negative consequences flag the design as `UNRESOLVED` and attach a falsification clause (`docs/adrs/0013-design-authority.md:265`):
 
 > if that pass finds it expensive, § 6's sequencing claim ("smaller than everything else in this ADR") is falsified and the ordering should be revisited rather than forced.
 
-This is that pass. **The clause fires.** The script is the largest item in the ADR, not the smallest, and it is the only one carrying supply-chain exposure. The recommendation is to reorder, not to abandon — with a genuinely small first slice identified in § 4.
+This is that pass. **The clause fires** — on the sizing claim. The script is the largest item in the ADR by dependency cost, and it is the only one carrying supply-chain exposure. The recommendation below was to reorder; **that part was wrong**, because § 6 does not order by size (§ 6, W1).
 
 ## 1. The dependency claim is false
 
@@ -104,3 +106,44 @@ This also softens ADR-0013:264's worry that the stub "may go unfilled forever": 
 5. **Fix the dangling "registered" in `sprint-boundary.md:212`** — either define it or reword it. Independent of everything above.
 
 Whether this rises to an ADR amendment or a § 6 superseding note is Archie's call, and item 3's rescope is Pat's.
+
+---
+
+## 6. Responses to the second gate
+
+Everything above § 6 is the pass as originally written. Wei (devil's advocate) and Archie (design authority) were then run as standalone agents. **Wei's verdict: `REFUTED`** — the factual finding is real and warrants correcting §§ 189/258, but it "does not support the conclusion the pass draws from it." That is largely right. Dispositions below; each was verified against the repo rather than taken on the agent's word.
+
+| # | Challenge | Severity | Disposition |
+|---|---|---|---|
+| **W1** | The pass falsifies an **aside** and treats it as the rationale. § 6 is titled *"C9's sensor goes first"* and orders by value at `:185` — *"if only one ships, the sensor is worth more, so it ships first."* The words "worth more" appear nowhere in the pass. | fatal | **Accepted.** Verified: `:185` reads exactly that. The pass demolished the sizing aside at `:189` and let the reader infer the ordering fell with it. To reorder § 6 you must argue the docs-only steps are worth *more*; the pass never attempted it. The reorder is **withdrawn**. |
+| **W2** | The dependency argument attacks **slice B**. Slice A is zero-dep, so it can *be* step 1 — the finding justifies **rescoping**, not **reordering**. | fatal | **Accepted, and it is the cleanest hole in the pass.** Rescoping is order-preserving. This is now exactly what ADR-0013 § 6 says. |
+| **W3** | **Slice A passes green on an obviously inaccessible site** — no `alt` text, unlabeled inputs, `div` click handlers with no keyboard path, no landmarks, inverted heading order, focus traps. The pass demanded a false-*positive* story and never asked for a false-*negative* one. | serious | **Accepted, and promoted to the most important finding of the exercise.** It constrains the slice the pass itself proposed. Now a **binding constraint** in ADR-0013 § 6: slice A ships under an honest narrow name, advisory, and may not satisfy Done Gate item 8. Item 8's upgrade stays gated on slice B. |
+| **W4** | *"C9 stands"* is a courtesy. Compose the three retreats — defer the DOM sensor, ship advisory, couple contrast to an optional file — and **Dani's rules still cannot fail a build.** No re-entry condition named. | serious | **Accepted as to the compounding**, and it cuts against W3's remedy in the opposite direction: honouring W3 makes this *worse*, not better. Recorded honestly rather than resolved — slice B is deferred **and explicitly not promised** in § 6, which is the truthful statement of where this stands. The re-entry condition is the false-negative measurement; naming an owner and a date is open (§ 7). |
+| **W5** | The colour-role prerequisite is an artifact of one formulation. Contrast pairs **are** derivable from CSS: any rule setting `color` and `background-color` on the same selector declares a pair. And reduced-motion needs no profile at all. | serious | **Accepted.** Verified by inspection: declaration-site pairing is a fact about CSS, and choosing the token as the unit of analysis was the error. The "second inversion" is **withdrawn** — the stub is not a prerequisite for slice A. Partial caveat retained: *inherited* backgrounds (fg on a child, bg on a distant ancestor) are not statically recoverable, so static contrast coverage is genuinely partial — which reinforces W3 rather than rescuing the pass. |
+| **W6** | Coupling the only build-failing check to the artifact the ADR calls most likely to never exist, and calling that an improvement, inverts the risk. | serious | **Moot** — the coupling is gone with W5. The underlying double standard (applying the false-green test to a disliked option and not to the recommended one) is a fair hit and is the same blind spot W3 names. |
+| **W8** | Page discovery is **not unsolved**. Take URLs as arguments — `design-floor-check http://localhost:3000/ /about`. No registry, no staleness, no per-framework surface, zero canon additions. This is how `axe-cli`, `pa11y`, and Lighthouse CI work. | serious | **Accepted.** The pass assumed auto-discovery and never questioned it, then escalated the result to "a canon-shaped decision." Now recorded as **resolved** in ADR-0013's Negative consequence 3. The dangling `"registered"` at `sprint-boundary.md:212` drops to a wording fix. |
+| **W9** | Recommendations 1 and 3 **are** the reorder; deferring recommendation 4 to "Archie's call" executes it before ratifying it. | serious | **Accepted, and it landed on live work.** The steps 2+3 commit had cited `:194` ("it carries 1 and 2") as sanction; verified, `:194` means **script + 8b**, not 8b + stub. Commit message corrected to state that it is neither that partial nor a reorder. |
+| **W10** | "Largest by every measure available" — the table has one discriminating axis. | minor | **Accepted.** Overreach. § 6's amendment says "ranked on one axis." |
+| **W11** | Browser binaries are **double-counted**: 8b's MCP server already put browsers on the machine, so the marginal cost is a manifest entry plus `axe-core`. | minor | **Partly accepted.** A project-level Playwright install can share a browsers cache, so "hundreds of MB" overstates the *marginal* cost. It does not rescue the claim that mattered: the MCP install is not a *project* dependency and cannot be depended on by a script, which is W2's point and remains the substance. |
+| **W12** | A zero-dep `.mjs` still needs `node` on PATH, and projects with CSS to grep mostly have a `package.json` anyway — so slice A's portability edge is largely notional. | minor | **Noted, not resolved.** Fair, and it weakens the § 3 tie-breaker argument without changing any decision. `index.ts:47` being a scaffolder choice rather than a law is a good observation for whoever specs slice B. |
+
+**W7** (the recommended first PR ships prose and zero enforcement, in service of retiring a defect defined as *"checkable rules left in prose"*) is accepted as an accurate description and left standing as a cost. Shipping steps 2 and 3 remains defensible — both are ratified, independently complete, and unblocking — but Wei is right that they pay down none of the § B defect, and the PR should not be described as if they do.
+
+**Wei's counter-argument for no change at all** deserves recording because one leg of it survives everything above: *"the cost of being wrong is asymmetric against deferral."* Build the sensor and find it noisy, and trigger 2 removes it — one line, reversible, and you have learned the false-positive rate that is otherwise unmeasurable. Defer it, and the § B defect rides another cycle while `:253` sits Accepted promising the modal user "a deterministic accessibility floor that can fail a build." That asymmetry is real and is **not** resolved by this amendment; it is the strongest argument for paying slice B's cost sooner rather than later, and it should be the first thing read when slice B is scoped.
+
+**Archie's ruling** (`2026-08-05-adr-0013-section-6-ruling.md`) returned *"amendment in place — reorder § 6."* The **amendment-in-place instrument was adopted**; the **reorder was not.** Archie's ruling rests at its lines 118 and 128 on the colour-role prerequisite — pre-digested fact 9 in its own briefing — which W5 dismantled. Adopted from it: that no `## Amendment` heading precedent exists so ADR-0012 § B's inline named-amendment form is the instrument to copy; that `:258` gets **corrected rather than excused** because *Consequences* is what a reader quotes in six months; that `:194` must survive verbatim; and that slice B may not inherit § B's script-over-hook justification.
+
+## 7. Still open
+
+- **The false-negative rate of slice A** — the measurement this whole ADR failed to ask for (W3). No owner, no method. Blocks slice A from the Done Gate under any name.
+- **A re-entry condition for slice B** (W4). Deferred-and-not-promised is honest, but an indefinite deferral with no trigger is what W4 predicts becomes permanent.
+- **Whether slice A is worth building at all** given W3 and W12 — a zero-dep check that catches little, on projects that mostly could have afforded the real one. Not asked here.
+- **Slice A's acceptance criteria**, and the `"registered"` wording fix at `sprint-boundary.md:212`.
+
+## 8. Process note, on how the gate itself failed and half-worked
+
+The Silent-Starvation mitigations (`docs/process/gotchas.md`) worked: both agents produced complete artifacts on the first attempt — Archie's skeleton landed on turn 1 and refined to 19 KB with zero `TBD` left, and Wei, who cannot write files, returned the full structured output it was asked for.
+
+But the mitigation introduced a new failure. Archie was handed ten "pre-digested verified facts" to spend its turn budget on reasoning instead of reading. **Nine were verified; fact 9 was the coordinator's own unverified inference, stated in the same declarative register.** Archie had no way to distinguish them and built a ruling on it. Wei, briefed on the same facts, was explicitly told to default to refuted and attacked the premise instead — which is the only reason it was caught.
+
+**The lesson:** pre-digestion transfers the coordinator's errors into the subagent's premises with the authority of established fact. Facts handed to an agent should carry their proof grade the way Done Gate items do — `verified: file:line` versus `inference` — and an agent asked to rule should be told which is which. Filed as a candidate gotcha; not yet added to canon.
