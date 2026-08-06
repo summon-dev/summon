@@ -15,7 +15,12 @@ import {
   runHealth,
   type CheckResult,
 } from "../src/doctor.ts";
-import { ADDON_ROOT, DIGEST_ALGORITHM, treeDigest } from "../src/addons/impeccable.ts";
+import {
+  ADDON_ROOT,
+  CONSENT_PROMPT,
+  DIGEST_ALGORITHM,
+  treeDigest,
+} from "../src/addons/impeccable.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -518,6 +523,32 @@ describe("addon-integrity check (ADR-0014 §5)", () => {
     const r = checkAddonIntegrity(root);
     expect(r.verdict).toBe("ok");
     expect(r.detail).toContain("never matched");
+  });
+
+  it("exists because the consent prompt promises it — the prompt must not name a capability the binary lacks", () => {
+    // This is the sensor for the Critical finding of 2026-08-06. CONSENT_PROMPT
+    // told users `summon-team doctor` warns if the payload changes later, while
+    // doctor.ts had no idea manifests or digests existed — that check was a
+    // different, unscheduled issue. It is the ONE consideration offered in
+    // exchange for consent, so promising it unbuilt obtains consent on a false
+    // premise, and ADR-0014 §5 permits only a claim passive about mechanism.
+    //
+    // The rule this pins: if the prompt names doctor, doctor must actually check.
+    // Deleting the check without also rewording the prompt now fails here.
+    if (/summon-team doctor|`?doctor`?\b/.test(CONSENT_PROMPT)) {
+      expect(HEALTH_CHECKS).toContain(checkAddonIntegrity);
+    }
+    // And the converse guard: the prompt must still be the thing that promises
+    // it, so a future reword that drops the promise is a deliberate act rather
+    // than an accident that leaves this test vacuously true.
+    expect(CONSENT_PROMPT).toMatch(/doctor/);
+  });
+
+  it("actually reports on a recorded add-on, so the promise is behavioural not nominal", () => {
+    // Registration alone would pass even if the check returned a constant.
+    const root = makeAddonProject({});
+    const result = runHealth(root).find((r) => r.id === "addon-integrity");
+    expect(result?.detail).toContain("impeccable");
   });
 
   it("is registered in the health registry, so `summon-team doctor` actually runs it", () => {

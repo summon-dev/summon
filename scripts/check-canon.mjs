@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "coordinator@2026-07-03", key: ["8 checks: agent files, persona roster, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes"] }
+// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "claude@2026-08-06", key: ["9 checks: agent files, persona roster, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering, review-sentinel integrity", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8/#9 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes", "check #9 catches the Placeholder-Sentinel anti-pattern; its marker regex is anchored to a Status: line because matching prose false-positived on two real reviews", "exports findSentinelProblems + runAllChecks behind an entry-point guard, so the module is importable by its tests"] }
 //
 // Fitness function for Summon's canon. Our agent/persona/process docs duplicate
 // facts across many files; the agent-notes protocol keeps them in sync by hand.
@@ -12,6 +12,7 @@
 
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const ROOT = process.cwd();
 const AGENTS_DIR = join(ROOT, ".claude", "agents");
@@ -255,18 +256,112 @@ function checkAdrNumbering() {
   }
 }
 
-for (const check of [checkAgentFiles, checkPersonaRoster, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering]) {
-  try {
-    check();
-  } catch (err) {
-    fail(`${check.name} threw: ${err.message}`);
+// 9. Review-sentinel integrity (the Placeholder-Sentinel anti-pattern,
+//    docs/process/gotchas.md). A review agent's completion sentinel is what the
+//    coordinator gates on. CLAUDE.md § Treat Agent Output as Untrusted says to
+//    re-run any agent whose "self-declared count doesn't match the findings
+//    present in the file" — but an agent briefed to write its file on turn 1
+//    will write the sentinel INTO the skeleton, and then `0 declared` matches
+//    `0 present` and the gate passes on a review that never happened. That is
+//    not hypothetical: it happened on 2026-08-06, and a clean `git status` does
+//    not catch it either, because the file exists.
+//
+//    Recording that in prose was itself the ADR-0012 §B defect — a mechanically
+//    checkable rule left as prose. This is the sensor.
+//
+//    Exported so it is unit-testable; the CLI wrapper below adapts it.
+export function findSentinelProblems(dir) {
+  const problems = [];
+  // Any AGENT-COMPLETE: shape, so this covers Pierrot, Vik, Tara and REVIEW alike.
+  const SENTINEL = /^[A-Z][A-Z-]*-COMPLETE:/;
+  // Markers that mean "not finished" — but ONLY when they are the file's own
+  // status declaration. Matching them anywhere in the body produced two false
+  // positives on real reviews immediately: one discusses the board's
+  // `Backlog → Ready → In Progress` pipeline, the other the `/command`
+  // placeholder token. A review that analyses a status flow is not a review
+  // that is in progress, and a check that cannot tell the difference is one
+  // people learn to route around.
+  const STATUS_LINE = /^\s*[*_>\s-]*(?:\*\*)?status(?:\*\*)?\s*:\s*(.*)$/i;
+  const IN_FLIGHT = /\b(IN PROGRESS|TBD|PLACEHOLDER|FILL ME|being filled in|underway)\b/i;
+
+  for (const abs of walkMarkdown(dir)) {
+    const rel = relative(ROOT, abs);
+    const lines = read(abs).split("\n");
+    const sentinelIdx = lines.findIndex((l) => SENTINEL.test(l.trim()));
+    if (sentinelIdx === -1) continue; // not a sentinel-bearing report
+
+    // (a) The sentinel is valid ONLY as the last line. Content after it means
+    //     the agent kept writing past its own completion claim.
+    const lastContentIdx = lines.reduce((acc, l, i) => (l.trim() ? i : acc), -1);
+    if (sentinelIdx !== lastContentIdx) {
+      problems.push(
+        `${rel}: completion sentinel is not the last line (line ${sentinelIdx + 1} of ${lastContentIdx + 1}) — it attests to content written after it`
+      );
+    }
+
+    // (b) The observed failure mode: a skeleton carrying both a sentinel and an
+    //     in-flight marker. This is the rule that catches the real placeholder.
+    for (const line of lines.slice(0, sentinelIdx)) {
+      const status = line.match(STATUS_LINE);
+      const marker = status && status[1].match(IN_FLIGHT);
+      if (marker) {
+        problems.push(
+          `${rel}: declares "Status: ${marker[0]}" above a completion sentinel — the sentinel was written before the work it attests to`
+        );
+        break;
+      }
+    }
+
+    // (c) A zero-findings sentinel is legitimate ONLY for a review that actually
+    //     ran and found nothing clean — which has sections describing what was
+    //     checked. A bare skeleton has just its title. Deliberately structural
+    //     rather than a line-count threshold, and deliberately NOT "0 findings
+    //     always fails": failing a genuinely clean review would train people to
+    //     route around the check, which is worse than not having it.
+    if (/:\s*0\s+findings/i.test(lines[sentinelIdx])) {
+      const headings = lines.filter((l) => /^#{1,6}\s/.test(l)).length;
+      if (headings < 2) {
+        problems.push(
+          `${rel}: declares 0 findings but has no sections describing what was checked — a review that found nothing still has to show its work`
+        );
+      }
+    }
   }
+  return problems;
 }
 
-if (failures.length === 0) {
-  console.log("canon check: OK");
-  process.exit(0);
+function checkReviewSentinels() {
+  // Consistent with #7/#8: docs/history/ is meta and never ships, so a scaffolded
+  // canon-only tree has nothing to check and must not fail on its absence.
+  if (!IS_SUMMON_REPO) return;
+  for (const p of findSentinelProblems(join(ROOT, "docs", "history"))) fail(p);
 }
-console.error(`canon check: ${failures.length} problem(s) found\n`);
-for (const f of failures) console.error(`  - ${f}`);
-process.exit(1);
+
+export function runAllChecks() {
+  for (const check of [checkAgentFiles, checkPersonaRoster, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels]) {
+    try {
+      check();
+    } catch (err) {
+      fail(`${check.name} threw: ${err.message}`);
+    }
+  }
+  return failures;
+}
+
+// Entry-point guard, so this file can be imported by its tests without running
+// the CLI and calling process.exit. `import.meta.url` is percent-encoded and
+// `process.argv[1]` is not, so compare against pathToFileURL — the same six
+// characters whose absence was a Critical defect in the CSS checker.
+// `process.argv[1]` is undefined under `node -e`/`node --eval`, where nothing is
+// the entry point — hence the guard on it, without which importing this module
+// that way throws instead of just not running the CLI.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const found = runAllChecks();
+  if (found.length === 0) {
+    console.log("canon check: OK");
+    process.exit(0);
+  }
+  console.error(`canon check: ${found.length} problem(s) found\n`);
+  for (const f of found) console.error(`  - ${f}`);
+  process.exit(1);
+}
