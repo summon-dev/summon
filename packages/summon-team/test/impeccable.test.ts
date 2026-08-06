@@ -1,7 +1,14 @@
 // agent-notes: { ctx: "TDD red — impeccable opt-in add-on (ADR-0014)", deps: ["src/addons/impeccable.ts"], state: active, last: "tara@2026-08-06" }
 
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync } from "node:fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+  readFileSync,
+} from "node:fs";
 import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -105,6 +112,14 @@ describe("shouldPrompt — ADR-0014 §3 consent gating", () => {
 
   it("returns false when stdin is not a TTY (ADR-0014 §3)", () => {
     expect(shouldPrompt({ isTTY: false, env: {}, argv: [] })).toBe(false);
+  });
+
+  it("names both .claude/skills/impeccable/ and the manifest entry in removal (ADR-0014 §5)", () => {
+    // Deleting the directories leaves the manifest asserting an install that is
+    // gone, and this text is printed on a digest mismatch — to the user most
+    // likely to follow it exactly.
+    expect(REMOVAL_NOTICE).toContain(".summon/manifest.json");
+    expect(REMOVAL_NOTICE).toContain("commit");
   });
 
   it("returns false when env.CI is set to '1' (ADR-0014 §3)", () => {
@@ -345,6 +360,22 @@ describe("childEnv — ADR-0014 §4 environment hygiene", () => {
     expect(result).toEqual({ PATH: "/usr/bin", HOME: "/home/dev" });
   });
 
+  it("strips IMPECCABLE_BUNDLE_PATH regardless of casing (ADR-0014 §4)", () => {
+    // Windows environment lookup is case-insensitive, but the spread preserves
+    // whatever casing the variable was set with — so a case-sensitive delete
+    // leaves this spelling visible to the child under any casing.
+    const result = childEnv({ Impeccable_Bundle_Path: "/tmp/evil", PATH: "/usr/bin" });
+    expect(Object.keys(result).some((k) => k.toLowerCase() === "impeccable_bundle_path")).toBe(
+      false,
+    );
+    expect(result.PATH).toBe("/usr/bin");
+  });
+
+  it("strips a lowercase impeccable_bundle_path too (ADR-0014 §4)", () => {
+    const result = childEnv({ impeccable_bundle_path: "/tmp/evil" });
+    expect(Object.keys(result)).toHaveLength(0);
+  });
+
   it("does not mutate the caller's environment object (ADR-0014 §4)", () => {
     const original: Record<string, string | undefined> = {
       IMPECCABLE_BUNDLE_PATH: "/tmp/evil",
@@ -494,6 +525,60 @@ describe("treeDigest — ADR-0014 §5 summon-tree-v1", () => {
     expect(treeDigest(lf)).toBe(treeDigest(crlf));
   });
 
+  it("does NOT normalize a lone CR — it is content, not a line ending (ADR-0014 §5)", () => {
+    // Collapsing lone CR to LF would make [0x0D], [0x0A] and [0x0D,0x0A] collide,
+    // letting anyone with write access flip an LF to a CR anywhere in the tree
+    // without moving the digest. In bash that turns the LF ending a comment into
+    // a CR and swallows the next line — deleting a check with no digest change.
+    // autocrlf produces CRLF, never a lone CR, so normalizing it buys nothing.
+    const cr = makeTempDir();
+    writeFileSync(join(cr, "s.sh"), Buffer.from([0x61, 0x0d, 0x62]));
+    const lf = makeTempDir();
+    writeFileSync(join(lf, "s.sh"), Buffer.from([0x61, 0x0a, 0x62]));
+    expect(treeDigest(cr)).not.toBe(treeDigest(lf));
+  });
+
+  it("counts a symlink's presence, so a planted link cannot hide (ADR-0014 §5)", () => {
+    // Skipping symlinks entirely would let a payload plant
+    // `impeccable/vendor -> ../../../.cache/x`: inside the root by every path a
+    // user would type, absent from the blessed tree, and freely mutable with
+    // matchedBlessed still true.
+    const plain = buildTree([["a.txt", "alpha"]]);
+    const linked = buildTree([["a.txt", "alpha"]]);
+    symlinkSync("../../../.cache/x", join(linked, "vendor"));
+    expect(treeDigest(linked)).not.toBe(treeDigest(plain));
+  });
+
+  it("changes when a symlink is repointed (ADR-0014 §5)", () => {
+    const first = buildTree([["a.txt", "alpha"]]);
+    symlinkSync("./target-one", join(first, "vendor"));
+    const second = buildTree([["a.txt", "alpha"]]);
+    symlinkSync("./target-two", join(second, "vendor"));
+    expect(treeDigest(first)).not.toBe(treeDigest(second));
+  });
+
+  it("does not follow a symlink out of the tree (ADR-0014 §5)", () => {
+    // The link's target string is hashed, never the target's content — so an
+    // identical link pointing at wildly different outside content digests the
+    // same, which is what "does not follow" means.
+    const outside = buildTree([["secret.txt", "sensitive"]]);
+    const withLink = buildTree([["a.txt", "alpha"]]);
+    symlinkSync(outside, join(withLink, "vendor"));
+    const before = treeDigest(withLink);
+    writeAt(outside, "secret.txt", "totally different content now");
+    expect(treeDigest(withLink)).toBe(before);
+  });
+
+  it("refuses to hash a root that is itself a symlink (ADR-0014 §5)", () => {
+    // Following it would digest wherever it points while REMOVAL_NOTICE's
+    // "delete .claude/skills/impeccable/" removes only the link.
+    const real = buildTree([["a.txt", "alpha"]]);
+    const parent = makeTempDir();
+    const linkRoot = join(parent, "impeccable");
+    symlinkSync(real, linkRoot);
+    expect(() => treeDigest(linkRoot)).toThrow(/symlink/i);
+  });
+
   it("distinguishes two files whose contents are swapped between paths (ADR-0014 §5)", () => {
     const forward = buildTree([
       ["a.txt", "alpha"],
@@ -543,6 +628,27 @@ describe("readManifest — ADR-0014 §5 forward compatibility", () => {
     const root = makeTempDir();
     writeAt(root, ".summon/manifest.json", JSON.stringify({ manifestVersion: 1, futureField: 1 }));
     expect(readManifest(root)).toMatchObject({ futureField: 1 });
+  });
+
+  it("returns null on a malformed manifest rather than throwing (ADR-0014 §6)", () => {
+    // The untrusted installer has write access to the project before Summon
+    // reads this, and §6 forbids the add-on being fatal to a completed scaffold.
+    const root = makeTempDir();
+    writeAt(root, ".summon/manifest.json", "{ not json at all");
+    expect(() => readManifest(root)).not.toThrow();
+    expect(readManifest(root)).toBeNull();
+  });
+
+  it("returns null when the manifest is a JSON array, not an object (ADR-0014 §6)", () => {
+    const root = makeTempDir();
+    writeAt(root, ".summon/manifest.json", JSON.stringify([1, 2, 3]));
+    expect(readManifest(root)).toBeNull();
+  });
+
+  it("returns null when the manifest is a bare JSON scalar (ADR-0014 §6)", () => {
+    const root = makeTempDir();
+    writeAt(root, ".summon/manifest.json", "42");
+    expect(readManifest(root)).toBeNull();
   });
 
   it("tolerates a newer manifestVersion than this CLI knows (ADR-0014 §5)", () => {
@@ -611,6 +717,34 @@ describe("writeAddonEntry — ADR-0014 §5 additive addons array", () => {
     expect(readManifestRaw(root).addons).toContainEqual(
       expect.objectContaining({ name: "legacy", version: "0.1.0" }),
     );
+  });
+
+  it("builds on the supplied pre-install snapshot, not on what is on disk (ADR-0014 §5)", () => {
+    // The installer runs with write access before this executes. A payload that
+    // seeds its own manifest could otherwise have Summon preserve a fabricated
+    // entry claiming matchedBlessed: true, then commit it under a Summon message.
+    const root = makeTempDir();
+    writeAt(
+      root,
+      ".summon/manifest.json",
+      JSON.stringify({
+        manifestVersion: 1,
+        addons: [{ name: "fabricated-by-payload", matchedBlessed: true }],
+      }),
+    );
+    // Snapshot taken before the hostile write would be an empty/absent manifest.
+    writeAddonEntry(root, { name: "impeccable", version: PAYLOAD_VERSION }, null);
+    const addons = readManifestRaw(root).addons as Array<Record<string, unknown>>;
+    expect(addons.map((a) => a.name)).not.toContain("fabricated-by-payload");
+    expect(addons.map((a) => a.name)).toContain("impeccable");
+  });
+
+  it("still preserves a genuine pre-install entry when that is the snapshot (ADR-0014 §5)", () => {
+    const root = makeTempDir();
+    const snapshot = { manifestVersion: 1, addons: [{ name: "legacy", version: "0.1.0" }] };
+    writeAddonEntry(root, { name: "impeccable", version: PAYLOAD_VERSION }, snapshot);
+    const addons = readManifestRaw(root).addons as Array<Record<string, unknown>>;
+    expect(addons.map((a) => a.name)).toEqual(["legacy", "impeccable"]);
   });
 
   it("round-trips through readManifest after writing (ADR-0014 §5)", () => {

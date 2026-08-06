@@ -7,12 +7,15 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  checkAddonIntegrity,
   exitCodeFor,
   formatResults,
+  HEALTH_CHECKS,
   isSummonProject,
   runHealth,
   type CheckResult,
 } from "../src/doctor.ts";
+import { ADDON_ROOT, DIGEST_ALGORITHM, treeDigest } from "../src/addons/impeccable.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -399,5 +402,127 @@ describe("doctor CLI dispatch", () => {
     expect((result.stdout + result.stderr).toLowerCase()).toMatch(
       /no summon|\.claude/
     );
+  });
+});
+
+// ---- unit: addon-integrity (ADR-0014 §5) -----------------------------------
+
+/** Build a project carrying a recorded add-on plus its on-disk tree. */
+function makeAddonProject(opts: {
+  entry?: Record<string, unknown>;
+  treeFiles?: Record<string, string> | null;
+}): string {
+  const treeFiles =
+    opts.treeFiles === undefined ? { ".claude/skills/impeccable/a.txt": "alpha" } : opts.treeFiles;
+  const root = makeProject({ "CLAUDE.md": "# project\n", ...(treeFiles ?? {}) });
+
+  const digest =
+    treeFiles === null ? "sha256:" + "0".repeat(64) : treeDigest(join(root, ADDON_ROOT));
+
+  const entry = {
+    name: "impeccable",
+    root: ADDON_ROOT,
+    digestAlgorithm: DIGEST_ALGORITHM,
+    treeDigest: digest,
+    matchedBlessed: true,
+    hooksWired: false,
+    ...(opts.entry ?? {}),
+  };
+  const manifestPath = join(root, ".summon", "manifest.json");
+  mkdirSync(dirname(manifestPath), { recursive: true });
+  writeFileSync(manifestPath, JSON.stringify({ manifestVersion: 1, addons: [entry] }, null, 2));
+  return root;
+}
+
+describe("addon-integrity check (ADR-0014 §5)", () => {
+  it("passes with no manifest at all — the modal install has no add-ons", () => {
+    const root = makeProject({ "CLAUDE.md": "# project\n" });
+    const r = checkAddonIntegrity(root);
+    expect(r.verdict).toBe("ok");
+    expect(r.detail).toContain("no add-ons recorded");
+  });
+
+  it("reports intact when the tree still matches the recorded digest", () => {
+    const r = checkAddonIntegrity(makeAddonProject({}));
+    expect(r.verdict).toBe("ok");
+    expect(r.detail).toContain("intact");
+  });
+
+  it("reports drift when a file under the add-on root changed after install", () => {
+    const root = makeAddonProject({});
+    writeFileSync(join(root, ADDON_ROOT, "a.txt"), "tampered");
+    const r = checkAddonIntegrity(root);
+    expect(r.verdict).toBe("degraded");
+    expect(r.detail).toContain("drift");
+  });
+
+  it("reports drift when a file is added under the add-on root", () => {
+    const root = makeAddonProject({});
+    writeFileSync(join(root, ADDON_ROOT, "extra.sh"), "#!/bin/sh\necho hi\n");
+    expect(checkAddonIntegrity(root).verdict).toBe("degraded");
+  });
+
+  it("does not claim to know WHY the tree changed — update, edit and tampering are indistinguishable", () => {
+    const root = makeAddonProject({});
+    writeFileSync(join(root, ADDON_ROOT, "a.txt"), "tampered");
+    expect(checkAddonIntegrity(root).detail).toContain("cannot tell which");
+  });
+
+  it("reports a stale entry, not a failure, when the tree is gone entirely", () => {
+    const root = makeAddonProject({});
+    rmSync(join(root, ADDON_ROOT), { recursive: true, force: true });
+    const r = checkAddonIntegrity(root);
+    expect(r.verdict).toBe("ok");
+    expect(r.detail).toContain("stale");
+  });
+
+  it("refuses a manifest root that escapes the project — the manifest is untrusted", () => {
+    const root = makeAddonProject({ entry: { root: "../../../etc" } });
+    const r = checkAddonIntegrity(root);
+    expect(r.verdict).toBe("degraded");
+    expect(r.detail).toContain("escapes the project");
+  });
+
+  it("refuses an absolute manifest root", () => {
+    const root = makeAddonProject({ entry: { root: "/etc" } });
+    expect(checkAddonIntegrity(root).verdict).toBe("degraded");
+  });
+
+  it("refuses a digest algorithm it cannot recompute", () => {
+    const root = makeAddonProject({ entry: { digestAlgorithm: "summon-tree-v99" } });
+    const r = checkAddonIntegrity(root);
+    expect(r.verdict).toBe("degraded");
+    expect(r.detail).toContain("cannot recompute");
+  });
+
+  it("survives a malformed addons entry rather than throwing", () => {
+    const root = makeProject({
+      "CLAUDE.md": "# project\n",
+      ".summon/manifest.json": JSON.stringify({ manifestVersion: 1, addons: ["not-an-object"] }),
+    });
+    expect(() => checkAddonIntegrity(root)).not.toThrow();
+    expect(checkAddonIntegrity(root).verdict).toBe("degraded");
+  });
+
+  it("survives a malformed manifest file rather than throwing", () => {
+    const root = makeProject({
+      "CLAUDE.md": "# project\n",
+      ".summon/manifest.json": "{ not json",
+    });
+    expect(() => checkAddonIntegrity(root)).not.toThrow();
+    expect(checkAddonIntegrity(root).verdict).toBe("ok");
+  });
+
+  it("still says the payload never matched the reviewed one, even when intact", () => {
+    const root = makeAddonProject({ entry: { matchedBlessed: false } });
+    const r = checkAddonIntegrity(root);
+    expect(r.verdict).toBe("ok");
+    expect(r.detail).toContain("never matched");
+  });
+
+  it("is registered in the health registry, so `summon-team doctor` actually runs it", () => {
+    expect(HEALTH_CHECKS).toContain(checkAddonIntegrity);
+    const root = makeAddonProject({});
+    expect(runHealth(root).map((r) => r.id)).toContain("addon-integrity");
   });
 });

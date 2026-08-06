@@ -22,7 +22,7 @@
  * the thing ADR-0006 and Done Gate item 16 exist to prevent.
  */
 
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   existsSync,
@@ -30,13 +30,20 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  readlinkSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
 import { createInterface } from "node:readline/promises";
 import { join, relative, resolve, sep } from "node:path";
 
-/** The pinned downloader. ADR-0010's cooldown reaches this artifact (it is a named version). */
+/**
+ * The pinned downloader — and ADR-0010's cooldown reaches only THIS artifact,
+ * because it is a named, dated version. It does not reach the ~3.3 MB payload
+ * this downloader fetches, which carries no version and no checksum and is the
+ * part that actually executes. That gap is ADR-0014 §7's recorded exception #1,
+ * not something the pin covers.
+ */
 export const IMPECCABLE_CLI_VERSION = "3.5.0";
 
 /** The payload's own version line, from its `SKILL.md`. Recorded by hand — the bundle carries no version. */
@@ -107,8 +114,18 @@ and at the end of every turn):
 Note: that turn-end check can take up to 30 seconds, and the wiring
 lands in .claude/settings.local.json, which git does not track.`;
 
-/** Named in the prompt and printed instead of the enable-hooks text on a digest mismatch (§5). */
-export const REMOVAL_NOTICE = `To remove it: delete .claude/skills/impeccable/ and .impeccable/.`;
+/**
+ * Named in the prompt and printed instead of the enable-hooks text on a digest
+ * mismatch (§5) — that is, to the user most likely to actually follow it, who
+ * has just been told their payload may not be the reviewed one. So it names
+ * everything, including the two things deleting directories does not reach: the
+ * manifest entry that would otherwise assert an install that is gone, and the
+ * commit the suspect bytes stay recoverable from.
+ */
+export const REMOVAL_NOTICE = `To remove it: delete .claude/skills/impeccable/ and .impeccable/,
+then drop the "impeccable" entry from .summon/manifest.json.
+The files are also in the add-on commit, so remove that commit too if you
+want them out of the repository's history.`;
 
 /**
  * The exact invocation (§4, as amended 2026-08-06). Exported so the flags that
@@ -193,7 +210,14 @@ export function childEnv(
   env: Record<string, string | undefined>
 ): Record<string, string | undefined> {
   const copy = { ...env };
-  delete copy.IMPECCABLE_BUNDLE_PATH;
+  // Case-insensitively, because Windows environment *lookup* ignores case while
+  // the spread above preserves whatever casing the variable was actually set
+  // with. `delete copy.IMPECCABLE_BUNDLE_PATH` would leave `Impeccable_Bundle_Path`
+  // in place and visible to the child under any spelling — half-avoiding the
+  // laundering this control exists to avoid entirely.
+  for (const key of Object.keys(copy)) {
+    if (key.toLowerCase() === "impeccable_bundle_path") delete copy[key];
+  }
   return copy;
 }
 
@@ -205,9 +229,17 @@ export function childEnv(
  *
  * Traversal rules, pinned here because §5 does not state them and an unstated
  * rule is where a spurious mismatch comes from:
- *   - Regular files only. Directories are structure, not content; symlinks are
- *     skipped rather than followed, so a link cannot smuggle content in twice
- *     or walk out of the tree.
+ *   - Regular files contribute their content. Directories are structure, not
+ *     content.
+ *   - Symlinks contribute their literal target string and are NOT walked
+ *     through. Skipping them entirely (the obvious reading of "don't follow
+ *     links") is a hole: a payload that plants
+ *     `.claude/skills/impeccable/vendor -> ../../../.cache/x` gets a subtree
+ *     that is inside the add-on root by every path a user would type, is absent
+ *     from the blessed tree, changes no digest by its presence, and stays
+ *     mutable forever with `matchedBlessed` still true. Hashing the target
+ *     string makes the link's presence register while still refusing to follow
+ *     it, so content cannot be counted twice or reached outside the root.
  *   - Empty directories do not contribute. They carry no content to hash.
  *   - Permission bits are not covered. The digest answers "did the bytes
  *     change", and a mode-only change is outside what §5 claims.
@@ -224,37 +256,60 @@ export function childEnv(
  * to ignore.
  */
 export function treeDigest(root: string): string {
-  const files: string[] = [];
+  // Refuse a symlinked root outright. `existsSync`/`readdirSync` would follow it
+  // and digest wherever it points, while REMOVAL_NOTICE's "delete
+  // .claude/skills/impeccable/" would remove only the link and leave the real
+  // tree on disk — a digest describing a directory the removal instruction does
+  // not reach.
+  const rootStat = lstatSync(root, { throwIfNoEntry: false });
+  if (rootStat?.isSymbolicLink()) {
+    throw new Error(`Refusing to hash ${root}: it is a symlink, not a directory.`);
+  }
+
+  // Each entry is [relative path, content hash]. Symlinks are entries too.
+  const entries: Array<[string, string]> = [];
 
   const walk = (dir: string): void => {
     for (const name of readdirSync(dir).sort()) {
       const full = join(dir, name);
-      // lstat, not stat: a symlink must not be followed. Under lstat a link is
-      // neither a file nor a directory, so it falls through both branches and is
-      // skipped — it cannot hash content twice or reach outside the tree.
+      // lstat, not stat: nothing here may follow a link.
       const st = lstatSync(full, { throwIfNoEntry: false });
       if (!st) continue;
-      if (st.isDirectory()) walk(full);
-      else if (st.isFile()) files.push(full);
+      const rel = relative(root, full).split(sep).join("/");
+      if (st.isSymbolicLink()) {
+        // The target string, not the target's content. Presence registers; the
+        // link is not walked through.
+        entries.push([rel, sha256(`symlink:${readlinkSync(full)}`)]);
+      } else if (st.isDirectory()) {
+        walk(full);
+      } else if (st.isFile()) {
+        entries.push([rel, sha256(normalizeLineEndings(readFileSync(full)))]);
+      }
     }
   };
   walk(root);
 
-  const relativePaths = files
-    .map((f) => relative(root, f).split(sep).join("/"))
-    .sort();
+  entries.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
 
   let concatenated = "";
-  for (const rel of relativePaths) {
-    const normalized = normalizeLineEndings(readFileSync(join(root, rel)));
-    concatenated += `${rel}\n${sha256(normalized)}\n`;
+  for (const [rel, hash] of entries) {
+    concatenated += `${rel}\n${hash}\n`;
   }
 
   return `sha256:${sha256(concatenated)}`;
 }
 
 /**
- * CRLF -> LF, and lone CR -> LF, on BYTES rather than on a decoded string.
+ * CRLF -> LF on BYTES rather than on a decoded string. Lone CR is left ALONE.
+ *
+ * Mapping lone CR to LF as well would make the byte sequences `[0x0D]`,
+ * `[0x0A]` and `[0x0D,0x0A]` all hash identically, so anyone with write access
+ * could flip any LF to a CR anywhere in the tree without moving the digest.
+ * That is not cosmetic in the payload's ~147 mostly-executable scripts: bash
+ * does not treat CR as a line terminator, so turning the LF that ends a comment
+ * into a CR swallows the following line into that comment and deletes whatever
+ * it did. The extra collisions buy nothing either — git's `autocrlf` produces
+ * CRLF, never a lone CR — so the rationale for normalizing never covered them.
  *
  * Decoding to UTF-8 first would be the obvious implementation and it is subtly
  * wrong for a tamper-detection digest: `Buffer.toString("utf-8")` maps every
@@ -279,10 +334,11 @@ function normalizeLineEndings(buf: Buffer): Buffer {
   const out = Buffer.allocUnsafe(buf.length);
   let n = 0;
   for (let i = 0; i < buf.length; i++) {
-    if (buf[i] === CR) {
+    // Only a CR immediately followed by LF collapses, to the single LF. A lone
+    // CR is content and is copied through untouched.
+    if (buf[i] === CR && buf[i + 1] === LF) {
       out[n++] = LF;
-      // A CRLF pair collapses to the single LF just written.
-      if (buf[i + 1] === LF) i++;
+      i++;
     } else {
       out[n++] = buf[i];
     }
@@ -314,7 +370,21 @@ function manifestPath(root: string): string {
 export function readManifest(root: string): Record<string, unknown> | null {
   const path = manifestPath(root);
   if (!existsSync(path)) return null;
-  return JSON.parse(readFileSync(path, "utf-8")) as Record<string, unknown>;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(path, "utf-8"));
+  } catch {
+    // Unreadable or malformed reads as absent rather than throwing. The add-on
+    // must not be fatal to a completed scaffold (§6), and this file is one the
+    // untrusted installer had write access to before Summon got here.
+    return null;
+  }
+  // A non-object (`null`, an array, a bare number) is not a manifest. Returning
+  // it would let a payload-supplied array reach the spread in `writeAddonEntry`.
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return null;
+  }
+  return parsed as Record<string, unknown>;
 }
 
 /**
@@ -331,9 +401,19 @@ export function readManifest(root: string): Record<string, unknown> | null {
  */
 export function writeAddonEntry(
   root: string,
-  entry: Record<string, unknown>
+  entry: Record<string, unknown>,
+  /**
+   * The manifest as it looked BEFORE the installer ran. Pass it whenever an
+   * untrusted process has had write access in between: the installer can write
+   * its own `.summon/manifest.json` first, and since unknown keys are preserved
+   * by design and `addons` is appended to, a payload could otherwise seed a
+   * fabricated entry with `matchedBlessed: true` and have Summon rewrite and
+   * commit it under a message saying the install was recorded. The artifact
+   * that polices the payload must not be built on a base the payload supplied.
+   */
+  base?: Record<string, unknown> | null
 ): void {
-  const existing = readManifest(root) ?? {};
+  const existing = (base === undefined ? readManifest(root) : base) ?? {};
   const addons = Array.isArray(existing.addons) ? existing.addons : [];
 
   const next = {
@@ -358,6 +438,98 @@ not verify.
 Source: npm:impeccable@${IMPECCABLE_CLI_VERSION} (CLI) -> https://impeccable.style bundle (payload)`;
 }
 
+interface InstallOutcome {
+  status: number | null;
+  signal: NodeJS.Signals | null;
+  error?: Error;
+  timedOut: boolean;
+  interrupted: boolean;
+  /** False when the OS gave no way to guarantee descendants are dead. */
+  descendantsReaped: boolean;
+}
+
+/**
+ * Runs the vendor installer under a real time bound.
+ *
+ * `spawnSync`'s `timeout`/`killSignal` looked like it did this and did not: the
+ * signal reaches the direct child (`npx`) only, while the node process `npx`
+ * execs — the one actually fetching and extracting 3.3 MB — is left running and
+ * reparented to init. The old code then deleted the tree out from under a live
+ * writer and printed "unaffected" while third-party code kept writing. §6 sells
+ * the cap as bounding the add-on's *execution*; `spawnSync` bounded Summon's
+ * *wait*. Those are different guarantees and only the weaker one was true.
+ *
+ * So: `detached` puts the child in its own process group, and the timeout kills
+ * the whole group. Where the platform cannot guarantee that, we say so and let
+ * the caller decline to clean up rather than race a writer.
+ */
+function runInstaller(
+  targetDir: string,
+  env: Record<string, string | undefined>
+): Promise<InstallOutcome> {
+  // detached creates a process group on POSIX. On Windows it spawns a new
+  // console instead and there are no process groups to signal, so we don't.
+  const canGroupKill = process.platform !== "win32";
+
+  return new Promise((resolve) => {
+    const child = spawn("npx", [...INSTALL_ARGS], {
+      cwd: targetDir,
+      env,
+      stdio: "inherit",
+      detached: canGroupKill,
+    });
+
+    let timedOut = false;
+    let interrupted = false;
+    let settled = false;
+
+    const killTree = (): boolean => {
+      if (child.pid === undefined) return false;
+      if (canGroupKill) {
+        try {
+          // Negative pid signals the whole group, which is the point.
+          process.kill(-child.pid, "SIGKILL");
+          return true;
+        } catch {
+          /* group already gone, or never formed */
+        }
+      }
+      try {
+        child.kill("SIGKILL");
+      } catch {
+        /* already dead */
+      }
+      return false;
+    };
+
+    let descendantsReaped = true;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      descendantsReaped = killTree();
+    }, INSTALL_TIMEOUT_MS);
+
+    // With `detached`, the child is no longer in the terminal's foreground
+    // group, so a Ctrl-C reaches Summon and not the installer. Forwarding it is
+    // what keeps §6's "Ctrl-C must never produce a broken project" true.
+    const onSigint = () => {
+      interrupted = true;
+      descendantsReaped = killTree();
+    };
+    process.once("SIGINT", onSigint);
+
+    const finish = (outcome: Omit<InstallOutcome, "timedOut" | "interrupted" | "descendantsReaped">) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      process.removeListener("SIGINT", onSigint);
+      resolve({ ...outcome, timedOut, interrupted, descendantsReaped });
+    };
+
+    child.once("error", (error) => finish({ status: null, signal: null, error }));
+    child.once("exit", (status, signal) => finish({ status, signal }));
+  });
+}
+
 interface OfferOptions {
   /** The finished, already-committed project directory. */
   targetDir: string;
@@ -371,13 +543,22 @@ interface OfferOptions {
 
 async function askOnStdin(prompt: string): Promise<string | null> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
-  // SIGINT resolves null rather than throwing, so Ctrl-C reads as "no" (§3).
-  const onSigint = () => rl.close();
+
+  // Ctrl-C must resolve null so it reads as "no" (§3). Closing the interface is
+  // NOT enough: an in-flight `rl.question()` promise from node:readline/promises
+  // stays pending forever after `rl.close()`, and attaching a SIGINT listener
+  // also suppresses Node's default termination — together those hang the CLI
+  // just after a successful, already-committed scaffold. Aborting the question
+  // is what actually settles it.
+  const controller = new AbortController();
+  const onSigint = () => controller.abort();
   rl.once("SIGINT", onSigint);
+
   try {
-    return await rl.question(prompt);
+    return await rl.question(prompt, { signal: controller.signal });
   } catch {
-    return null; // EOF
+    // AbortError (SIGINT) and EOF both land here, and both mean no.
+    return null;
   } finally {
     rl.close();
   }
@@ -395,7 +576,10 @@ async function askOnStdin(prompt: string): Promise<string | null> {
 export async function offerImpeccable(options: OfferOptions): Promise<void> {
   const {
     targetDir,
-    isTTY = process.stdin.isTTY === true,
+    // Both streams, not just stdin. With stdout redirected (`summon-team ... |
+    // tee log`) the prompt text goes into the pipe, the user sees nothing, and
+    // the process blocks waiting on an answer to a question never displayed.
+    isTTY = process.stdin.isTTY === true && process.stdout.isTTY === true,
     env = process.env,
     argv = process.argv.slice(2),
     log = (m: string) => console.log(m),
@@ -421,6 +605,10 @@ export async function offerImpeccable(options: OfferOptions): Promise<void> {
   const addonPath = resolve(targetDir, ADDON_ROOT);
   // Recorded BEFORE spawning so cleanup never destroys a pre-existing install (§6).
   const preExisting = existsSync(addonPath);
+  // Sampled for the same reason: everything below this line runs after arbitrary
+  // third-party code has had write access to targetDir, so this snapshot — not
+  // whatever is on disk afterwards — is the base the manifest is rebuilt from.
+  const manifestBefore = readManifest(targetDir);
 
   const cleanup = (): void => {
     if (preExisting || !existsSync(addonPath)) return;
@@ -435,24 +623,48 @@ export async function offerImpeccable(options: OfferOptions): Promise<void> {
 
   const failed = (reason: string): void => {
     cleanup();
-    log(`${reason}\nYour project is complete and unaffected.`);
+    // Say what is true. `cleanup()` removes ADDON_ROOT and nothing else, while a
+    // mid-install failure has usually already created `.impeccable/` and whatever
+    // preceded the failing step. "Your project is complete and unaffected" is
+    // false in exactly the circumstance it prints in, at the moment the user is
+    // least inclined to go looking.
+    log(
+      `${reason}\nYour scaffold is complete and committed. The failed install may ` +
+        `have left files behind — check \`git status\` and .impeccable/.`
+    );
     log(`To try the design skill yourself later:  ${MANUAL_COMMAND}`);
   };
 
-  const result = spawnSync(
-    "npx",
-    [...INSTALL_ARGS],
-    {
-      cwd: targetDir,
-      env: childEnv(env),
-      stdio: "inherit",
-      timeout: INSTALL_TIMEOUT_MS,
-      killSignal: "SIGKILL",
-    }
-  );
+  // The installer inherits this terminal, so its output is visually
+  // indistinguishable from Summon's and it can read stdin. `--yes` suppresses
+  // the vendor's legitimate prompts, which makes ANY prompt in this window
+  // anomalous — but only if the user knows where Summon stopped talking. A
+  // payload printing "Enter your npm token to continue:" otherwise collects a
+  // credential the user believes they are giving Summon. Inheriting is still
+  // right for a 3.3 MB download the user should see progress on; the fix is to
+  // mark the boundary, not to hide the output.
+  log(`--- output below is from impeccable, not from Summon ---`);
+  const result = await runInstaller(targetDir, childEnv(env));
+  log(`--- end of impeccable output ---`);
 
-  if (result.error && (result.error as NodeJS.ErrnoException).code === "ETIMEDOUT") {
-    failed(`The impeccable install exceeded ${INSTALL_TIMEOUT_MS / 1000}s and was stopped.`);
+  if (result.timedOut || result.interrupted) {
+    const what = result.timedOut
+      ? `The impeccable install exceeded ${INSTALL_TIMEOUT_MS / 1000}s and was stopped.`
+      : `The impeccable install was interrupted.`;
+    if (result.descendantsReaped) {
+      failed(what);
+    } else {
+      // Deleting a tree while a surviving writer is still extracting into it
+      // produces a half-deleted, half-written state that is worse than leaving
+      // it. Say so and name the path instead of cleaning up blind.
+      log(
+        `${what}\nSummon could not confirm the installer and its children had ` +
+          `stopped, so it did NOT delete anything — removing files under a live ` +
+          `writer would leave a worse mess. Nothing was recorded and nothing was ` +
+          `committed.\nCheck and remove manually if needed: ${addonPath}`
+      );
+      log(`To try the design skill yourself later:  ${MANUAL_COMMAND}`);
+    }
     return;
   }
   if (result.error) {
@@ -460,8 +672,7 @@ export async function offerImpeccable(options: OfferOptions): Promise<void> {
     return;
   }
   if (result.signal) {
-    // Includes Ctrl-C during install. §6: that must never produce a broken project.
-    failed(`The impeccable install was interrupted (${result.signal}).`);
+    failed(`The impeccable install was killed (${result.signal}).`);
     return;
   }
   if (result.status !== 0) {
@@ -494,28 +705,77 @@ export async function offerImpeccable(options: OfferOptions): Promise<void> {
 
   const matchedBlessed = BLESSED_TREE_DIGEST !== null && observed === BLESSED_TREE_DIGEST;
 
-  writeAddonEntry(targetDir, {
-    name: "impeccable",
-    installer: `npm:impeccable@${IMPECCABLE_CLI_VERSION}`,
-    payloadVersion: PAYLOAD_VERSION,
-    root: ADDON_ROOT,
-    installedAt: new Date().toISOString(),
-    digestAlgorithm: DIGEST_ALGORITHM,
-    treeDigest: observed,
-    matchedBlessed,
-    // Summon never sets this true (§5). It records what Summon did, not the
-    // state of the world — a user who wires hooks later does not change it.
-    hooksWired: false,
-  });
+  // Guarded for the same reason the hash is: §6 forbids the add-on from being
+  // fatal to the scaffold, and this can throw. `readManifest` parses a file the
+  // untrusted installer just had write access to, and the write itself can fail
+  // on EACCES/EROFS/ENOSPC. Unguarded, that escapes to `main().catch` and exits
+  // 1 on a completed scaffold — the exact posture §6 forbids.
+  // The installer writing a manifest is not normal and is worth saying out loud
+  // — it is the shape of an attempt to seed a record Summon would then sign.
+  const manifestAfter = readManifest(targetDir);
+  if (JSON.stringify(manifestAfter) !== JSON.stringify(manifestBefore)) {
+    log(
+      `Note: the installer modified .summon/manifest.json. Summon has discarded ` +
+        `those changes and recorded its own result instead.`
+    );
+  }
+
+  try {
+    writeAddonEntry(targetDir, {
+      name: "impeccable",
+      installer: `npm:impeccable@${IMPECCABLE_CLI_VERSION}`,
+      payloadVersion: PAYLOAD_VERSION,
+      root: ADDON_ROOT,
+      installedAt: new Date().toISOString(),
+      digestAlgorithm: DIGEST_ALGORITHM,
+      treeDigest: observed,
+      matchedBlessed,
+      // Summon never sets this true (§5). It records what Summon did, not the
+      // state of the world — a user who wires hooks later does not change it.
+      hooksWired: false,
+    }, manifestBefore);
+  } catch (err) {
+    failed(
+      `Installed impeccable, but could not record it in .summon/manifest.json: ` +
+        `${err instanceof Error ? err.message : String(err)}`
+    );
+    return;
+  }
 
   // §2: a trust decision that leaves no trace in version control is one nobody
   // can audit later. Best-effort, like the scaffold's own `git init`.
+  //
+  // Staged explicitly rather than with `git add -A`. The digest covers one
+  // directory, but the installer runs with write access to the whole project —
+  // so a blanket add would sweep a payload's edits to CLAUDE.md, `.claude/agents/*`
+  // or a dropped credential into a commit labelled "install impeccable design
+  // skill". That is both attribution laundering and a change the digest cannot
+  // see. Anything the installer touched outside its declared footprint is
+  // information the user should be shown, not something a commit should swallow.
   try {
-    execFileSync("git", ["add", "-A"], { cwd: targetDir, stdio: "ignore" });
+    // Only paths that actually exist. `git add` fails the whole invocation on a
+    // pathspec matching nothing, and `.impeccable/` is not created under
+    // --no-hooks --providers=claude — so naming it unconditionally aborts the
+    // add, skips the commit, and leaves the add-on uncommitted in a dirty tree.
+    const toStage = [ADDON_ROOT, ".impeccable", ".summon/manifest.json"].filter((rel) =>
+      existsSync(resolve(targetDir, rel))
+    );
+    execFileSync("git", ["add", "--", ...toStage], { cwd: targetDir, stdio: "ignore" });
     execFileSync("git", ["commit", "-m", commitMessage()], {
       cwd: targetDir,
       stdio: "ignore",
     });
+
+    const stray = execFileSync("git", ["status", "--porcelain"], {
+      cwd: targetDir,
+      encoding: "utf-8",
+    }).trim();
+    if (stray) {
+      log(
+        `The installer also changed files outside its own directory. These were ` +
+          `NOT committed, and Summon's digest does not cover them:\n${stray}`
+      );
+    }
   } catch {
     log("Installed impeccable, but could not commit it. Commit it yourself to keep the record.");
   }
