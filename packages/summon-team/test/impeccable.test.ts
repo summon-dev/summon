@@ -463,6 +463,37 @@ describe("treeDigest — ADR-0014 §5 summon-tree-v1", () => {
     expect(treeDigest(asB)).not.toBe(treeDigest(asA));
   });
 
+  it("distinguishes binary files that are not valid UTF-8 (ADR-0014 §5)", () => {
+    // Decoding to a string before hashing would map every invalid byte sequence
+    // to U+FFFD, so these two distinct payloads would collide. The payload is
+    // third-party code fetched over an unverified channel, which puts that
+    // collision within an attacker's reach rather than in theory.
+    const first = makeTempDir();
+    writeFileSync(join(first, "blob.bin"), Buffer.from([0xff, 0xfe, 0x00, 0x01]));
+    const second = makeTempDir();
+    writeFileSync(join(second, "blob.bin"), Buffer.from([0xff, 0xfe, 0x00, 0x02]));
+    expect(treeDigest(second)).not.toBe(treeDigest(first));
+  });
+
+  it("does not corrupt binary content while normalizing line endings (ADR-0014 §5)", () => {
+    // 0x0D inside binary data still normalizes — that is the documented rule —
+    // but bytes that are neither CR nor LF must survive untouched, so two blobs
+    // differing only in a non-CR byte stay distinguishable.
+    const first = makeTempDir();
+    writeFileSync(join(first, "blob.bin"), Buffer.from([0x80, 0x0d, 0x0a, 0x81]));
+    const second = makeTempDir();
+    writeFileSync(join(second, "blob.bin"), Buffer.from([0x80, 0x0d, 0x0a, 0x82]));
+    expect(treeDigest(second)).not.toBe(treeDigest(first));
+  });
+
+  it("treats a CRLF and a lone LF in binary content identically (ADR-0014 §5)", () => {
+    const crlf = makeTempDir();
+    writeFileSync(join(crlf, "blob.bin"), Buffer.from([0x80, 0x0d, 0x0a, 0x81]));
+    const lf = makeTempDir();
+    writeFileSync(join(lf, "blob.bin"), Buffer.from([0x80, 0x0a, 0x81]));
+    expect(treeDigest(lf)).toBe(treeDigest(crlf));
+  });
+
   it("distinguishes two files whose contents are swapped between paths (ADR-0014 §5)", () => {
     const forward = buildTree([
       ["a.txt", "alpha"],

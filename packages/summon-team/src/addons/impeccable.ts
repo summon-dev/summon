@@ -246,17 +246,51 @@ export function treeDigest(root: string): string {
 
   let concatenated = "";
   for (const rel of relativePaths) {
-    const normalized = readFileSync(join(root, rel))
-      .toString("utf-8")
-      .replace(/\r\n/g, "\n")
-      .replace(/\r/g, "\n");
+    const normalized = normalizeLineEndings(readFileSync(join(root, rel)));
     concatenated += `${rel}\n${sha256(normalized)}\n`;
   }
 
   return `sha256:${sha256(concatenated)}`;
 }
 
-function sha256(input: string): string {
+/**
+ * CRLF -> LF, and lone CR -> LF, on BYTES rather than on a decoded string.
+ *
+ * Decoding to UTF-8 first would be the obvious implementation and it is subtly
+ * wrong for a tamper-detection digest: `Buffer.toString("utf-8")` maps every
+ * invalid byte sequence to U+FFFD, so two different binary payloads decode to
+ * the same string and hash identically. The payload is ~147 files of somebody
+ * else's code fetched over an unverified channel (ADR-0014 §7), which makes
+ * that collision attacker-reachable rather than theoretical — an attacker who
+ * can shape the bundle can shape the bytes the digest never sees.
+ *
+ * Today's 4.0.4 payload happens to round-trip through UTF-8 losslessly on all
+ * 147 files, so this produces a digest identical to the decoded form and the
+ * blessed constant is unaffected. That is a property of this payload, not of
+ * the algorithm, and it is not one to depend on across future releases.
+ *
+ * Byte 0x0D is CR and 0x0A is LF. Both are single-byte in UTF-8 and cannot
+ * appear inside a multi-byte sequence (continuation bytes are all >= 0x80), so
+ * scanning raw bytes cannot corrupt valid text either.
+ */
+function normalizeLineEndings(buf: Buffer): Buffer {
+  const CR = 0x0d;
+  const LF = 0x0a;
+  const out = Buffer.allocUnsafe(buf.length);
+  let n = 0;
+  for (let i = 0; i < buf.length; i++) {
+    if (buf[i] === CR) {
+      out[n++] = LF;
+      // A CRLF pair collapses to the single LF just written.
+      if (buf[i + 1] === LF) i++;
+    } else {
+      out[n++] = buf[i];
+    }
+  }
+  return out.subarray(0, n);
+}
+
+function sha256(input: string | Buffer): string {
   return createHash("sha256").update(input).digest("hex");
 }
 
