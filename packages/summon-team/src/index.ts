@@ -11,6 +11,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { basename, resolve } from "node:path";
+import { offerImpeccable } from "./addons/impeccable";
 import {
   exitCodeFor,
   formatResults,
@@ -286,6 +287,12 @@ async function main() {
   }
 
   s.stop("Project ready.");
+
+  // The add-on phase (ADR-0014 §2). It runs here, last, because the scaffold
+  // above is already complete and committed — which is what makes §6's failure
+  // posture structural rather than a promise. Nothing below can leave a
+  // half-scaffolded project, and offerImpeccable never throws or exits non-zero.
+  await offerImpeccable({ targetDir, argv: args });
 
   p.note(
     `cd ${projectName}\n\nOpen in Claude Code, then run /quickstart`,
