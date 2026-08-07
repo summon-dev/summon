@@ -348,11 +348,18 @@ describe("summon-team CLI", () => {
     expect(Number.isNaN(Date.parse(record.installedAt))).toBe(false);
   }, 30_000);
 
-  it("provenance lands in the initial commit, not as an untracked stray", async () => {
-    // It is written before `git init` deliberately. A provenance file that shows
-    // up as an untracked change in a brand-new project is noise the user has to
-    // decide about, and one that never gets committed cannot answer the question
-    // it exists for once the directory is shared.
+  it("provenance is tracked by git, never an untracked stray", async () => {
+    // It is written before `git init` deliberately. A provenance file arriving as
+    // an untracked change in a brand-new project is noise the user has to make a
+    // decision about, and one that never enters git cannot answer the question it
+    // exists for once the directory is shared.
+    //
+    // Assert on the UNTRACKED marker specifically, not on absence from the status
+    // output. An earlier version of this test checked absence and passed locally
+    // for the wrong reason: it conflated "committed" with "tracked". On a machine
+    // with no git identity configured — CI, for one — `git init` and `git add`
+    // succeed while `git commit` fails, so every file sits staged (`A `) and the
+    // absence assertion fires on a project that is in fact perfectly fine.
     const cwd = makeTempDir();
     expect((await run(["--local", REPO_ROOT, "prov-git"], { cwd })).code).toBe(0);
 
@@ -364,7 +371,18 @@ describe("summon-team CLI", () => {
         (_e, stdout) => res(stdout.toString())
       );
     });
-    expect(status).not.toContain(".summon-install.json");
+    expect(status).not.toContain("?? .summon-install.json");
+    // And it is not silently excluded by the shipped .gitignore either: staged or
+    // committed, git must know about it.
+    const tracked = await new Promise<string>((res) => {
+      execFile(
+        "git",
+        ["ls-files", "--cached", "--", ".summon-install.json"],
+        { cwd: join(cwd, "prov-git") },
+        (_e, stdout) => res(stdout.toString())
+      );
+    });
+    expect(tracked.trim()).toBe(".summon-install.json");
   }, 30_000);
 
   it("rejects when target directory already exists and is non-empty", async () => {
