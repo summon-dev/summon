@@ -22,6 +22,16 @@ const PKG = JSON.parse(
   readFileSync(resolve(__dirname, "..", "package.json"), "utf-8")
 );
 
+// execFile reports `code` as `string | number | undefined`: a number on a normal
+// process exit, but a string errno ("ENOENT") when the spawn itself fails. Passing
+// that through as an exit status would let a spawn failure fail an assertion for
+// the wrong reason — a test reporting the wrong cause is its own kind of false
+// green — so a non-numeric code collapses to 1.
+function exitCodeOf(error: { code?: string | number | null } | null): number {
+  if (!error) return 0;
+  return typeof error.code === "number" ? error.code : 1;
+}
+
 function run(
   args: string[],
   options: { cwd?: string } = {}
@@ -33,7 +43,7 @@ function run(
       { cwd: options.cwd, env: { ...process.env, NO_COLOR: "1" } },
       (error, stdout, stderr) => {
         resolve({
-          code: error?.code ?? 0,
+          code: exitCodeOf(error),
           stdout: stdout.toString(),
           stderr: stderr.toString(),
         });
@@ -290,7 +300,7 @@ describe("summon-team CLI", () => {
         [join(projectDir, "scripts", "check-canon.mjs")],
         { cwd: projectDir },
         (err, stdout, stderr) =>
-          res({ code: err?.code ?? 0, out: stdout.toString() + stderr.toString() })
+          res({ code: exitCodeOf(err), out: stdout.toString() + stderr.toString() })
       );
     });
     expect(check.code).toBe(0);

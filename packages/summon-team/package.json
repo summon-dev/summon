@@ -16,7 +16,8 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "pretest": "tsup",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json"
   },
   "keywords": [
     "claude-code",
