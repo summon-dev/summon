@@ -5,8 +5,13 @@ name: CI
 on:
   push:
     branches: [main]
+  # No base-branch filter. `pull_request.branches` filters on the *base*, so
+  # `[main]` meant CI ran only on PRs targeting main — and every stacked PR
+  # merged unchecked. That is not hypothetical here: ADR-0015's rollout stacks
+  # slices onto an integration branch by design, so the whole accumulated stack
+  # would meet CI for the first time at the final merge to main, which is the
+  # worst possible moment to find a failure (#109).
   pull_request:
-    branches: [main]
 
 jobs:
   build-and-test:
