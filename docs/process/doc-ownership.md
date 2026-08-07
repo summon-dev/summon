@@ -3,7 +3,7 @@ agent-notes:
   ctx: "who owns which docs, update rules"
   deps: [CLAUDE.md, docs/glossary.md, docs/adrs/0009-ubiquitous-language-glossary.md]
   state: active
-  last: "claude@2026-08-04"
+  last: "claude@2026-08-08"
 ---
 # Document Ownership
 
@@ -13,6 +13,7 @@ Extracted from CLAUDE.md to reduce context window load. Referenced by CLAUDE.md 
 
 | Doc | Owner | Path | Update trigger |
 |-----|-------|------|---------------|
+| Communication registers | Diego | `docs/process/communication-registers.md` | A register, the return contract, or the correspondence rule changes (ADR-0015) |
 | SBOM + dependency decisions | Pierrot | `docs/sbom/sbom.md`, `docs/sbom/dependency-decisions.md` | Dependency add/remove/upgrade |
 | Threat model | Pierrot | `docs/security/threat-model.md` | New endpoints, data types, integrations, auth flows; new owner-harm (C1–C8) or tool-supply surface |
 | Design profile | The human (Dani cites) | `docs/design-profile.md` | A visual decision is made that outlives one PR. Dani never authors House rules (ADR-0013 §5 rule 4) |
