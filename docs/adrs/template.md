@@ -16,6 +16,9 @@ agent-notes: { ctx: "ADR template for architectural decisions", deps: [CLAUDE.md
   text. That is authorship exhaust. It reads as substance because it is true and it
   is recent, and it is exactly what a reader five months out has to skim past.
 
+  This is about *this document's* revision history — not about other documents. Where
+  an option or a constraint came from is context and stays; see Alternatives Considered.
+
   Gate provenance belongs in Status as one or two sentences plus a pointer to the
   debate record in docs/history/tracking/ — never as inlined dispositions.
   ADR-0007 and ADR-0012 do this correctly; follow them.
@@ -60,21 +63,27 @@ What is the change that we're proposing and/or doing?
 ## Alternatives Considered
 
 <!--
-  The options that were not taken, each with the reason it lost. This section is
-  decision content and it is mandatory in substance — an ADR whose alternatives are
-  missing has recorded a preference, not a decision, and the next person to hit the
-  same fork re-litigates it from scratch.
+  The options that were not taken, each with the reason it lost. Mandatory in
+  substance: an ADR with no alternatives has recorded a preference, not a decision,
+  and the next person at the same fork re-litigates it from scratch.
 
-  Careful with the "no authorship narrative" rule above — it is easy to over-apply
-  and delete this section. The rejected option stays; the chronology of when and by
-  whom it was rejected goes. Two phrasings of the same fact:
+  The "no authorship narrative" rule above is the one people over-apply into gutting
+  this section. Two contrasts, each the same fact phrased two ways:
 
     Keep:  "Strict JSON was considered and rejected: the emitters can't guarantee
-            fence-free output, so every consumer would need a repair path anyway."
-    Cut:   "An earlier draft specified strict JSON; a reviewer objected in round 2
-            and it was changed."
+            fence-free output, so every consumer needs a repair path anyway."
+    Cut:   "An earlier draft specified strict JSON; a reviewer objected in round 2."
 
-  The first is a fact about the problem. The second is the same fact as autobiography.
+    Keep:  "The originating proposal specified stdlib Python."
+    Cut:   "Python was proposed in review and argued down."
+
+  An option's source is context; an objection's author is not. A rejection with no
+  named source is indistinguishable from a straw man — the reader can't tell whether
+  the option was a real contender or invented to be knocked down, which makes the
+  surviving content less trustworthy rather than merely tidier. It also explains why
+  the ADR bothers to rule on something the repo never used. The same goes for a
+  constraint inherited from elsewhere: name where it came from, or it reads as
+  arbitrary and the next author drops it.
 
   One option per subsection or bullet: what it was, why it lost. If an option is
   merely deferred rather than rejected, say which condition would revive it.

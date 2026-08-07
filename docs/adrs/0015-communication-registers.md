@@ -24,6 +24,8 @@ A human reading a security finding wants Pierrot's voice — the dark humour is 
 
 The fix is to condition communication style on the **sender → receiver edge** rather than on agent identity.
 
+That insight, and a full implementation design around it, came from an **originating proposal** (`docs/history/design/2026-08-07-comms-refit.md`). This ADR adopts the insight and rules against several of the proposal's specific choices. Where a rejected option appears below without another source named, the originating proposal is where it was proposed — the options were real, not hypotheticals raised to be knocked down.
+
 Ratified canon this decision touches:
 
 - `docs/process/team-governance.md:183-193` — "Agent Voice and Personality": *"Their voice must come through in their outputs — reports, reviews, challenges, and recommendations."*
@@ -89,7 +91,7 @@ The coordinator **gates on the envelope and forwards the narrative**. It does no
 
 Envelope + narrative also settles the conflict with `team-governance.md:183-193` without a loss. That rule names *reports* and *reviews* specifically; keeping the narrative keeps them voiced. The anti-false-green defence is bought entirely by the **envelope** — `finding_count`, `unknowns[]`, and per-claim `evidence` are machine-checkable, and none of them care whether the prose beside them is deadpan or dry. This does not reverse ADR-0012 §F.
 
-There is no separate `voice` field. Such a field would be forbidden on the only edge `SubagentStop` can observe, and its one legal use depends on the `PreToolUse` validation this ADR defers — unusable everywhere it is reachable, which is dead weight in a v1 schema.
+There is no separate `voice` field. The originating proposal carried one, capped at 20 words, to let a trace of persona survive an otherwise persona-free packet; the `narrative` field supersedes that purpose entirely. A capped `voice` field would also be forbidden on the only edge `SubagentStop` can observe, and its one legal use would depend on the `PreToolUse` validation this ADR defers — unusable everywhere it is reachable, which is dead weight in a v1 schema.
 
 #### Correspondence: `claims[]` is the raw claim, `narrative` is the same claim voiced
 
@@ -180,9 +182,9 @@ Applying ADR-0012 §B and its tie-breaker: *prefer the script where determinism 
 | BRIEF conduct — offer-menu ban | **Prose** (`docs/process/communication-registers.md`) | Judgment over natural language. See Alternative E. |
 | Act vocabulary, claim tagging honesty, coordinator-only acts | **Prose** | Judgment. A regex cannot decide whether a claim is really OBSERVED. |
 
-**BRIEF conduct has no length ceiling.** Length is the wrong control variable, and a hard sentence ceiling truncates Critical findings — reintroducing the exact false-green hazard this ADR exists to close. The control variable is *outcome-first and nothing omitted*.
+**BRIEF conduct has no length ceiling.** The originating proposal set one at 1-3 sentences. Length is the wrong control variable, and a hard sentence ceiling truncates Critical findings — reintroducing the exact false-green hazard this ADR exists to close. The control variable is *outcome-first and nothing omitted*.
 
-**No self-declared marker may exempt a return from validation.** Register selection rides **inside** the packet as a validated field, or is derived from the transcript. An exemption triggered by a string the validated party emits is a bypass available to any confused, budget-starved, or prompt-injected agent, and it makes the hook advisory against intent rather than enforcing. Logging such a bypass does not fix it: the log is read by nobody at the moment it matters.
+**No self-declared marker may exempt a return from validation.** The originating proposal's validator exempted any return beginning with a literal marker string, so that a specialist writing directly to the human could opt out of the packet contract. Register selection instead rides **inside** the packet as a validated field, or is derived from the transcript. An exemption triggered by a string the validated party emits is a bypass available to any confused, budget-starved, or prompt-injected agent, and it makes the hook advisory against intent rather than enforcing. Logging such a bypass does not fix it: the log is read by nobody at the moment it matters.
 
 **Two requirements on the validator, both guarding fail-closed-into-silence.**
 
@@ -193,13 +195,15 @@ Both carry regression tests before the adapter lands.
 
 ### Sub-decision 4 — Enforcement adapters are Node ESM
 
-All Summon enforcement adapters — this one and every future one — are `.mjs`, Node standard library, zero dependencies.
+All Summon enforcement adapters — this one and every future one — are `.mjs`, Node standard library, zero dependencies. The originating proposal specified stdlib Python for the adapters, deliberately, to avoid a pip dependency; this ADR rules otherwise.
 
 Summon has zero Python. All four existing checks (`scripts/check-canon.mjs`, `check-canon.test.mjs`, `check-css-contrast-motion.mjs`, `harvest-debt.mjs`) are Node ESM; the repo is pnpm + Node. A Python adapter would fork the toolchain for two files and ship a `python3` requirement to Node projects that never asked for it — plus `jq`, if the acceptance checks are shell pipelines.
 
 **ADR-0012's "degrade explicitly, never silently" clause does not authorise a Python adapter.** That clause is a **floor for unavoidable degradation** — it governs capabilities genuinely absent on a runtime or plan tier. It is not a licence for self-inflicted degradation; read that way it would bless any dependency as long as a warning printed. Its precondition is that no cheaper alternative exists, and here the cheaper alternative is the house language. It also fails mechanically: it requires announcement **at invocation**, and a hook that cannot start because `python3` is missing has no channel to announce anything, because the announcing machinery is inside the process that failed to launch.
 
-Cost: draft-07 validation is hand-rolled rather than delegated to a library. Viable precisely because the schema is deliberately flat with no `$ref`, and consistent with the zero-dependency posture ADR-0013 §6 slice A establishes. The flat-schema constraint keeps its original justification — grammar-constrained decoding in a future harness port — and gains a second one.
+Cost: draft-07 validation is hand-rolled rather than delegated to a library. Viable precisely because the schema is deliberately flat with no `$ref`, and consistent with the zero-dependency posture ADR-0013 §6 slice A establishes.
+
+**The flat, `$ref`-free schema shape is inherited from the originating proposal and is load-bearing — do not "improve" it by factoring out shared subschemas.** Its original rationale is grammar-constrained decoding: a flat JSON Schema converts cleanly to a GBNF-style grammar for a future harness port, and `$ref` indirection does not. Choosing Node adds a second, immediate reason — flatness is what makes a hand-rolled stdlib validator ~40 lines instead of a dependency. Both reasons must fail before the constraint is worth relaxing.
 
 ### Sub-decision 5 — `AGENTS.md` and the comms skill are projections
 
@@ -209,13 +213,15 @@ Three authored sources, everything else a pointer:
 2. `schemas/packet.schema.json` — the structure.
 3. A one-line register binding in each `.claude/agents/*.md`.
 
-`AGENTS.md` at repo root and `.claude/skills/comms/SKILL.md` are **generated projections** of (1), with a `check-canon.mjs` staleness rule. This satisfies ADR-0006: a root cross-runtime file authored as an original inverts the model on its first real test and sets a precedent that erodes it for every subsequent cross-runtime artifact. Keeping the binding to one line per agent also avoids duplicating a block across sixteen agent files, which is a drift generator with no single source.
+`AGENTS.md` at repo root and `.claude/skills/comms/SKILL.md` are **generated projections** of (1), with a `check-canon.mjs` staleness rule. The originating proposal authored `AGENTS.md` as a root original instead; that satisfies nothing in ADR-0006, because a root cross-runtime file authored as an original inverts the projection model on its first real test and sets a precedent that erodes it for every subsequent cross-runtime artifact.
+
+The originating proposal also appended a ~19-line register block to each of the sixteen agent files. Item (3) is **one line** per agent for that reason: ~300 lines of copy-paste with no single source is a drift generator, where the next persona edit forgets one file and the contract silently forks.
 
 **Precedence, stated explicitly because pointers rot:** where a pointer, a projection, and the process doc disagree, **the process doc wins.** Projections are rebuilt; pointers are corrected.
 
-**`CLAUDE.md` wiring.** The `@AGENTS.md` import goes **immediately after** the First-Run Detection block, not at line 1. First-Run Detection is a guard clause whose job is to short-circuit before anything else applies; an uninitialised project should not be loading the register contract at all.
+**`CLAUDE.md` wiring.** The `@AGENTS.md` import goes **immediately after** the First-Run Detection block — not at line 1, where the originating proposal placed it. First-Run Detection is a guard clause whose job is to short-circuit before anything else applies; an uninitialised project should not be loading the register contract at all.
 
-**This change is strictly additive to `CLAUDE.md`.** No existing content is removed on the grounds that the register contract now duplicates it. `CLAUDE.md` is 168 lines of ratified operating canon with no allowlist, no diff-review step, and no acceptance check guarding it; an open-ended deletion licence over it is not something this ADR grants. Any removal is a separate, individually enumerated change with human line-by-line review.
+**This change is strictly additive to `CLAUDE.md`.** The originating proposal instructed the implementer to *"remove any content the contract now duplicates"*; that instruction is not carried out. `CLAUDE.md` is 168 lines of ratified operating canon — the Session Entry Protocol, the Done Gate pointer, "Treat Agent Output as Untrusted", the board transitions — with no allowlist, no diff-review step, and no acceptance check guarding it. An open-ended deletion licence over that file is not something this ADR grants. Any removal is a separate, individually enumerated change with human line-by-line review.
 
 ### Sub-decision 6 — Trust surface, tamper boundary, and what is withheld
 
@@ -276,21 +282,21 @@ Gate: a separate Architecture Gate ADR on executing code in user repos, plus opt
 
 ## Alternatives Considered
 
-**A. Strict persona-free PACKET — mechanical fields only, no prose.** The cleanest machine contract: trivially validated, and the natural target for grammar-constrained decoding later. Rejected because it pays the persona context cost on every invocation and discards the output on more than nine returns in ten — the specialist → human edge is under 10% of invocations, so loading persona definitions into every specialist and then forbidding their use is the worst of both. It also collides head-on with `team-governance.md:183-193`, which names reports and reviews specifically as outputs that must carry voice.
+**A. Strict persona-free PACKET — mechanical fields only, no prose.** The originating proposal's design, and the most serious alternative here. The cleanest machine contract: trivially validated, and the natural target for grammar-constrained decoding later. Rejected because it pays the persona context cost on every invocation and discards the output on more than nine returns in ten — the specialist → human edge is under 10% of invocations, so loading persona definitions into every specialist and then forbidding their use is the worst of both. It also collides head-on with `team-governance.md:183-193`, which names reports and reviews specifically as outputs that must carry voice.
 
 It does hold **one advantage envelope + narrative cannot match**: a packet with no prose has nowhere to smuggle a fact. The correspondence rule and the count assertion narrow that gap without closing it, since nothing mechanical reads prose for unclaimed findings. The trade is accepted with eyes open, and a reversal trigger below exists so that if narrative-only findings appear in practice this alternative is re-argued on evidence rather than defended on the original reasoning.
 
 **B. Do nothing — keep the two-tier protocol and the sentinel line.** Zero cost, zero risk. Rejected because the sentinel is a hand-rolled, unenforced convention guarding the single failure mode most likely to ship a real defect, and because the two-tier text is under-specified about shape rather than merely informal.
 
-**C. Five registers, replacing the two tiers wholesale** — adding registers for the durable-artifact edge, the notes-to-future-agents edge, and a separate specialist-voice edge. Rejected as over-scoped: the notes register duplicates ratified canon in `agent-notes.md`, the voice register dissolves into `narrative` once the return contract carries prose, and the artifact register has no spec. Framing the change as replacement rather than refinement also discards the tiers' correct insight about the axis in order to re-derive it under new names.
+**C. Five registers, replacing the two tiers wholesale** — the originating proposal's model, adding registers for the durable-artifact edge, the notes-to-future-agents edge, and a separate specialist-voice edge. Rejected as over-scoped: the notes register duplicates ratified canon in `agent-notes.md`, the voice register dissolves into `narrative` once the return contract carries prose, and the artifact register has no spec. Framing the change as replacement rather than refinement also discards the tiers' correct insight about the axis in order to re-derive it under new names.
 
 **D. Three registers — the two specified plus a named-but-deferred artifact register.** Rejected: a canon word that ships to a stranger who looks it up and finds a table row is worse than shipping nothing. The edge is deferred without a name.
 
-**E. Enforce BRIEF conduct with a blocking `Stop` hook** that regex-matches offer-menus and packet-field leakage in the coordinator's final message. Rejected on four counts. A regex over natural language is judgment wearing a determinism costume, and ADR-0012's ladder puts judgment at Prose tier. Patterns matching the system's own vocabulary — schema field names, register names — block any turn that explains the register model or surfaces a governance conflict, which is a structural false positive over an entire legitimate conversation class rather than a tunable rate. The hook fires on every coordinator turn, the hottest path in the system. And blocking a final message has no good failure mode: the human is waiting and the turn cannot complete.
+**E. Enforce BRIEF conduct with a blocking `Stop` hook** that regex-matches offer-menus and packet-field leakage in the coordinator's final message, as the originating proposal specified. Rejected on four counts. A regex over natural language is judgment wearing a determinism costume, and ADR-0012's ladder puts judgment at Prose tier. Patterns matching the system's own vocabulary — schema field names, register names — block any turn that explains the register model or surfaces a governance conflict, which is a structural false positive over an entire legitimate conversation class rather than a tunable rate. The hook fires on every coordinator turn, the hottest path in the system. And blocking a final message has no good failure mode: the human is waiting and the turn cannot complete.
 
 **F. Ship the enforcement adapters in the payload immediately.** Rejected on trust grounds — a category change in what `summon-team` installs, resting on eight unverified harness claims. Slice 4 keeps the door open behind a gate.
 
-**G. Python adapters.** Rejected under Sub-decision 4.
+**G. Stdlib Python enforcement adapters,** as the originating proposal specified — chosen there for a deliberate reason, that Python's standard library covers JSON parsing and regex with no pip dependency. Rejected because Summon is a pnpm + Node repo with zero Python and four existing Node ESM checks, so a Python adapter ships a `python3` requirement to Node projects that never asked for it and forks the toolchain for two files. Node's standard library covers the same ground at no added cost. Full argument, including why ADR-0012's announced-degradation clause does not authorise it, in Sub-decision 4.
 
 ## Consequences
 
