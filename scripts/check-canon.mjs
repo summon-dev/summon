@@ -67,6 +67,39 @@ function checkPersonaRoster() {
   }
 }
 
+// 2b. Every persona entry in personas.md carries a Voice field.
+//
+// ADR-0015 makes a persona `narrative` required on every specialist return, and
+// personas.md is the single source that has to answer for all of them. Nine of
+// fifteen had no voice recorded anywhere before #97 — not through drift, but
+// because nothing made an absent one visible. Coverage tracked how vivid a
+// persona was rather than whether anything needed it.
+//
+// So the sensor asserts presence, not quality. A deliberately plain voice is a
+// legitimate value; a missing one is a defect. Anchored on the `**Agent file:**`
+// line because that is what marks a section as a persona entry rather than a
+// prose heading, which keeps the check honest when sections are added.
+export function findPersonasMissingVoice(text) {
+  const missing = [];
+  for (const section of text.split(/^### /m).slice(1)) {
+    const agentFile = /\*\*Agent file:\*\* `\.claude\/agents\/([a-z-]+)\.md`/.exec(section);
+    if (!agentFile) continue; // a prose heading, not a persona entry
+    if (!/^\*\*Voice:\*\*[ \t]*\S/m.test(section)) {
+      missing.push({ name: section.split("\n")[0].trim(), agent: agentFile[1] });
+    }
+  }
+  return missing;
+}
+
+function checkPersonaVoice() {
+  for (const { name, agent } of findPersonasMissingVoice(read(PERSONAS))) {
+    fail(
+      `persona voice: "${name}" (${agent}.md) has no **Voice:** field in personas.md — ` +
+        `ADR-0015 requires every persona to have a documented voice, and a blank is a defect rather than an opt-out`
+    );
+  }
+}
+
 // 3. Every command file carries an agent-notes block.
 function checkCommandNotes() {
   for (const file of mdFiles(COMMANDS_DIR)) {
@@ -338,7 +371,7 @@ function checkReviewSentinels() {
 }
 
 export function runAllChecks() {
-  for (const check of [checkAgentFiles, checkPersonaRoster, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels]) {
+  for (const check of [checkAgentFiles, checkPersonaRoster, checkPersonaVoice, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels]) {
     try {
       check();
     } catch (err) {

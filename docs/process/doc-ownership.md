@@ -42,6 +42,7 @@ Four artifacts describe "the project," and it must be obvious which one owns a g
 |-----------|------|------|
 | what a **domain word** means (Order, Invoice) | `docs/glossary.md` | the user's *domain* vocabulary |
 | what a **process term** means (proof grade, wave, agent-notes) | its spec doc (`done-gate.md`, `phases.md`, `agent-notes.md`, `team-governance.md`) | Summon's *methodology* vocabulary |
+| how a **persona sounds** | `docs/methodology/personas.md` (the `**Voice:**` field) | every persona's voice |
 | **where** something is built / how data flows | `docs/code-map.md` | modules, packages, APIs |
 | whether to **open a given file** | that file's agent-notes | one file's purpose and deps |
 

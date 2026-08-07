@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "tests for check-canon's review-sentinel integrity check", deps: [scripts/check-canon.mjs, docs/process/gotchas.md], state: active, last: "claude@2026-08-06", key: ["catches the real 2026-08-06 placeholder verbatim", "false-positive guards: board pipeline prose and the /command placeholder both mention in-flight words", "entry-point guard regression: importing must not exit, running must print"] }
+// agent-notes: { ctx: "tests for check-canon's sentinel and persona-voice checks", deps: [scripts/check-canon.mjs, docs/process/gotchas.md], state: active, last: "claude@2026-08-08", key: ["catches the real 2026-08-06 placeholder verbatim", "false-positive guards: board pipeline prose and the /command placeholder both mention in-flight words", "entry-point guard regression: importing must not exit, running must print"] }
 //
 //   node --test scripts/check-canon.test.mjs
 //
@@ -12,11 +12,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-import { findSentinelProblems } from "./check-canon.mjs";
+import { findSentinelProblems, findPersonasMissingVoice } from "./check-canon.mjs";
 
 const SCRIPT = resolve(import.meta.dirname, "check-canon.mjs");
 
@@ -171,4 +171,68 @@ test("running the script as a CLI still executes the checks", () => {
     encoding: "utf8",
   });
   assert.match(out, /canon check:/, "the CLI must produce a verdict, not exit silently");
+});
+
+// --- persona voice coverage (#97) -------------------------------------------
+//
+// Nine of fifteen personas had no voice recorded anywhere. Not drift: all three
+// locations arrived in one import nobody deduplicated, and nothing made an
+// absent voice visible. ADR-0015 then made a persona `narrative` required on
+// every specialist return, which turns a documentation gap into a contract the
+// repo cannot honour. These tests pin the sensor that replaces the vigilance.
+
+const PERSONA = (body) =>
+  `### Tester Tara\n\n**Agent file:** \`.claude/agents/tara.md\` **Capability:** TDD\n\n${body}\n`;
+
+test("flags a persona entry with no Voice field", () => {
+  const missing = findPersonasMissingVoice(PERSONA("The red in red-green-refactor."));
+  assert.equal(missing.length, 1);
+  assert.equal(missing[0].agent, "tara");
+});
+
+test("accepts a persona entry that carries a Voice field", () => {
+  const missing = findPersonasMissingVoice(
+    PERSONA("**Voice:** Precise and relentless about edge cases.\n\nThe red in red-green-refactor.")
+  );
+  assert.deepEqual(missing, []);
+});
+
+test("a deliberately plain voice is a valid value, not a blank", () => {
+  // ADR-0015 rules out a neutral-by-design opt-out, but the sensor asserts
+  // presence rather than flamboyance — recording that an agent is plain is a
+  // decision, and the check must not push anyone into inventing a quirk.
+  const missing = findPersonasMissingVoice(PERSONA("**Voice:** Plain and unhurried. No set-pieces."));
+  assert.deepEqual(missing, []);
+});
+
+test("an empty Voice field counts as missing", () => {
+  assert.equal(findPersonasMissingVoice(PERSONA("**Voice:**")).length, 1);
+  assert.equal(findPersonasMissingVoice(PERSONA("**Voice:**   ")).length, 1);
+});
+
+test("ignores headings that are prose rather than persona entries", () => {
+  // personas.md carries section headings like "Governance Rules" and
+  // "Feature Development" that have no agent file and need no voice. Anchoring
+  // on **Agent file:** is what keeps the check from demanding one.
+  const text = "### Governance Rules\n\nVeto power exists and is explicit.\n";
+  assert.deepEqual(findPersonasMissingVoice(text), []);
+});
+
+test("reports every uncovered persona, not just the first", () => {
+  const text =
+    PERSONA("no voice here") +
+    "\n### SDE Sato\n\n**Agent file:** `.claude/agents/sato.md` **Capability:** Impl\n\nAlso none.\n";
+  assert.deepEqual(
+    findPersonasMissingVoice(text).map((m) => m.agent).sort(),
+    ["sato", "tara"]
+  );
+});
+
+test("the shipped personas.md has a voice for every persona", () => {
+  // The regression guard that matters: this is the real file, not a fixture.
+  const personas = readFileSync(
+    resolve(import.meta.dirname, "..", "docs", "methodology", "personas.md"),
+    "utf-8"
+  );
+  assert.deepEqual(findPersonasMissingVoice(personas), []);
 });
