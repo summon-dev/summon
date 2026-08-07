@@ -1,14 +1,18 @@
 ---
-agent-notes: { ctx: "ADR: edge-conditioned communication registers; envelope+narrative return contract", deps: [CLAUDE.md, docs/adrs/template.md, docs/process/team-governance.md, docs/process/doc-ownership.md, docs/methodology/agent-notes.md, docs/methodology/personas.md], state: proposed, last: "archie@2026-08-07", key: ["TWO registers only — BRIEF and PACKET; the model is a selection rule, not a taxonomy", "correspondence is BIDIRECTIONAL: no fact only in narrative (smuggling), no claim only in claims[] (starvation)", "claims[] is the raw claim, narrative is the SAME claim voiced, carrying literal anchors; clarity beats character on conflict", "voice INTENSITY is edge-conditioned — damped internal vs full-voice narrative; internal = machine-CONSUMED, not machine-carried", "8 UNVERIFIED harness claims gate slices 2-3; Slice 2.5 probe harness breaks the circularity", "hooks are canon by subject and WITHHELD from the payload — classification is not a shipping decision", "adapters are Node ESM; ADR-0012's announce-clause is a floor for unavoidable degradation, not a licence", "team-governance:188-193 is 4-of-6 duplicate — Tara + Pat descriptors migrate to personas.md BEFORE deletion", "all 15 personas get a voice, no neutral opt-out (issue #97); 6 covered today", "narrative runs 4-6 sentences, 8-12 for a 12-claim return; a 5-agent wave is a wall and that cost is accepted"] }
+agent-notes: { ctx: "ADR: edge-conditioned communication registers; envelope+narrative return contract", deps: [CLAUDE.md, docs/adrs/template.md, docs/process/team-governance.md, docs/process/doc-ownership.md, docs/methodology/agent-notes.md, docs/methodology/personas.md], state: accepted, last: "claude@2026-08-07", key: ["TWO registers only — BRIEF and PACKET; the model is a selection rule, not a taxonomy", "correspondence is BIDIRECTIONAL: no fact only in narrative (smuggling), no claim only in claims[] (starvation)", "claims[] is the raw claim, narrative is the SAME claim voiced, carrying literal anchors; clarity beats character on conflict", "voice INTENSITY is edge-conditioned — damped internal vs full-voice narrative; internal = machine-CONSUMED, not machine-carried", "8 UNVERIFIED harness claims gate slices 2-3; Slice 2.5 probe harness breaks the circularity", "hooks are canon by subject and WITHHELD from the payload — classification is not a shipping decision", "adapters are Node ESM; ADR-0012's announce-clause is a floor for unavoidable degradation, not a licence", "team-governance:188-193 is 4-of-6 duplicate — Tara + Pat descriptors migrate to personas.md BEFORE deletion", "all 15 personas get a voice, no neutral opt-out (issue #97); 6 covered today", "narrative runs 4-6 sentences, 8-12 for a 12-claim return; a 5-agent wave is a wall and that cost is accepted"] }
 ---
 
 # ADR-0015: Edge-conditioned communication registers
 
 ## Status
 
-**Proposed** — 2026-08-07. Work item: issue #94. No implementation may begin until this ADR is Accepted (CLAUDE.md § Critical Rules, "ADR Before Implementation").
+**Accepted** — 2026-08-07, ratified by the human. Work item: issue #94.
 
 Architecture Gate completed 2026-08-07. Point-by-point dispositions: `docs/history/tracking/2026-08-07-comms-register-gate.md`. Originating brief: `docs/history/design/2026-08-07-comms-refit.md`.
+
+**This decision and its implementation reach `main` together, not separately.** The rollout changes how every agent on the team sounds, and that is a property no review can settle — only a real session can. So the slices are built on an integration branch and validated by installing the result into a fresh project before anything merges. Ratification unblocks the build; it does not publish it. An Accepted ADR standing alone on `main` with none of its artifacts present would read to a later session as unfinished work and invite a second, parallel implementation.
+
+Restore point for the whole rollout: tag `v0.1.0-pre-registers`. Note what a revert does and does not reach — the repository, yes; a project already scaffolded from it, no, because that project holds a copy. That asymmetry is why validation precedes the merge rather than following it.
 
 ## Classification: canon
 
@@ -340,5 +344,3 @@ Revisit this ADR if any of the following becomes true.
 - **The human starts skipping narratives.** If wave output is routinely scrolled past rather than read, the verbosity has exceeded what the voice buys, and the honest response is to revisit full-voice `narrative` on multi-agent waves — not to quietly start summarising, which is the failure this ADR forbids. Watch at five agents and up; a two-agent wave will not surface it.
 - **`unknowns[]` becomes ritual.** If agents routinely emit `unknowns: []` on work that plainly had unknowns, the field is a checkbox and worse than nothing — it converts an absence of thought into a positive assertion of completeness. That is the false-green failure mode wearing this ADR's own uniform.
 - **Checkpoint: 2027-02-07**, six months from Proposed. If Slice 1 has not landed by then, the LATER ranking was correct and the rest should be closed rather than carried.
-
-=== END ADR-0015 DRAFT — sub-decisions: 6, unverified harness claims: 8 ===
