@@ -186,7 +186,7 @@ How agents address you and each other — the two registers, the specialist retu
 
 Per-persona voice is defined in [`docs/methodology/personas.md`](../methodology/personas.md), which is the single source for it.
 
-The two-tier protocol that stood here was right about the axis and under-specified about the shape; ADR-0015 supersedes the text and keeps the idea.
+Both are governed by ADR-0015. Change either one there first.
 
 ## Parallel Agent Teams
 
