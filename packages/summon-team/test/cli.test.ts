@@ -1,4 +1,4 @@
-// agent-notes: { ctx: "integration tests for summon-team CLI", deps: ["dist/index.js", "src/index.ts"], state: active, last: "tara@2026-07-03" }
+// agent-notes: { ctx: "integration tests for summon-team CLI", deps: ["dist/index.js", "src/index.ts"], state: active, last: "tara@2026-08-08" }
 
 import { execFile } from "node:child_process";
 import {
@@ -308,5 +308,120 @@ describe("summon-team CLI", () => {
     expect(result.code).not.toBe(0);
     const output = result.stdout + result.stderr;
     expect(output).toContain("already exists");
+  });
+
+  // --- --ref flag (issue #98) ---------------------------------------------
+  // Every case below must fail before any network call: the CLI is exercised
+  // with either a malformed flag, an invalid ref, or a target directory that
+  // is already occupied, all of which exit before downloadTemplate runs.
+
+  it("--ref without a value exits non-zero", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--ref"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("--ref requires");
+  });
+
+  it("--ref does not swallow the flag that follows it", async () => {
+    // --yes is consumed downstream by the add-on phase, not by main()'s early
+    // branches, so it makes a clean probe: if --ref eats it as a ref value the
+    // run proceeds instead of reporting the missing value. The target dir is
+    // pre-occupied so that a swallowed flag fails on "already exists" rather
+    // than reaching the network.
+    const cwd = makeTempDir();
+    const occupied = join(cwd, "proj");
+    mkdirSync(occupied);
+    writeFileSync(join(occupied, "file.txt"), "occupying the directory");
+
+    const result = await run(["--ref", "--yes", "proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("--ref requires");
+  });
+
+  it("--help still wins when --ref is missing its value", async () => {
+    // Deliberate, not a bug: --local behaves the same way (the --help
+    // short-circuit sits above every flag's arity check), and a global --help
+    // that an unrelated typo can defeat is worse than an unreported typo.
+    // Do not "fix" this into a non-zero exit — see the anti-swallow test above,
+    // which is what actually guards --ref from eating the next flag.
+    const result = await run(["--ref", "--help"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("Usage:");
+  });
+
+  it("does not mistake the ref value for the project name when the flag comes first", async () => {
+    // The ref value sits at the positional slot the name parser scans. If it is
+    // read as the project name, the run fails on name validation ("feat/x" has a
+    // slash) instead of on the occupied directory — so the two outcomes are
+    // distinguishable without a network call either way.
+    const cwd = makeTempDir();
+    const occupied = join(cwd, "proj-name");
+    mkdirSync(occupied);
+    writeFileSync(join(occupied, "file.txt"), "occupying the directory");
+
+    const result = await run(["--ref", "feat/x", "proj-name"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("proj-name");
+    expect(output).toContain("already exists");
+    expect(output).not.toMatch(/letters, numbers, hyphens, or underscores/i);
+  });
+
+  it("reads the project name when it comes before --ref", async () => {
+    const cwd = makeTempDir();
+    const occupied = join(cwd, "proj-name");
+    mkdirSync(occupied);
+    writeFileSync(join(occupied, "file.txt"), "occupying the directory");
+
+    const result = await run(["proj-name", "--ref", "feat/x"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("proj-name");
+    expect(output).toContain("already exists");
+    expect(output).not.toMatch(/letters, numbers, hyphens, or underscores/i);
+  });
+
+  it("rejects a ref containing a path traversal sequence", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--ref", "../../etc", "trav-proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toMatch(/ref/i);
+    expect(output).toContain("../../etc");
+    // The rejection is about the ref, not connectivity — and it happens before
+    // any download, so no project directory is left behind.
+    expect(output).not.toMatch(/network/i);
+    expect(existsSync(join(cwd, "trav-proj"))).toBe(false);
+  });
+
+  it("rejects a ref containing a space", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--ref", "feat/my branch", "space-proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toMatch(/ref/i);
+    expect(existsSync(join(cwd, "space-proj"))).toBe(false);
+  });
+
+  it("rejects --ref combined with --local, which has no git ref", async () => {
+    const cwd = makeTempDir();
+    const result = await run(
+      ["--local", REPO_ROOT, "--ref", "main", "combo-proj"],
+      { cwd }
+    );
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("--ref");
+    expect(output).toContain("--local");
+    expect(output).toMatch(/cannot|can't|not.*together/i);
+    expect(existsSync(join(cwd, "combo-proj"))).toBe(false);
+  }, 30_000);
+
+  it("--help documents the --ref flag", async () => {
+    const result = await run(["--help"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("--ref");
   });
 });

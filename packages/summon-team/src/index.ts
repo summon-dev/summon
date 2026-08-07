@@ -1,3 +1,5 @@
+// agent-notes: { ctx: "summon-team CLI entry — scaffold, --local, --ref, doctor", deps: ["src/doctor.ts", "src/template-ref.ts", "src/addons/impeccable.ts"], state: active, last: "sato@2026-08-08" }
+
 import * as p from "@clack/prompts";
 import { downloadTemplate } from "giget";
 import { execFileSync } from "node:child_process";
@@ -18,6 +20,11 @@ import {
   isSummonProject,
   runHealth,
 } from "./doctor";
+import {
+  buildTemplateSpec,
+  describeDownloadFailure,
+  validateRef,
+} from "./template-ref";
 
 declare const __VERSION__: string;
 
@@ -120,6 +127,7 @@ async function main() {
     -v, --version        Show version
     -h, --help           Show this help
     --local <path>       Copy template from a local directory instead of GitHub
+    --ref <ref>          Scaffold from a branch, tag, or commit instead of the default branch
 `);
     process.exit(0);
   }
@@ -133,10 +141,55 @@ async function main() {
       process.exit(1);
     }
   }
+
+  const refIdx = args.indexOf("--ref");
+  if (refIdx !== -1) {
+    const next = args[refIdx + 1];
+    if (!next || next.startsWith("-")) {
+      console.error("Error: --ref requires a ref argument.\n");
+      console.error(
+        "Usage: npx summon-team [--ref <branch|tag|commit>] <project-name>"
+      );
+      process.exit(1);
+    }
+  }
+
   const localPath = localIdx !== -1 ? args[localIdx + 1] : undefined;
-  const skipIdx = localIdx !== -1 ? localIdx + 1 : -1;
+  const ref = refIdx !== -1 ? args[refIdx + 1] : undefined;
+
+  // A local directory copy has no git ref to check out. Honouring one flag and
+  // dropping the other silently is how a validation run passes against a payload
+  // nobody asked for, so contradictory flags are an error, not a preference order.
+  if (localPath !== undefined && ref !== undefined) {
+    console.error("Error: --ref and --local cannot be used together.\n");
+    console.error(
+      "--local copies a directory that is already on disk, so there is no ref to resolve."
+    );
+    process.exit(1);
+  }
+
+  // Validate before anything touches the disk or the network: a bad ref should
+  // cost a message, not a half-created project directory.
+  if (ref !== undefined) {
+    const check = validateRef(ref);
+    if (!check.ok) {
+      console.error(`Error: ${check.reason}\n`);
+      console.error(
+        "Usage: npx summon-team [--ref <branch|tag|commit>] <project-name>"
+      );
+      process.exit(1);
+    }
+  }
+
+  // Every flag that takes a value consumes the index after it. Those indices are
+  // not candidates for the project name — a set (rather than a scalar skip) is
+  // what keeps the next value-taking flag from reintroducing this bug.
+  const consumedValueIdx = new Set<number>();
+  for (const flagIdx of [localIdx, refIdx]) {
+    if (flagIdx !== -1) consumedValueIdx.add(flagIdx + 1);
+  }
   const projectArg = args.find(
-    (a, i) => !a.startsWith("-") && i !== skipIdx
+    (a, i) => !a.startsWith("-") && !consumedValueIdx.has(i)
   );
 
   p.intro("summon-team — Summon your AI dev team");
@@ -211,15 +264,12 @@ async function main() {
   } else {
     s.start("Downloading Summon template...");
     try {
-      await downloadTemplate(TEMPLATE, {
+      await downloadTemplate(buildTemplateSpec(TEMPLATE, ref), {
         dir: targetDir,
       });
     } catch (err) {
       s.stop("Download failed.");
-      const message = err instanceof Error ? err.message : String(err);
-      p.log.error(
-        `Could not download the template. Check your network connection.\n${message}`
-      );
+      p.log.error(describeDownloadFailure(err, ref));
       process.exit(1);
     }
     s.stop("Template downloaded.");
