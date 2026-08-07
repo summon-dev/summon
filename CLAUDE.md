@@ -40,7 +40,7 @@ Every non-excluded file must have agent-notes metadata. See `docs/methodology/ag
 | Debugging | Sato | Blackboard with Tara, Vik, Pierrot |
 | Sprint Boundary | Grace | `/sprint-boundary` (mandatory) |
 
-**Full details:** Agent roster, persona triggers, debate protocol, voice rules → `docs/process/team-governance.md` **Doc ownership:** Who maintains what → `docs/process/doc-ownership.md`
+**Full details:** Agent roster, persona triggers, debate protocol → `docs/process/team-governance.md` **How agents address you and each other:** `docs/process/communication-registers.md` **Doc ownership:** Who maintains what → `docs/process/doc-ownership.md`
 
 ## Critical Rules
 
@@ -134,7 +134,8 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 | `docs/methodology/personas.md` | 16-agent persona catalog |
 | `docs/methodology/agent-notes.md` | Agent-notes protocol spec |
 | `docs/methodology/debt-markers.md` | `summon:` debt-marker convention (`pnpm harvest:debt`) |
-| `docs/process/team-governance.md` | Triggers, debate protocol, architecture gate, voice rules |
+| `docs/process/team-governance.md` | Triggers, debate protocol, architecture gate |
+| `docs/process/communication-registers.md` | BRIEF and PACKET, the return contract, voice rules |
 | `docs/process/done-gate.md` | 16-item Done Gate checklist |
 | `docs/process/operational-baseline.md` | Cross-cutting operational concerns checklist |
 | `docs/process/review-lenses.md` | Canonical reusable review-lens checklists (operational, conformance) |

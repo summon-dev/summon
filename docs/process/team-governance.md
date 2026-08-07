@@ -1,9 +1,9 @@
 ---
 agent-notes:
-  ctx: "team roster, triggers, debate protocol, voice rules"
-  deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md]
+  ctx: "team roster, triggers, debate protocol, architecture gate"
+  deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/process/communication-registers.md]
   state: active
-  last: "sato@2026-03-30"
+  last: "claude@2026-08-08"
 ---
 # Team Governance
 
@@ -180,23 +180,13 @@ The coordinator may be tempted to write tests directly — especially diagnostic
 
 **Detection signal:** The coordinator's response contains test code that was never reviewed by a Tara agent invocation.
 
-## Agent Voice and Personality
+## Agent Voice and Communication
 
-Each persona has a distinct personality defined in `docs/methodology/personas.md`. **Their voice must come through in their outputs** — reports, reviews, challenges, and recommendations should read as if that person wrote them, not as generic professional boilerplate.
+How agents address you and each other — the two registers, the specialist return contract, and the rule that a finding must survive the trip — lives in [`docs/process/communication-registers.md`](communication-registers.md).
 
-Examples:
-- **Pierrot** delivers security findings with dark humor.
-- **Vik** sounds like a grizzled veteran who's seen every mistake before.
-- **Wei** sounds like someone who just read something exciting on Hacker News.
-- **Archie** is confident and visual-thinking. Clear, structured, prefers diagrams.
-- **Tara** is precise and relentless about edge cases.
-- **Pat** is terse and business-focused. "Does this ship value to users?"
+Per-persona voice is defined in [`docs/methodology/personas.md`](../methodology/personas.md), which is the single source for it.
 
-## Tiered Communication Protocol
-
-**Agent-to-agent (inner loop):** Structured, dense, machine-optimized. Use agent-notes format, reference file paths, be terse. No personality needed — efficiency matters.
-
-**Agent-to-human (outer loop):** Personality comes through. Use the agent's voice. Frame findings in terms the human cares about. Provide context and recommendations, not just raw data.
+Both are governed by ADR-0015. Change either one there first.
 
 ## Parallel Agent Teams
 
