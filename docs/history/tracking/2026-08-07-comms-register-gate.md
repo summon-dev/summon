@@ -96,6 +96,15 @@ All ten proposed artifacts classify **canon, zero meta**. Four ship a new trust 
 
 **Priority (Pat):** LATER. It displaces nothing. It queues behind #79, #93, #81, #82, and #91 — making Slice 1 sixth of nine. Authorship by the human is signal about a real daily irritant, but it is not a priority argument.
 
-## Open decision for the human
+## Decisions taken by the human (post-gate, 2026-08-07)
 
-**C2 — does persona voice survive on specialist→coordinator returns?** Three lenses flagged it; Archie declined to decide it on the grounds that it is a product-identity call. The options are: accept the loss and amend the voice rule to CHARACTER-only; carve out reviews and challenges as always-persona regardless of edge; or adopt Pat's envelope-plus-`narrative` field. The gate recommends the third.
+**C2 — does persona voice survive on specialist→coordinator returns?** Three lenses flagged it; Archie declined to decide it on the grounds that it is a product-identity call. **Resolved: envelope + narrative** — required mechanical fields the coordinator gates on, plus a persona prose field it forwards. This is ADR-0015 Sub-decision 2. Wei's round-2 challenge then found the defect the repair introduced (unbounded fact-smuggling through the narrative), which is why Sub-decision 2 also carries the precedence rule and the `finding_count === claims.length` assertion.
+
+**Voice coverage — all fifteen, no opt-out.** The gate's follow-up survey found voice documented for only 6 of 15 personas, in three unowned locations, with coverage tracking persona vividness rather than need. The alternative on the table was voice for the six and recorded neutrality for the nine. **Resolved: every persona gets a documented voice.** Work item: issue #97. Root cause is inheritance, not drift — `personas.md`, `team-governance.md`, and all 16 agent files arrived together in commit `91217fd` (2026-03-31, the vteam-hybrid port) already carrying overlapping voice text, and `doc-ownership.md`'s Single-Source Rule has no category for persona voice, so nothing flagged the redundancy.
+
+**Voice intensity is edge-conditioned — a second axis, new to the ADR.** The register model conditions *surface form* on the edge; this adds *intensity*.
+
+- **Internal — damped.** Agent↔agent peer traffic and the machine-consumed envelope prose fields use a near-uniform register: parsimony and pragmatism. Identity survives in word choice and priority ordering, not in performance. Voices converge here deliberately. Honest scope: peer traffic does not yet flow (`SendMessage`/`PreToolUse` are deferred), so today this governs the envelope's prose fields only.
+- **`narrative` — full voice, explicitly carved out.** It is the persona's message to the human, merely transported through the coordinator. The reading that would pull it into the damped register because it rides an internal edge was considered and rejected. **"Internal" means machine-to-machine coordination, not "carried on an internal edge."**
+
+**The accepted cost.** Full-voice narratives run roughly 4–6 sentences, and a review wave returning five of them is a wall of text. The human took this decision with that stated. It promotes Wei's W6(b) rule — BRIEF × multiple forwarded narratives — from tidy-up to load-bearing: the five-agent wave is the common case, not the edge case.

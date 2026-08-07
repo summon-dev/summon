@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "ADR: edge-conditioned communication registers; envelope+narrative return contract; gated 2026-08-07 (round 2: Wei 7)", deps: [CLAUDE.md, docs/adrs/template.md, docs/process/team-governance.md, docs/process/doc-ownership.md, docs/methodology/agent-notes.md, docs/methodology/personas.md], state: proposed, last: "archie@2026-08-07", key: ["TWO registers only — BRIEF and PACKET; the model is a selection rule, not a taxonomy", "envelope+narrative REJECTS the brief's persona-free PACKET (Pat: CHARACTER edge <10% of invocations)", "W3: envelope is the record — narrative-only facts are NOT reported; validator asserts finding_count === claims.length", "REPORT deferred WITHOUT a name; NOTES dropped; CHARACTER dissolved into the narrative field", "W7 PROBE FALSIFIED the draft: team-governance:188-193 is 4-of-6 duplicate — Tara + Pat tone descriptors must migrate to personas.md BEFORE deletion", "8 UNVERIFIED harness claims; Slice 2.5 disposable probe harness breaks the U-gate circularity", "hooks are canon by subject and WITHHELD from the payload — classification is not a shipping decision", "adapters are Node ESM; ADR-0012's announce-clause is a floor for unavoidable degradation, not a licence", "spec lands in process/, not methodology/ (conduct vs format)"] }
+agent-notes: { ctx: "ADR: edge-conditioned communication registers; envelope+narrative return contract; gated 2026-08-07 (round 2: Wei 7; round 3: voice H1-H4)", deps: [CLAUDE.md, docs/adrs/template.md, docs/process/team-governance.md, docs/process/doc-ownership.md, docs/methodology/agent-notes.md, docs/methodology/personas.md], state: proposed, last: "archie@2026-08-07", key: ["TWO registers only — BRIEF and PACKET; the model is a selection rule, not a taxonomy", "envelope+narrative REJECTS the brief's persona-free PACKET (Pat: CHARACTER edge <10% of invocations)", "W3: envelope is the record — narrative-only facts are NOT reported; validator asserts finding_count === claims.length", "REPORT deferred WITHOUT a name; NOTES dropped; CHARACTER dissolved into the narrative field", "W7 PROBE FALSIFIED the draft: team-governance:188-193 is 4-of-6 duplicate — Tara + Pat tone descriptors must migrate to personas.md BEFORE deletion", "8 UNVERIFIED harness claims; Slice 2.5 disposable probe harness breaks the U-gate circularity", "hooks are canon by subject and WITHHELD from the payload — classification is not a shipping decision", "adapters are Node ESM; ADR-0012's announce-clause is a floor for unavoidable degradation, not a licence", "spec lands in process/, not methodology/ (conduct vs format)", "H2: voice INTENSITY is edge-conditioned — damped internal vs full-voice narrative; internal = machine-CONSUMED, not machine-carried", "H1: all 15 personas get a voice, no neutral opt-out (issue #97); only 6 covered today — coverage tracked vividness, not need", "H3: full-voice narrative is 4-6 sentences; 5-agent wave = wall of text, accepted knowingly; BRIEF rule needs severity ORDERING + actionable index"] }
 ---
 
 # ADR-0015: Edge-conditioned communication registers
@@ -8,7 +8,7 @@ agent-notes: { ctx: "ADR: edge-conditioned communication registers; envelope+nar
 
 **Proposed** — 2026-08-07. Work item: issue #94. Ratification pending human sign-off. No implementation may begin until this ADR is Accepted (CLAUDE.md § Critical Rules, "ADR Before Implementation").
 
-Two review rounds are incorporated: a five-lens gate on the originating brief, and Wei's challenge to this draft (7 objections, 1 blocking, all accepted). Point-by-point dispositions are in § Gate record below. Gate record file: `docs/history/tracking/2026-08-07-comms-register-gate.md`. Originating brief: `docs/history/design/2026-08-07-comms-refit.md`.
+Three review rounds are incorporated: a five-lens gate on the originating brief, Wei's challenge to this draft (7 objections, 1 blocking, all accepted), and a further human ruling on voice (H1-H4, issue #97). Point-by-point dispositions are in § Gate record below. Gate record file: `docs/history/tracking/2026-08-07-comms-register-gate.md`. Originating brief: `docs/history/design/2026-08-07-comms-refit.md`.
 
 ## Classification: canon
 
@@ -68,9 +68,13 @@ This is a refinement, not a repeal — but the word describes the *idea*, not th
 
 **Precondition on the deletion:** Tara's and Pat's tone descriptors are **migrated into `docs/methodology/personas.md` before** the 188-193 deletion commit, in the same PR. Not a follow-up. Deleting them unmigrated destroys ratified guidance that exists nowhere else.
 
-**And the "single source" claim needs qualifying.** `personas.md` entries are written capability-first — agent file, capability, hybrid phases, behaviour — so voice appears for some personas incidentally and is absent for others. "personas.md is the single source for who sounds like what" is therefore **aspirational, not currently true**; the migration above is what starts making it true, for two of sixteen.
+**And the "single source" claim needs qualifying.** `personas.md` entries are written capability-first — agent file, capability, hybrid phases, behaviour — so voice appears for some personas incidentally and is absent for others. "personas.md is the single source for who sounds like what" is therefore **aspirational, not currently true**; the migration above is what starts making it true, for two of fifteen.
 
-This matters more than a doc-hygiene note, because Sub-decision 2 makes `narrative` a **required** field on every specialist return. That contract assumes `personas.md` can tell each of the sixteen agents how to sound. Inconsistent voice coverage means inconsistent narratives, on the field this ADR just made mandatory. **A voice-coverage pass across all 16 personas is warranted and I am scoping it as a separate work item, explicitly not part of Slice 1** — Slice 1 migrates exactly the two descriptors its own deletion would otherwise destroy, and nothing more. Widening it silently is how a docs slice becomes a sprint.
+The full survey: of 15 personas, **9 have no voice documented anywhere.** `personas.md` covers 6 (Pierrot, Vik, Wei, Archie, plus Tara and Pat weakly — behaviour only, which is exactly the W7 falsification above); `team-governance.md:188-193` covers the same 6; the agent files cover 3-4. **Coverage tracked persona vividness, not persona need** — the loud characters got documented because they were fun to write, and the executors did not.
+
+This matters more than doc hygiene, because Sub-decision 2 makes `narrative` a **required** field on every specialist return. That contract assumes `personas.md` can tell each of the fifteen agents how to sound; today it can tell six. **Ratified (H1): every persona gets a documented voice — there is no neutral-by-design opt-out.** The question of whether executors like Sato, Grace, Ines, Diego, Debra, Cloud, Cam, Dani, and Prof should instead carry a recorded decision to stay plain was raised and answered: they get a voice. That pass is **committed, not merely warranted**, and its work item is **issue #97**.
+
+It stays out of Slice 1 regardless. Slice 1 migrates exactly the two descriptors its own deletion would otherwise destroy and stops; #97 is sized and scheduled on its own. Widening a docs slice silently is how it becomes a sprint.
 
 Two adjacent repo-state claims **were** verified by the coordinator on 2026-08-07 and are recorded as such: the inbound-link grep for `team-governance.md`'s voice sections is clean (so the deletion is link-safe), and `docs/process/doc-ownership.md:14` has the four columns `Doc | Owner | Path | Update trigger` with no `team-governance.md` row.
 
@@ -97,13 +101,41 @@ Accordingly, **the validator asserts `finding_count === claims.length` and block
 
 Watch this in practice. If narrative-only findings show up anyway, the precedence rule is being ignored and the reversal trigger below fires.
 
+#### Voice intensity is edge-conditioned too
+
+Registers set the **surface form** of a message. A second axis, ratified separately (H2), sets its **intensity**:
+
+- **Damped (internal).** Near-uniform register: parsimony and pragmatism. Identity survives in word choice and in what the agent chooses to put first — not in performance. No set-pieces, no extended metaphors, no jokes. Voices deliberately converge here.
+- **Full voice.** The persona as written, unhedged.
+
+**`narrative` is FULL voice. This is an explicit carve-out and it was argued.** The tempting reading is that `narrative` is authored on the specialist → coordinator edge, which is internal, so it should be damped. **That reading was considered and rejected.** `narrative` is the persona's message *to the human*, merely transported through the coordinator. The damped register does not reach it.
+
+**Definition, stated precisely, because the whole distinction rests on it: *internal* means machine-to-machine coordination — not "carried on an internal edge."** The test is **who consumes the text, not who carries it.** A field is internal if a program or an agent acts on it as data. A field is human-facing if a person reads it, however many relays it crosses on the way. Transport is not consumption.
+
+So the damped register governs peer traffic and the envelope's machine-consumed prose fields — `summary`, `action`, and the entries in `unknowns[]`. It does not govern `narrative`.
+
+This is less a second axis bolted onto the model than the **same edge rule applied honestly.** The ADR's premise is that register follows the sender → receiver edge; `narrative`'s receiver is the human even though its wire is internal. Identifying the true receiver rather than the visible one is what produces the carve-out. The model is more coherent for it, not less.
+
+It also draws a clean mechanical line through the packet, and the line is the one W3 already needed: **the damped fields are the record; the full-voice field is commentary on it.** Fields the machine parses are terse and authoritative. The field the machine only forwards is voiced and non-authoritative. Same boundary, two names — which means `schemas/packet.schema.json` must document which prose fields are damped, because a schema that treats all prose alike will not carry this.
+
+**Honesty about scope (H4): the damped internal register has almost no live consumer today.** Peer agent↔agent messages depend on the `SendMessage` / `PreToolUse` work this ADR explicitly defers, so that traffic does not yet flow. What exists now is the envelope's prose fields, and that is the whole of the damped register's current reach. It is written here so the rule is settled when peer traffic arrives; describing it as governing traffic that does not exist would be the kind of overclaim this ADR spends a section warning against.
+
 #### BRIEF × multiple narratives
 
-The two registers this ADR specifies meet on the most common path in the system — a parallel review wave — and the earlier draft left that meeting undefined. Three specialists return, each with a narrative; BRIEF says outcome-first and nothing omitted, Sub-decision 2 says forward verbatim, and "summarising is where findings die" makes naive concatenation the path of least resistance. Left unspecified, the human receives either a wall or a lossy digest, chosen ad hoc per wave.
+The two registers this ADR specifies meet on the most common path in the system — a parallel review wave — and the earlier draft left that meeting undefined. Left unspecified, the human receives either a wall or a lossy digest, chosen ad hoc per wave.
 
-**Rule for a multi-narrative wave.** The coordinator's BRIEF is: the outcome, then per-agent severity (the highest severity each agent returned, read from its envelope, not from its prose), then the narratives forwarded verbatim below under agent headings. **No narrative is dropped, and none is summarised.** The BRIEF is the index; the narratives are the body.
+**H2 makes this rule load-bearing rather than a tidy-up.** Full-voice narratives run roughly 4-6 sentences; a five-agent wave is the common case, not the edge case; and the human accepted that cost with the downside stated in as many words — *"5 of these is a wall of text."* So the rule has to actually manage volume, and the three-part version in the previous draft does not on its own. It survives at five agents **with three additions**, all of which manage volume without dropping anything.
 
-This keeps the anti-omission property that BRIEF exists for while giving the human a scannable top. It costs length, which is exactly the trade Sub-decision 3 makes when it strikes the brief's sentence ceiling: the control variable is *nothing omitted*, not *short*.
+**Rule for a multi-narrative wave.**
+
+1. **Outcome first**, one line: what happened and what it means for the human.
+2. **The index**: one line per agent — agent, highest severity, finding count — every value read **from the envelope, never from the prose** (the W3 precedence rule, applied consistently).
+3. **Ordered by severity, highest first — not by roster order and not by completion order.** This is the single largest readability lever available and it costs nothing. A human reading top-down meets the Critical first and can stop reading at any point without having missed the worst thing. Roster order distributes severity randomly through the wall, which is the property that makes a wall a wall.
+4. **The index must be independently actionable.** The human should be able to decide and act having read only steps 1-3, without opening a single narrative. This is achievable by construction rather than by discipline: W3 already establishes that every finding lives in `claims[]`, so an index built from envelopes is complete. Narratives elaborate the record; they never carry it.
+5. **Narratives below a single separator**, each under its own agent heading, in the same severity order, **verbatim**. Agents that returned no findings go last.
+6. **No narrative is dropped and none is summarised.**
+
+The BRIEF is the index; the narratives are the body. Steps 3-5 are what let a five-narrative return be *scanned* rather than *read* — the volume is unchanged, but the reader controls how much of it they consume and never pays for that control in missed findings. That is the honest resolution: this rule cannot make the output short, and it should not try. Sub-decision 3 struck the brief's sentence ceiling for exactly this reason. The control variable is **nothing omitted**, and the mitigation for length is **ordering and structure**, not deletion.
 
 **This is a deliberate departure from the originating brief, which specified PACKET as persona-free with no prose.** The reason is a cost argument, not an aesthetic one. Pat priced the specialist → human edge at **under 10% of invocations** — so a persona-free return contract would pay the full context cost of loading persona definitions into every specialist and then discard the benefit on more than nine returns in ten. Persona context is not free; buying it and throwing away the output is the worst of both.
 
@@ -212,7 +244,9 @@ Gate: a separate Architecture Gate ADR on executing code in user repos, plus opt
 
 **Deferred, not scheduled:** a register for the durable-artifact edge (the brief's `REPORT`) — the edge is real, this ADR has no spec for it, and it ships no name until it has one; `PreToolUse` validation on peer messages; claim-store-compiled artifacts; the MAF/LangChain harness port; any promotion of BRIEF conduct from prose to a blocking check.
 
-**Separate work item, not in any slice above:** a voice-coverage pass across all 16 personas in `docs/methodology/personas.md`, so that the `narrative` field Sub-decision 2 makes mandatory has a consistent source to draw on. Sized independently; Slice 1 migrates exactly two descriptors and stops.
+**Separate work item, not in any slice above — issue #97:** the voice-coverage pass across all 15 personas in `docs/methodology/personas.md`, ratified under H1, so that the `narrative` field Sub-decision 2 makes mandatory has a consistent source to draw on for every agent rather than for six of them. Nine personas need a voice written from scratch. Sized and scheduled independently; Slice 1 migrates exactly Tara's and Pat's descriptors and stops.
+
+**Dependency note:** #97 is not a gate on any slice here — Slices 1-3 are buildable with voice coverage as it stands. But the *quality* of the `narrative` field is capped by #97 until it lands, and narrative quality is most of what D1 bought. Shipping the register model without #97 delivers the contract and defers the benefit.
 
 **Priority: LATER.** Slice 1 is cheap and should land when convenient. Nothing here preempts current sprint commitments.
 
@@ -239,6 +273,18 @@ Architecture Gate 2026-08-07, issue #94. Five lenses reviewed the originating br
 ### Round 2 — disagreements
 
 None. All seven accepted; W2 and W6(b) accepted with the modifications noted above, both of which strengthen rather than soften his point. Wei's round-1 objections O3, O4, O5, O6, and O9 were closed by the draft and are recorded in the gate file.
+
+### Round 3 — human decisions on voice
+
+**H1 — voice for all fifteen personas, no neutral-by-design opt-out. ACCEPTED as a ratified input.** This closes the open question in issue #97. It bears directly on this ADR because Sub-decision 2 makes `narrative` mandatory on every return while only 6 of 15 personas have a documented voice — the survey's finding that **coverage tracked persona vividness rather than persona need** is the diagnosis, and it is the same defect W7 caught one instance of. Recorded in Sub-decision 1 with the 6/15 breakdown; the pass is #97 and stays out of Slice 1.
+
+**H2 — voice intensity is edge-conditioned. ACCEPTED, and it improves the model rather than complicating it.** New `#### Voice intensity is edge-conditioned too` in Sub-decision 2. The `narrative` carve-out is recorded as **explicitly argued and the damped reading rejected**, so a later reader does not re-derive it. The definition is stated as instructed and turns on one line: ***internal* means machine-to-machine coordination, not "carried on an internal edge" — the test is who consumes the text, not who carries it.**
+
+One observation offered rather than a change: this reads as a second axis, but it is better understood as **the ADR's own edge rule applied honestly.** Register follows sender → receiver; `narrative`'s receiver is the human even though its wire is internal. Identifying the true receiver rather than the visible one produces the carve-out without an exception. I have written it that way because a rule derived from the model is more durable than one bolted onto it — the human's ruling is unchanged, only its justification is tightened.
+
+**H3 — price the verbosity. ACCEPTED, and the BRIEF rule was strengthened because of it.** Consequences now carries the 4-6-sentences-per-narrative figure, the 20-30-sentence five-agent case, and the human's own "wall of text" framing, stated as a cost taken knowingly rather than glossed. On whether Wei's W6(b) rule survives five full-voice returns: **yes, but not as drafted.** Three additions were required — severity ordering rather than roster order, an index that is independently actionable by construction (which follows from W3, so it is free), and narratives below a single separator with clean agents last. Rationale in Sub-decision 2. The honest limit is stated there too: this rule makes the output **scannable, not short**, and it should not try to be short, because every mechanism for shortening it is a mechanism for dropping findings.
+
+**H4 — honesty about the damped register's reach. ACCEPTED.** Peer traffic depends on the `SendMessage` / `PreToolUse` work this ADR defers, so the damped register's only live surface today is the envelope's prose fields. Stated plainly in Sub-decision 2 rather than written as though it governs traffic that does not flow. This is the same discipline the tamper-boundary clause and the U-table impose, applied to a rule of our own rather than to a claim about the harness.
 
 ### Round 1 — human decisions, ratified as inputs
 
@@ -287,7 +333,9 @@ It does, however, hold **one advantage envelope + narrative cannot match**, and 
 - **The durable-artifact edge is now unnamed as well as unspecified.** Anyone who wants to talk about it has no word, which is a small ongoing friction traded for not shipping an empty one.
 - **Hand-rolled schema validation** means Summon owns draft-07 semantics it did not write and cannot delegate upstream. Bounded by the flat-schema constraint, but it is code we maintain.
 - **Discarded work.** ~100 lines of authored Python and a ~19-line-per-agent block are thrown away.
-- **A coordinator that forwards narratives verbatim will produce longer human-facing output** than one that summarises. That is intentional — summarising is where findings die — but it is a real change in reading load.
+- **Human-facing output gets substantially longer, and the size is now quantified rather than hand-waved.** Full-voice narratives run 4-6 sentences each. A five-agent review wave therefore returns 20-30 sentences of narrative plus the index — the human's own words for this were *"5 of these is a wall of text."* This cost was accepted knowingly, not overlooked, and it should not be softened in retelling: the ADR makes the common case verbose. The multi-narrative rule mitigates it by ordering and structure so the wall can be scanned and abandoned safely at any point, but **mitigation is not elimination**. The volume is real and permanent, and it is the price of the anti-omission property.
+- **Voice work is now a committed obligation, not an optional polish.** H1 rules out the cheap escape of declaring the nine undocumented executors neutral-by-design. Nine personas need a voice authored from scratch (#97) — creative writing, not mechanical migration, and the hardest kind, since these are precisely the personas nobody found vivid enough to document in the first place.
+- **The packet now carries prose in two registers** — damped machine-consumed fields and one full-voice field. That is more nuance in a v1 schema than a single prose convention would be, it has to be documented in `schemas/packet.schema.json` rather than left to prose, and it is one more thing an agent can get wrong.
 
 ### Neutral
 
@@ -303,7 +351,8 @@ Revisit this ADR if any of the following becomes true.
 - **The trust ADR for Slice 4 is rejected.** If Summon decides it will never ship executing code into user repos, the enforcement half of this ADR is permanently framework-only, and the shipped canon is prose plus a schema. Worth saying out loud rather than leaving Slice 4 open indefinitely.
 - **The envelope measurably degrades return quality.** If specialists start producing thinner narratives because the structured fields absorb the effort, the trade in Sub-decision 2 has inverted and strict prose plus a sentinel may genuinely be better. Watch for narratives that restate the envelope instead of adding to it.
 - **Narrative-only findings are observed in practice.** If a finding turns up in a `narrative` that never appeared in `claims[]` — the Sub-decision 2 failure case, live — then the precedence rule is not holding, `finding_count` is certifying an incomplete record, and envelope + narrative has re-created the smuggling channel it was warned about. That is the one outcome that would make the brief's strict persona-free PACKET the better call after all, and it should be re-argued on that evidence rather than defended.
+- **The human starts skipping narratives.** If wave output is routinely scrolled past rather than read, the verbosity H3 priced has exceeded what the voice buys, and the honest response is to revisit full-voice `narrative` on multi-agent waves — not to quietly start summarising, which is the failure this ADR forbids. Watch for it specifically at five agents and up; a two-agent wave will not surface it.
 - **`unknowns[]` becomes ritual.** If agents routinely emit `unknowns: []` on work that plainly had unknowns, the field has become a checkbox and is worse than nothing — it converts an absence of thought into a positive assertion of completeness. That is the false-green failure mode wearing this ADR's own uniform.
 - **Checkpoint: 2027-02-07**, six months from Proposed. If Slice 1 has not landed by then, the priority ranking (LATER) was correct and the rest should be closed rather than carried.
 
-=== END ADR-0015 DRAFT — sub-decisions: 6, unverified claims: 8 (harness, open) + 3 repo claims discharged (1 falsified) ===
+=== END ADR-0015 DRAFT — sub-decisions: 6, unverified claims: 8 (harness, open) + 3 repo claims discharged (1 falsified); review rounds: 3 (5 lenses, Wei 7, voice H1-H4) ===
