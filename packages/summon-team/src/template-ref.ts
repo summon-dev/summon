@@ -24,6 +24,20 @@ export function validateRef(ref: string): RefValidation {
     };
   }
 
+  // A fully-qualified ref reaches more than branches and tags. GitHub's tarball
+  // API serves `refs/pull/N/head` with a 200 — so accepting this prefix would
+  // widen who can author the template from "someone with push access to
+  // summon-dev/summon" to "anyone who can open a fork PR", and the payload is
+  // agent instruction files plus scripts/*.mjs. Branches, tags, and SHAs never
+  // need the prefix, so nothing legitimate is refused. Matched with the trailing
+  // slash so a branch merely named `refs-cleanup` is unaffected.
+  if (ref === "refs" || ref.startsWith("refs/")) {
+    return {
+      ok: false,
+      reason: `The ref "${ref}" is fully qualified. Pass a branch, tag, or commit SHA instead — "refs/..." can reach pull-request heads that nobody with write access ever reviewed.`,
+    };
+  }
+
   if (ref.startsWith("-")) {
     return {
       ok: false,
@@ -56,7 +70,27 @@ export function validateRef(ref: string): RefValidation {
  */
 export function buildTemplateSpec(template: string, ref?: string): string {
   if (ref === undefined || ref === "") return template;
+  // Appending to a spec that already carries a ref produces `…#main#feat/x`, and
+  // giget's `(?<ref>#[\w./@-]+)` stops at the second `#` — it would take `main`
+  // and discard the user's ref without a word. Unreachable while TEMPLATE is a
+  // bare constant; it throws rather than trusting that to stay true, because the
+  // failure it guards is a silent one.
+  if (template.includes("#")) {
+    throw new Error(
+      `Template "${template}" already carries a ref, so "${ref}" cannot be appended.`
+    );
+  }
   return `${template}#${ref}`;
+}
+
+/**
+ * `github:owner/repo` → `owner/repo`, for use in error messages. Falls back to
+ * the whole spec rather than guessing at an unfamiliar shape.
+ */
+export function repoFromTemplate(template: string): string {
+  const withoutRef = template.split("#")[0];
+  const match = /^github:(.+)$/.exec(withoutRef);
+  return match ? match[1] : withoutRef;
 }
 
 /** Pull a message off an unknown throw without assuming it is an Error. */
@@ -70,9 +104,14 @@ function messageOf(err: unknown): string {
   return String(err);
 }
 
-/** True for throws that carry no useful text at all — appending "(null)" helps nobody. */
+/**
+ * True when the throw carries text worth showing. `null`/`undefined` stringify to
+ * "(null)", and a plain object to "([object Object])" — both cost a line and tell
+ * the reader nothing, so neither is appended.
+ */
 function hasDetail(err: unknown): boolean {
-  return err !== null && err !== undefined;
+  if (err === null || err === undefined) return false;
+  return messageOf(err) !== "[object Object]";
 }
 
 function codeOf(err: unknown): string {
@@ -98,7 +137,11 @@ function codeOf(err: unknown): string {
  */
 const NOT_FOUND = /(?::\s*404\b)|(?:\b404 Not Found\b)/;
 
-export function describeDownloadFailure(err: unknown, ref?: string): string {
+export function describeDownloadFailure(
+  err: unknown,
+  ref?: string,
+  repo = "summon-dev/summon"
+): string {
   const message = messageOf(err);
   const code = codeOf(err);
   const detail = message && hasDetail(err) ? ` (${message})` : "";
@@ -109,12 +152,12 @@ export function describeDownloadFailure(err: unknown, ref?: string): string {
       // auth, so name the likely cause rather than asserting it.
       return (
         `Could not download the template at ref "${ref}". ` +
-        `The most likely cause is that "${ref}" does not exist in summon-dev/summon — ` +
+        `The most likely cause is that "${ref}" does not exist in ${repo} — ` +
         `check the branch, tag, or commit is spelled correctly and has been pushed.${detail}`
       );
     }
     return (
-      `Could not download the template: summon-dev/summon returned 404 Not Found. ` +
+      `Could not download the template: ${repo} returned 404 Not Found. ` +
       `The template repository or its default branch was not there.${detail}`
     );
   }

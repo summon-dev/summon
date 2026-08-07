@@ -58,6 +58,40 @@ describe("validateRef", () => {
     });
   });
 
+  describe("rejects fully-qualified refs, which reach beyond the pushable branches", () => {
+    // GitHub serves /tarball/refs/pull/N/head with a 200, and a PR head can come
+    // from any fork by anyone — where a branch or tag requires push access. The
+    // payload here is agent instruction files and scripts/*.mjs, so that gap is
+    // the difference between "a maintainer chose this" and "a stranger did".
+    // Branches, tags and SHAs never need the refs/ prefix, so nothing legitimate
+    // is lost by refusing it.
+    it("rejects a pull request head ref", () => {
+      expect(validateRef("refs/pull/95/head").ok).toBe(false);
+    });
+
+    it("rejects a pull request merge ref", () => {
+      expect(validateRef("refs/pull/95/merge").ok).toBe(false);
+    });
+
+    it("rejects a fully-qualified branch ref", () => {
+      expect(validateRef("refs/heads/main").ok).toBe(false);
+    });
+
+    it("rejects a fully-qualified tag ref", () => {
+      expect(validateRef("refs/tags/v1.0.0").ok).toBe(false);
+    });
+
+    // The rejection must key on the refs/ path segment, not the letters "refs".
+    // These are ordinary branch names a user is entitled to install.
+    it("accepts a branch whose name merely starts with those letters", () => {
+      expect(validateRef("refs-cleanup")).toEqual({ ok: true });
+    });
+
+    it("accepts a branch with a refs/ segment that is not the first", () => {
+      expect(validateRef("my-refs/experiment")).toEqual({ ok: true });
+    });
+  });
+
   describe("rejects refs that are empty or blank", () => {
     it("rejects an empty string", () => {
       expect(validateRef("").ok).toBe(false);
@@ -193,6 +227,31 @@ describe("describeDownloadFailure", () => {
 
     it("still surfaces the underlying error text for debugging", () => {
       expect(describeDownloadFailure(notFound(), undefined)).toContain("404");
+    });
+  });
+
+  describe("when the ref name itself contains a status code", () => {
+    // giget embeds the user's ref in the message, so "does the message contain
+    // 404" and "did the server answer 404" are different questions. A ref named
+    // v404-hotfix makes them disagree — which is the case that discriminates a
+    // position-anchored status match from a bare substring search.
+    const refWith404 = "v404-hotfix";
+
+    it("does not call the ref missing when the server returned a 500", () => {
+      const err = new Error(
+        "Failed to download https://api.github.com/repos/summon-dev/summon/tarball/v404-hotfix: 500 Internal Server Error",
+      );
+      const message = describeDownloadFailure(err, refWith404).toLowerCase();
+      expect(message).not.toMatch(/not found|does not exist|doesn't exist/);
+    });
+
+    it("still calls the ref missing when the server really returned a 404", () => {
+      const err = new Error(
+        "Failed to download https://api.github.com/repos/summon-dev/summon/tarball/v404-hotfix: 404 Not Found",
+      );
+      const message = describeDownloadFailure(err, refWith404).toLowerCase();
+      expect(message).toMatch(/not found|does not exist|doesn't exist/);
+      expect(message).toContain(refWith404);
     });
   });
 

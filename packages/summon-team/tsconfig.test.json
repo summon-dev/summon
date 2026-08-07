@@ -1,3 +1,7 @@
+// Test-only relaxations live here, never in the build config. `typecheck` runs
+// BOTH configs — src under the strict build settings first, then the tree under
+// these — because a gate that is more permissive than the build lets `src` drift
+// (a src file importing "./foo.ts" would pass here and fail a real emit).
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {

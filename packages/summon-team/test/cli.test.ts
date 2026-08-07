@@ -12,7 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, describe, expect, it } from "vitest";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -32,6 +32,23 @@ function exitCodeOf(error: { code?: string | number | null } | null): number {
   return typeof error.code === "number" ? error.code : 1;
 }
 
+// This suite must never reach the network, and arranging for that is not the same
+// as being unable to. Two vars are needed, not one:
+//   GIGET_GITHUB_URL  — giget builds its tarball URL from it (giget 2.0.0 dist,
+//                       `tar: ${githubAPIURL}/repos/${repo}/tarball/${ref}`), so a
+//                       dead port makes a real download structurally impossible.
+//   XDG_CACHE_HOME    — giget serves from ~/.cache/giget/github before fetching.
+//                       With only the URL blocked, a warm cache still scaffolds a
+//                       complete project and exits 0 — verified by hand. A suite
+//                       that passes off a developer's cache is a false green.
+// A future opt-in test that wants a real download must override both.
+const DEAD_GITHUB_URL = "http://127.0.0.1:1";
+const CACHE_DIR = mkdtempSync(join(tmpdir(), "summon-test-cache-"));
+
+afterAll(() => {
+  rmSync(CACHE_DIR, { recursive: true, force: true });
+});
+
 function run(
   args: string[],
   options: { cwd?: string } = {}
@@ -40,7 +57,15 @@ function run(
     execFile(
       "node",
       [CLI, ...args],
-      { cwd: options.cwd, env: { ...process.env, NO_COLOR: "1" } },
+      {
+        cwd: options.cwd,
+        env: {
+          ...process.env,
+          NO_COLOR: "1",
+          GIGET_GITHUB_URL: DEAD_GITHUB_URL,
+          XDG_CACHE_HOME: CACHE_DIR,
+        },
+      },
       (error, stdout, stderr) => {
         resolve({
           code: exitCodeOf(error),
@@ -434,4 +459,89 @@ describe("summon-team CLI", () => {
     expect(result.code).toBe(0);
     expect(result.stdout).toContain("--ref");
   });
+
+  // --- --flag=value form and the unknown-flag class (C1) -------------------
+  // `--ref=x` is a single token: it matches no indexOf() flag check, and because
+  // it starts with "-" the project-name scan skips it too. So it is ignored in
+  // both directions and the run exits 0 having installed the default branch —
+  // a silent wrong answer. --local=path has the same hole, which is why these
+  // pin the behaviour at the unknown-flag level rather than per flag.
+
+  it("--ref=value validates the ref, rather than ignoring it", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--ref=../../etc", "eq-proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("../../etc");
+    expect(output).toMatch(/ref/i);
+    expect(output).not.toMatch(/network/i);
+    expect(existsSync(join(cwd, "eq-proj"))).toBe(false);
+  });
+
+  it("--ref=value reaches the download as the requested ref", async () => {
+    // Equivalence with the space-separated form, proven offline: the download is
+    // pointed at a dead port, so the failure text carries the tarball URL giget
+    // built — and that URL names the ref only if the value was actually parsed.
+    // Today it reads .../tarball/main, which is the whole bug.
+    const cwd = makeTempDir();
+    const result = await run(["--ref=v0.1.0-pre-registers", "eqv-proj"], {
+      cwd,
+    });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("v0.1.0-pre-registers");
+  });
+
+  it("--ref= with an empty value is the same error as --ref with none", async () => {
+    // The = form must not reopen the arity hole the space form closes.
+    const cwd = makeTempDir();
+    const result = await run(["--ref=", "empty-eq-proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("--ref requires");
+    expect(existsSync(join(cwd, "empty-eq-proj"))).toBe(false);
+  });
+
+  it("--local=path copies from that path, rather than ignoring it", async () => {
+    const cwd = makeTempDir();
+    const result = await run([`--local=${REPO_ROOT}`, "eqlocal-proj"], { cwd });
+    expect(result.code).toBe(0);
+    expect(existsSync(join(cwd, "eqlocal-proj", "CLAUDE.md"))).toBe(true);
+  }, 30_000);
+
+  it("rejects a repeated value flag rather than letting the first one win", async () => {
+    // `indexOf` found only the first occurrence, so `--ref a --ref b` left `b`
+    // looking like a positional: a project literally named "b", scaffolded from
+    // "a", with no warning. Same silent-wrong-answer class as `--ref=value`.
+    const cwd = makeTempDir();
+    const result = await run(["--ref", "main", "--ref", "other-proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("--ref");
+    // Specifically must not have scaffolded a project named after the second value
+    expect(existsSync(join(cwd, "other-proj"))).toBe(false);
+  });
+
+  it("rejects an unknown flag instead of silently ignoring it", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--bogus", "unknown-proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("--bogus");
+    expect(existsSync(join(cwd, "unknown-proj"))).toBe(false);
+  });
+
+  it("still accepts the add-on flags, which main() itself never reads", async () => {
+    // --yes and --non-interactive are consumed downstream by the add-on phase,
+    // not by main(). An allowlist that only knows main()'s own flags would reject
+    // them and break the non-interactive install path — this is that guard.
+    for (const flag of ["--yes", "--non-interactive"]) {
+      const cwd = makeTempDir();
+      const result = await run([flag, "--local", REPO_ROOT, "addon-proj"], {
+        cwd,
+      });
+      expect(result.code).toBe(0);
+      expect(existsSync(join(cwd, "addon-proj", "CLAUDE.md"))).toBe(true);
+    }
+  }, 30_000);
 });
