@@ -1,4 +1,4 @@
-// agent-notes: { ctx: "summon doctor — portable health registry, run on-demand against cwd (ADR-0004)", deps: ["src/index.ts", "docs/adrs/meta/0004-summon-doctor.md"], state: active, last: "sato@2026-07-07" }
+// agent-notes: { ctx: "summon doctor — portable health registry, run on-demand against cwd (ADR-0004)", deps: ["src/index.ts", "src/addons/impeccable.ts", "docs/adrs/meta/0004-summon-doctor.md", "docs/adrs/meta/0014-optional-addons.md"], state: active, last: "claude@2026-08-06" }
 //
 // The `health` registry per ADR-0004: "is THIS project's Summon install wired
 // correctly?" — run downstream via `npx summon-team@latest doctor`, against cwd,
@@ -7,7 +7,12 @@
 // via the in-repo `pnpm check:canon` (ADR-0004 Decision 2, Wei gate R3 option 1).
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
+
+// ADR-0014 §5's addon-integrity check recomputes the same digest the installer
+// recorded, so it must use that exact implementation — a second copy here would
+// be a second source of truth that drifts and reports false mismatches.
+import { DIGEST_ALGORITHM, readManifest, treeDigest } from "./addons/impeccable";
 
 // Internal result struct (ADR-0004 Decision 3), shared in shape with ADR-0005's
 // grader contract. NOT serialized to --json yet — exit code + stdout is the v1
@@ -308,8 +313,120 @@ export function checkGlossary(root: string): CheckResult {
   };
 }
 
+// ---------------------------------------------------------------------------
+// addon-integrity (ADR-0014 §5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Reports whether each recorded add-on's tree still matches what Summon hashed
+ * at install time. Three states, and the distinction between them is the whole
+ * value of the check:
+ *
+ *   matches the recorded digest  -> intact, unchanged since install       (ok)
+ *   differs from it              -> drift: an update, a hand-edit, or
+ *                                   tampering. doctor CANNOT tell which. (degraded)
+ *   tree root gone               -> removed, the entry is stale          (ok/info)
+ *
+ * **This is drift detection, not verification** (§5). It says nothing about
+ * whether what landed was genuine — only whether it changed afterwards.
+ *
+ * The manifest is treated as UNTRUSTED input. The add-on installer is arbitrary
+ * third-party code that ran in this directory and could have written the file
+ * before Summon did, so every field is validated and `root` is confined to the
+ * project: a manifest naming `../../../etc` must not aim doctor at it.
+ */
+export function checkAddonIntegrity(root: string): CheckResult {
+  const id = "addon-integrity";
+  const base = { id, evidence: [] as EvidencePointer[], schemaVersion: DOCTOR_SCHEMA_VERSION };
+
+  const manifest = readManifest(root);
+  const addons = manifest && Array.isArray(manifest.addons) ? manifest.addons : [];
+  if (addons.length === 0) {
+    return { ...base, verdict: "ok", detail: "no add-ons recorded" };
+  }
+
+  const intact: string[] = [];
+  const problems: string[] = [];
+  const notes: string[] = [];
+
+  for (const raw of addons) {
+    if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+      problems.push("a manifest addons[] entry is not an object — ignoring it");
+      continue;
+    }
+    const entry = raw as Record<string, unknown>;
+    const name = typeof entry.name === "string" ? entry.name : "(unnamed)";
+    const entryRoot = entry.root;
+    const recorded = entry.treeDigest;
+
+    if (typeof entryRoot !== "string" || typeof recorded !== "string") {
+      problems.push(`${name}: manifest entry is missing a root or treeDigest`);
+      continue;
+    }
+    if (entry.digestAlgorithm !== DIGEST_ALGORITHM) {
+      problems.push(
+        `${name}: recorded with digest algorithm ${String(entry.digestAlgorithm)}, ` +
+          `which this CLI cannot recompute (it knows ${DIGEST_ALGORITHM})`
+      );
+      continue;
+    }
+
+    // Confine to the project. `relative()` starting with ".." or an absolute
+    // result means the manifest pointed outside, which only a hostile or
+    // corrupt manifest does.
+    const abs = resolve(root, entryRoot);
+    const rel = relative(root, abs);
+    if (rel === "" || rel.startsWith("..") || isAbsolute(rel)) {
+      problems.push(`${name}: manifest root "${entryRoot}" escapes the project — refusing to read it`);
+      continue;
+    }
+
+    if (!existsSync(abs)) {
+      notes.push(`${name}: removed — ${entryRoot} is gone, so this manifest entry is stale`);
+      continue;
+    }
+
+    let observed: string;
+    try {
+      observed = treeDigest(abs);
+    } catch (err) {
+      problems.push(
+        `${name}: could not hash ${entryRoot} — ${err instanceof Error ? err.message : String(err)}`
+      );
+      continue;
+    }
+
+    if (observed === recorded) {
+      intact.push(
+        entry.matchedBlessed === true
+          ? name
+          : `${name} (unchanged since install, but it never matched the payload Summon reviewed)`
+      );
+    } else {
+      problems.push(
+        `${name}: drift — files under ${entryRoot} changed after install. ` +
+          `This may be an update, a hand-edit, or tampering; doctor cannot tell which. ` +
+          `recorded ${recorded}, observed ${observed}. ` +
+          `Re-install from scratch, or accept the change and re-record it.`
+      );
+    }
+  }
+
+  const detail = [...problems, ...notes, ...intact.map((n) => `${n}: intact`)].join("; ");
+  return {
+    ...base,
+    verdict: problems.length > 0 ? "degraded" : "ok",
+    detail: detail || "no add-ons recorded",
+  };
+}
+
 // v1 health registry. Grows by observed need (ADR-0004 Vik YAGNI guard).
-export const HEALTH_CHECKS = [checkAgentNotesDeps, checkCommandRefs, checkGlossary];
+export const HEALTH_CHECKS = [
+  checkAgentNotesDeps,
+  checkCommandRefs,
+  checkGlossary,
+  checkAddonIntegrity,
+];
 
 export function runHealth(root: string): CheckResult[] {
   return HEALTH_CHECKS.map((check) => check(root));

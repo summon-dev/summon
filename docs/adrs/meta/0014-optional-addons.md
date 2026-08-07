@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "ADR: opt-in third-party add-on install path, first instance impeccable", deps: [docs/adrs/template.md, docs/adrs/meta/0007-canon-meta-boundary.md, docs/adrs/meta/0006-multi-runtime-install.md, docs/adrs/meta/0004-summon-doctor.md, docs/adrs/meta/0012-executable-canon.md, docs/adrs/0010-dependency-release-age-cooldown.md, docs/adrs/0011-dependency-supply-chain-scan.md, docs/adrs/0013-design-authority.md, docs/attributions.md, packages/summon-team/src/index.ts], state: accepted, last: "pierrot@2026-08-05", key: ["one entry point: interactive prompt, default no", "installs with --no-hooks; Summon plants zero hooks", "digest detects drift, does NOT verify the download", "ADR-0010 is inapplicable here; recorded human-ratified exception"] }
+agent-notes: { ctx: "ADR: opt-in third-party add-on install path, first instance impeccable", deps: [docs/adrs/template.md, docs/adrs/meta/0007-canon-meta-boundary.md, docs/adrs/meta/0006-multi-runtime-install.md, docs/adrs/meta/0004-summon-doctor.md, docs/adrs/meta/0012-executable-canon.md, docs/adrs/0010-dependency-release-age-cooldown.md, docs/adrs/0011-dependency-supply-chain-scan.md, docs/adrs/0013-design-authority.md, docs/attributions.md, packages/summon-team/src/index.ts], state: accepted, last: "claude@2026-08-06", key: ["one entry point: interactive prompt, default no", "installs with --no-hooks; Summon plants zero hooks", "digest detects drift, does NOT verify the download", "ADR-0010 is inapplicable here; recorded human-ratified exception", "SCOPE AMENDED 2026-08-06: 3.5.0 also installs to .agents/ — §4 gains --providers=claude to confine it, which keeps §3's file count and removal text true and §5's digest scope honest", "blessed digest recorded: 147 files, matched on three independent trees"] }
 ---
 
 # ADR-0014: Optional Add-Ons — the opt-in install path, first instance `impeccable`
@@ -9,6 +9,10 @@ agent-notes: { ctx: "ADR: opt-in third-party add-on install path, first instance
 **Accepted** (2026-08-05) — ratified by the human at the Architecture Gate, with Pierrot's Critical finding in hand and § 7's recorded exception to ADR-0010 explicitly acknowledged as such. **Merge remains blocked on Pierrot's condition C5** (threat-model surfaces), which is being satisfied in § 11 rather than in a file that does not exist; the missing meta zone is filed separately as its own decision and is deliberately not settled here. Authored by Archie. Security review by Pierrot at `docs/history/tracking/2026-08-05-addon-trust-surface.md` — 7 findings, 1 Critical, verdict **proceed-with-conditions** with six conditions C1–C6. Architecture Gate challenge by Wei at `docs/history/tracking/2026-08-05-design-authority-and-addons-debate.md` — challenges **C1, C2, C8** are aimed at this ADR and are answered in § Answers to the review. All six of Pierrot's conditions are addressed; five are adopted, one is adopted with its content rewritten because the fact it described has changed (§ 3).
 
 **This ADR is the spec, not the build.** Nothing here edits `packages/summon-team/src/index.ts`, `doctor.ts`, `docs/attributions.md`, or any threat model. Every change those files need is written out verbatim below for a follow-up implementation PR. Precedent: ADR-0006, ADR-0007, ADR-0012 and ADR-0013 were all spec-only.
+
+**Amended once on 2026-08-06, in § 4, in place; the Decision is unchanged.** A *scope amendment*, found by running the installer for the first time rather than by reading it. `impeccable@3.5.0` reports *"Installed impeccable into: .claude, .agents (project)"* and writes a **second ~152-file copy** to `.agents/skills/impeccable/` — the cross-harness skills convention, which no part of this ADR knew existed. Three of its statements were false as a result: § 3's *"~147 files (~3.3 MB) in `.claude/skills/impeccable/`"* (really ~299 files across two trees), § 3's removal instruction (which left 152 executable files behind), and § 5's one-directory digest scope, whose item-5 exclusion list enumerates what is uncovered and did not name `.agents/`. That last one matters most: § 11's leading post-§4 concern is instruction-bearing text landing where a coding agent reads it, and `.agents/skills/` exists for precisely that purpose.
+
+The fix is **one flag** — § 4's invocation gains `--providers=claude`, which confines the install to a single tree (verified: 147 files in `.claude/`, zero in `.agents/`). It was chosen over widening § 5's digest because it makes the existing § 3 text **true again** rather than rewriting a security control, and § 3 is explicit that its text is data, not prose. **No § 3 wording changed.** The human ratified this amendment on 2026-08-06 and declined a second Architecture Gate on the grounds that it conforms reality to the ADR's existing promises rather than altering them; Pierrot's § 11 item-8 re-review covers it. Status remains **Accepted**.
 
 **Two decisions were made by the human *after* reading Pierrot's Critical finding**, and this ADR exists to record them honestly rather than to argue them into being safe:
 
@@ -146,13 +150,21 @@ Install impeccable? [y/N]
 
 **Decision: install with `--no-hooks`. Always. Not a flag, not a default — the only mode Summon offers.**
 
-The invocation:
+The invocation (**amended 2026-08-06** — `--providers=claude` added; the struck form is left visible):
+
+~~`npx --yes impeccable@3.5.0 install --no-hooks --yes`~~
 
 ```
-npx --yes impeccable@3.5.0 install --no-hooks --yes
+npx --yes impeccable@3.5.0 install --no-hooks --yes --providers=claude
 ```
 
 `--no-hooks` and `--yes` compose safely: `installHooks = !flags.includes('--no-hooks')` is evaluated independently of the yes-flag, so `--yes` cannot re-enable hooks. `--yes` is present only so impeccable's own prompts do not nest inside Summon's, which would produce a prompt the user cannot attribute to either tool.
+
+**Verified against the shipped artifact, not inferred.** `installHooks = !flags.includes('--no-hooks')` appears at `skills.mjs:1753` and `:2029` in `impeccable@3.5.0`, and **all four** hook-wiring call sites read `wantHooks = installHooks && await decideHookInstall(...)`. Because `&&` short-circuits, the yes-flag is never reached when `installHooks` is false — the composition claim is a property of the operator rather than a promise. An end-to-end install confirms it: no `.claude/settings.local.json` is created, and `.git/info/exclude` is untouched.
+
+**`--providers=claude` is why § 3's disclosure is true.** Without it, 3.5.0 installs into *two* trees, adding ~152 files (~3.4 MB) at `.agents/skills/impeccable/` — outside § 5's digest scope and outside the removal instruction the prompt gives. The flag confines the install to one tree, which restores § 3's stated file count, § 3's removal text, and § 5's one-directory scope in a single move. It is not an optimisation and it is not cosmetic: **dropping it silently re-breaks all three, and a reviewer should treat its absence as a defect, the same way § 4 treats a missing `IMPECCABLE_BUNDLE_PATH` strip.** Both are asserted in tests against an exported `INSTALL_ARGS` constant so an edit here cannot pass unnoticed.
+
+**Accepted consequence:** a user who works in another harness (Codex, Cursor, the `.agents` convention generally) gets impeccable in Claude Code only, and must re-run the vendor's installer themselves for the rest. That is the right trade at n=1 — Summon can honestly describe one tree, and § 1's rule is that convenience has to be earned. If real users ask for the other harnesses, widening the flag and widening § 5's digest to match is a normal amendment.
 
 **Three independent reasons, any one of which would be sufficient:**
 
@@ -165,10 +177,13 @@ npx --yes impeccable@3.5.0 install --no-hooks --yes
 ```
 impeccable installed with hooks off. Nothing from it runs yet.
 To enable its automatic design review (a check after every file edit
-and at the end of every turn):  npx impeccable@3.5.0 install
+and at the end of every turn):
+  npx impeccable@3.5.0 install --providers=claude
 Note: that turn-end check can take up to 30 seconds, and the wiring
 lands in .claude/settings.local.json, which git does not track.
 ```
+
+**`--providers=claude` carries into this text too** (2026-08-06 amendment). The bare `npx impeccable@3.5.0 install` printed before would have wired the hooks *and* silently added the second `.agents/` tree — a surface Summon's digest does not cover and `doctor` will not see. A user following Summon's own instruction should not acquire an uncovered copy as a side effect of enabling a feature.
 
 **Summon does not offer to do this**, does not prompt for it, and does not add a verb for it. The 30-second `Stop`-hook cost and the untracked-wiring fact are disclosed here rather than in the main prompt because they are only relevant to someone taking this step (Pierrot's F4, first and second bullets).
 
@@ -213,9 +228,26 @@ Two schema rules follow:
 
 | Blessed | CLI | Payload (`SKILL.md` version) | Reviewer | Date |
 |---|---|---|---|---|
-| pending — implementation PR must produce it | `impeccable@3.5.0` | `4.0.4` | Pierrot (payload read 2026-08-05) | 2026-08-05 |
+| `sha256:ee4e188c56b9c5cfb315c3b697b0e5a27a5de91de2288543daa7094cd6b6a2b1` (147 files) | `impeccable@3.5.0` | `4.0.4` | Pierrot (payload read 2026-08-05); human (tree reviewed in `../design-notes`, 2026-08-06) | 2026-08-06 |
 
-**What `doctor` reports.** A new `addon-integrity` check in the ADR-0004 health registry, for each `addons[]` entry. It distinguishes three states, and the distinction is the whole value of the check:
+**How this blessing was produced, since it did not follow the scratch-directory procedure above and the difference is in its favour.** The reviewed tree was the human's own `impeccable` 4.0.4 install in a sibling repo, where all 147 files are **tracked in git and clean**, and where the `v4.0.2 → v4.0.4` upgrade landed as commit `0240424` — a reviewable diff that still exists, rather than a scratch-directory glance that does not. The procedure asks a maintainer to review the diff against the previously blessed tree; here that diff is a permanent artifact.
+
+The digest was then confirmed to match on **three independently produced trees**: that reviewed one, a fresh full install, and a fresh `--providers=claude` install. Matching across all three is what establishes that `summon-tree-v1` is stable across machines and install modes, and that the constant will not report a spurious mismatch to every user on day one — which is the failure mode § 5 item 4 warns turns a check into one people route around.
+
+**Traversal rules were pinned in the implementation, because § 5 does not state them,** and two of them were corrected at security review before merge:
+
+| Rule | Why |
+|---|---|
+| Regular files contribute their content | The base case. |
+| **Symlinks contribute their literal target string, and are not walked through** | Skipping them — the obvious reading of "don't follow links" — is a hole. A payload planting `impeccable/vendor -> ../../../.cache/x` gets a subtree that is inside the add-on root by every path a user would type, absent from the blessed tree, invisible to the digest, and mutable forever with `matchedBlessed` still true. Hashing the target makes presence register while still refusing to follow. |
+| **A symlinked root is refused outright** | Following it would digest wherever it points, while the removal instruction "delete `.claude/skills/impeccable/`" removes only the link and leaves the real tree on disk. |
+| **CRLF collapses to LF; a lone CR does not** | Normalizing lone CR too would make `[0x0D]`, `[0x0A]` and `[0x0D,0x0A]` collide, so anyone with write access could flip an LF to a CR anywhere in the tree without moving the digest. In the payload's ~147 mostly-executable scripts that is not cosmetic: bash does not treat CR as a line terminator, so converting the LF ending a comment swallows the next line and deletes what it did. The extra collisions also buy nothing — `autocrlf` produces CRLF, never a lone CR. |
+| Content is hashed as **bytes**, not as a UTF-8 decode | `Buffer.toString("utf-8")` maps every invalid byte sequence to U+FFFD, so distinct binary payloads would hash identically. Over third-party bytes from an unverified channel that collision is attacker-reachable. |
+| Empty directories contribute nothing; permission bits are not covered; paths joined with `/` on every platform | Scope statements, so a later mismatch is not mistaken for tampering. |
+
+**None of these moved the blessed digest**, which was verified rather than assumed: the 4.0.4 payload contains no symlinks, no lone-CR bytes, and 147 of 147 files round-trip through UTF-8 losslessly. The security review predicted a re-bless would be required; empirically it was not, *for this payload*. That is the point of pinning the rules — each is a property of the algorithm, not of the tree that happened to be blessed under it.
+
+**What `doctor` reports.** A new `addon-integrity` check in the ADR-0004 health registry, for each `addons[]` entry. **Built 2026-08-06 and shipped with the prompt, not after it** — the consent text tells the user that `summon-team doctor` warns if these files change later, and a security review graded shipping that sentence ahead of the check a **Critical** consent-integrity defect: it is the entire consideration offered in exchange for consent, so promising it before building it obtains consent on a false premise. One consequence of building it is worth stating, because it inverts a risk: the manifest `doctor` reads is a file the untrusted installer had write access to, so the entry Summon records is built from a snapshot taken **before** the spawn, and a manifest whose `root` escapes the project is refused rather than followed. It distinguishes three states, and the distinction is the whole value of the check:
 
 | Observed vs. | Report | Severity |
 |---|---|---|
@@ -244,9 +276,11 @@ The honest one-sentence claim, and the only one that may appear in any user-faci
 | Offline / DNS failure / TLS failure | Prompt is still shown (Summon should not pre-probe the network), install attempt fails fast, message + manual command, **exit 0**. |
 | Upstream 404 or 5xx on the bundle endpoint | Same. Name the URL that failed, so the user can tell a vendor outage from a local problem. |
 | Installer exits non-zero | Same, plus cleanup below. |
-| Timeout | Hard **120 s** cap on the child process, then kill, then cleanup. A scaffolder that hangs is worse than one that skips. |
+| Timeout | Hard **120 s** cap on the child **process group**, then kill, then cleanup. A scaffolder that hangs is worse than one that skips. |
 | `SIGINT` during install | Kill the child, run cleanup, exit 0 with the scaffold intact. Ctrl-C must never produce a broken project. |
 | Hashing fails | Treated as install failure. **No manifest entry is written without a digest** — an entry with an empty digest would be worse than no entry, because `doctor` would report it as intact. |
+
+**"Process group" is load-bearing, and the first implementation got it wrong.** Signalling the direct child reaches `npx` only; the node process `npx` execs — the one fetching and extracting 3.3 MB — survives and is reparented to init. Cleanup then deletes a tree a live writer is still extracting into, and Summon exits 0 saying the project is unaffected while third-party code keeps writing. That bounds Summon's *wait*, not the payload's *runtime*, and only the second is what this row claims. The installer is therefore spawned `detached` so it forms its own group, and the timeout kills the group. **Where the platform cannot guarantee that — Windows has no process groups to signal — Summon does not clean up at all**, and says so: removing files under a surviving writer produces a worse state than leaving them. Ctrl-C is forwarded for the same reason, because a detached child is no longer in the terminal's foreground group.
 
 **Cleanup.** Summon records whether `.claude/skills/impeccable/` existed *before* it spawned the installer. On failure it removes that directory **only if it created it**, so a retry over an existing install never destroys a working one. If cleanup itself fails, Summon says so and names the exact path for manual removal rather than exiting quietly. **No `addons[]` entry, and no second commit, unless the install succeeded and hashed** — so a failed add-on leaves a scaffold indistinguishable from one where the user answered no.
 
