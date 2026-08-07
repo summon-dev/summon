@@ -332,6 +332,41 @@ describe("summon-team CLI", () => {
     expect(check.out).toContain("OK");
   }, 30_000);
 
+  it("records install provenance in the scaffolded project", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--local", REPO_ROOT, "prov-test"], { cwd });
+    expect(result.code).toBe(0);
+
+    const record = JSON.parse(
+      readFileSync(join(cwd, "prov-test", ".summon-install.json"), "utf-8")
+    );
+    expect(record.schema).toBe(1);
+    // --local has no git ref to resolve, so null is the honest value
+    expect(record.ref).toBeNull();
+    expect(record.template).toBe(REPO_ROOT);
+    expect(typeof record.installedAt).toBe("string");
+    expect(Number.isNaN(Date.parse(record.installedAt))).toBe(false);
+  }, 30_000);
+
+  it("provenance lands in the initial commit, not as an untracked stray", async () => {
+    // It is written before `git init` deliberately. A provenance file that shows
+    // up as an untracked change in a brand-new project is noise the user has to
+    // decide about, and one that never gets committed cannot answer the question
+    // it exists for once the directory is shared.
+    const cwd = makeTempDir();
+    expect((await run(["--local", REPO_ROOT, "prov-git"], { cwd })).code).toBe(0);
+
+    const status = await new Promise<string>((res) => {
+      execFile(
+        "git",
+        ["status", "--porcelain"],
+        { cwd: join(cwd, "prov-git") },
+        (_e, stdout) => res(stdout.toString())
+      );
+    });
+    expect(status).not.toContain(".summon-install.json");
+  }, 30_000);
+
   it("rejects when target directory already exists and is non-empty", async () => {
     const cwd = makeTempDir();
     const projectName = "existing-project";

@@ -20,6 +20,7 @@ import {
   isSummonProject,
   runHealth,
 } from "./doctor";
+import { PROVENANCE_FILE, buildProvenance } from "./provenance";
 import {
   buildTemplateSpec,
   describeDownloadFailure,
@@ -378,6 +379,25 @@ async function main() {
     cpSync(readmeTemplatePath, resolve(targetDir, "README.md"));
     rmSync(readmeTemplatePath, { force: true });
   }
+
+  // Record where this project came from, before git init so it lands in the
+  // initial commit. Without it a scaffolded tree cannot say which ref produced
+  // it — and since an upstream revert never reaches a project already scaffolded
+  // (that project holds a copy), asking each project what it was built from is
+  // the only way to find the affected ones.
+  writeFileSync(
+    resolve(targetDir, PROVENANCE_FILE),
+    JSON.stringify(
+      buildProvenance({
+        template: localPath ? resolve(localPath) : TEMPLATE,
+        ref,
+        cliVersion: VERSION,
+        installedAt: new Date().toISOString(),
+      }),
+      null,
+      2
+    ) + "\n"
+  );
 
   // Initialize git repo with an initial commit
   try {
