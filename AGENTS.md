@@ -1,8 +1,14 @@
----
-agent-notes: { ctx: "how agents address the human and each other; the specialist return contract", deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/agent-notes.md, docs/process/done-gate.md, docs/adrs/0015-communication-registers.md], state: canonical, last: "claude@2026-08-08", key: ["TWO registers — BRIEF and PACKET; a selection rule, not a taxonomy", "correspondence runs BOTH ways: nothing only in the narrative, nothing only in claims[]", "internal means machine-CONSUMED, not machine-carried; the test is who reads it", "on conflict the envelope governs and clarity beats character", "the correspondence and anchor rules are prose discipline, NOT machine-checkable"] }
----
+<!-- agent-notes: { ctx: "cross-runtime projection of the communication contract", deps: [docs/process/communication-registers.md], state: generated, last: "gen-agents-md@2026-08-09", key: ["GENERATED — edit the source and rerun, never this file", "the process doc wins over this projection on any disagreement"] } -->
+<!-- GENERATED FILE — DO NOT EDIT. -->
+<!-- Source: docs/process/communication-registers.md · regenerate with `node scripts/gen-agents-md.mjs` -->
 
-# Communication Registers
+# AGENTS.md
+
+This file is the cross-runtime projection of Summon's communication contract. Every agent working in this repository — whichever runtime it runs under — follows what is below.
+
+**This is a projection, not the source.** Edit `docs/process/communication-registers.md` and regenerate. Where a pointer, a projection, and the process doc disagree, **the process doc wins**.
+
+---
 
 Your team talks to two audiences that want opposite things.
 
@@ -10,7 +16,7 @@ You, reading a security finding, want Pierrot's voice. The dark humour is what m
 
 The fix is to choose communication style by the **edge**, meaning who is sending to whom, rather than by who the agent is.
 
-Decision record: [ADR-0015](../adrs/0015-communication-registers.md).
+Decision record: [ADR-0015](docs/adrs/0015-communication-registers.md).
 
 ## The two registers
 
@@ -21,7 +27,7 @@ Decision record: [ADR-0015](../adrs/0015-communication-registers.md).
 
 **Two registers is the whole model.** It is a selection rule. Nothing about two implies a third is coming. If a third edge ever earns a specified register it gets its own decision record. Nothing here reserves a slot.
 
-Two edges deliberately have no register named. Writing durable artifacts to `docs/**` is a real edge and an unspecified one, so it ships **no name at all**: a canon word you look up and find nothing behind is worse than no word. Notes to future agents are already specified by [`agent-notes.md`](../methodology/agent-notes.md), and a second source for a solved problem is a liability rather than thoroughness.
+Two edges deliberately have no register named. Writing durable artifacts to `docs/**` is a real edge and an unspecified one, so it ships **no name at all**: a canon word you look up and find nothing behind is worse than no word. Notes to future agents are already specified by [`agent-notes.md`](docs/methodology/agent-notes.md), and a second source for a solved problem is a liability rather than thoroughness.
 
 ## BRIEF, to the human
 
@@ -58,7 +64,7 @@ Two envelope rules that look pedantic and are not:
 - **`unknowns[]` is mandatory and may be empty.** An empty array is an assertion: *"I looked, and there was nothing I couldn't determine."* A missing key is a defect. Those are different claims, and the schema should not let them collapse into each other.
 - **`v` is required.** A contract that ships without a version key has no migration signal at its first breaking change, and no way for a reader to tell which contract it holds.
 
-The structure is also written as a JSON Schema at [`schemas/packet.schema.json`](../../schemas/packet.schema.json). This document is the authoritative one: where the schema and this text disagree, this text wins and the schema is corrected.
+The structure is also written as a JSON Schema at [`schemas/packet.schema.json`](docs/../schemas/packet.schema.json). This document is the authoritative one: where the schema and this text disagree, this text wins and the schema is corrected.
 
 ### The line every agent file carries
 
@@ -140,7 +146,7 @@ Note what the narrative does. Every claim reappears with its path, its severity,
 
 ## How a claim was established
 
-Every claim carries how it was established, using **the same three grades as the Done Gate's proof ladder** ([`done-gate.md`](done-gate.md)), because it is the same ladder. The gate grades an *item*; a claim grades *itself*. One vocabulary, two subjects.
+Every claim carries how it was established, using **the same three grades as the Done Gate's proof ladder** ([`done-gate.md`](docs/process/done-gate.md)), because it is the same ladder. The gate grades an *item*; a claim grades *itself*. One vocabulary, two subjects.
 
 | `epistemic` | Means | Evidence |
 |---|---|---|
@@ -159,7 +165,7 @@ Grade honestly in both directions. Forcing a taste call to look deterministic is
 Registers set the **surface form** of a message. A second axis sets its **intensity**.
 
 - **Damped.** Near-uniform: parsimony and pragmatism. Identity survives in word choice and in what the agent puts first, not in performance. No set-pieces, no extended metaphors, no jokes. Voices deliberately converge here.
-- **Full voice.** The persona as written in [`personas.md`](../methodology/personas.md), unhedged.
+- **Full voice.** The persona as written in [`personas.md`](docs/methodology/personas.md), unhedged.
 
 **`narrative` is full voice.** The tempting misreading is that `narrative` travels on the specialist → coordinator edge, which is internal, so it should be damped. It should not.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "sato@2026-08-08", key: ["10 checks: agent files, persona roster, persona voice + delivery, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering, review-sentinel integrity", "voice delivery (#112) asserts each personas.md voice appears verbatim (whitespace-collapsed) in .claude/agents/<name>.md — the agent file is the runtime surface, personas.md is only a doc it points at", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8/#9 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes", "check #9 catches the Placeholder-Sentinel anti-pattern; its marker regex is anchored to a Status: line because matching prose false-positived on two real reviews", "exports findSentinelProblems + runAllChecks behind an entry-point guard, so the module is importable by its tests"] }
+// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "claude@2026-08-09", key: ["12 checks: agent files, persona roster, persona voice + delivery, register binding, AGENTS.md projection, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering, review-sentinel integrity", "voice delivery (#112) asserts each personas.md voice appears verbatim (whitespace-collapsed) in .claude/agents/<name>.md — the agent file is the runtime surface, personas.md is only a doc it points at", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8/#9 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes", "check #9 catches the Placeholder-Sentinel anti-pattern; its marker regex is anchored to a Status: line because matching prose false-positived on two real reviews", "exports findSentinelProblems + runAllChecks behind an entry-point guard, so the module is importable by its tests"] }
 //
 // Fitness function for Summon's canon. Our agent/persona/process docs duplicate
 // facts across many files; the agent-notes protocol keeps them in sync by hand.
@@ -14,11 +14,15 @@ import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { findStaleness } from "./gen-agents-md.mjs";
+
 const ROOT = process.cwd();
 const AGENTS_DIR = join(ROOT, ".claude", "agents");
 const COMMANDS_DIR = join(ROOT, ".claude", "commands");
 const PERSONAS = join(ROOT, "docs", "methodology", "personas.md");
 const DONE_GATE = join(ROOT, "docs", "process", "done-gate.md");
+const REGISTERS = join(ROOT, "docs", "process", "communication-registers.md");
+const AGENTS_MD = join(ROOT, "AGENTS.md");
 
 const failures = [];
 const fail = (msg) => failures.push(msg);
@@ -178,6 +182,99 @@ function checkVoiceDelivery() {
   for (const { name, agent, reason } of findVoiceDeliveryGaps(read(PERSONAS), agentTexts)) {
     fail(`voice delivery: "${name}" — ${reasons[reason](agent)}`);
   }
+}
+
+// 2d. Register binding delivery (ADR-0015 Slice 2). Every agent file must carry
+// the one-line PACKET return contract. Same argument as 2c and the same reason
+// it is one line rather than the ~19-line block the originating proposal wanted:
+// ~300 lines of copy-paste with no single source is a drift generator, where the
+// next persona edit forgets one file and the contract silently forks.
+//
+// The line carries the field shape inline rather than pointing at the spec,
+// because #112 established that a pointer is not delivery — a subagent is handed
+// its own agent file and nothing else, so `@AGENTS.md` reaching the coordinator
+// buys the specialist nothing.
+//
+// Object.entries rather than a keyed lookup: it iterates own properties only, so
+// the `constructor` collision that bit findVoiceDeliveryGaps cannot arise here at
+// all. Closed by construction rather than by a guard a later edit could drop.
+export const BINDING_MARKER = "**Return contract (PACKET).**";
+
+/**
+ * The canonical binding line, read from the process doc that wins on disagreement.
+ * Returns null when the spec carries no such block (a scaffolded tree mid-upgrade).
+ */
+export function canonicalBindingLine(specText) {
+  const m = /### The line every agent file carries[\s\S]*?```text\n([\s\S]*?)\n```/.exec(specText);
+  return m ? m[1].trim() : null;
+}
+
+/**
+ * Vik and Archie each proved the first version of this check was hollow: it
+ * asserted only that the marker string was present, so `**Return contract
+ * (PACKET).** figure it out` passed, and so did a line declaring `v:2` with a
+ * severity of "blocker". A check that tests a heading is not testing a contract
+ * — the same label-versus-content defect as #112, one layer along.
+ *
+ * So it compares verbatim against a single source, exactly as
+ * findVoiceDeliveryGaps does for voices twenty lines up. That closes the other
+ * half of ADR-0015 Sub-decision 5's grievance: the ADR cut the *volume* of the
+ * originating proposal's per-agent block, but "no single source" stayed true
+ * until the canonical line lived in the spec.
+ */
+export function findBindingGaps(specText, agentTexts) {
+  const canonical = canonicalBindingLine(specText);
+  if (!canonical) return [];
+  const collapse = (s) => String(s).replace(/\s+/g, " ").trim();
+  const want = collapse(canonical);
+  const gaps = [];
+  // Object.entries iterates own properties only, so the `constructor` collision
+  // that bit findVoiceDeliveryGaps cannot arise here at all.
+  for (const [agent, text] of Object.entries(agentTexts)) {
+    if (!String(text).includes(BINDING_MARKER)) gaps.push({ agent, reason: "missing" });
+    else if (!collapse(text).includes(want)) gaps.push({ agent, reason: "mismatch" });
+  }
+  return gaps;
+}
+
+function checkRegisterBinding() {
+  const agentTexts = Object.fromEntries(
+    mdFiles(AGENTS_DIR).map((f) => [f.replace(/\.md$/, ""), read(join(AGENTS_DIR, f))])
+  );
+  if (!existsSync(REGISTERS)) return; // a scaffolded tree without the spec
+  // Present-but-unparseable is drift, not silence. findBindingGaps returns [] when
+  // the canonical block is missing, so without this the check would go green having
+  // compared nothing the moment that heading or fence changed shape — the same
+  // vacuity failure this whole slice keeps rediscovering, introduced by its own fix.
+  if (canonicalBindingLine(read(REGISTERS)) === null) {
+    fail(
+      "register binding: docs/process/communication-registers.md carries no `### The line every agent file carries` block with a ```text fence — " +
+        "that block is the single source the sixteen agent files are checked against, so without it this check silently compares nothing"
+    );
+    return;
+  }
+  const reasons = {
+    missing: (agent) =>
+      `.claude/agents/${agent}.md carries no ${BINDING_MARKER} line — a specialist is handed its agent file and nothing else, so the return contract has to be in it, not referenced from it (ADR-0015 Slice 2, issue #112)`,
+    mismatch: (agent) =>
+      `.claude/agents/${agent}.md has a ${BINDING_MARKER} line that differs from the canonical one in docs/process/communication-registers.md § The line every agent file carries — that block is the single source, so re-copy it verbatim (wrapping may differ, wording may not)`,
+  };
+  for (const { agent, reason } of findBindingGaps(read(REGISTERS), agentTexts)) {
+    fail(`register binding: ${reasons[reason](agent)}`);
+  }
+}
+
+// 2e. AGENTS.md projection staleness. Delegates to gen-agents-md.mjs rather than
+// recomputing the comparison, so `node scripts/gen-agents-md.mjs --check` and
+// this check cannot drift into disagreeing about one fact.
+//
+// Skipped when the source spec is absent: check-canon ships into scaffolded
+// projects, and firing there over a file the tree never had would fail every
+// such project on day one — the same reasoning as the IS_SUMMON_REPO guards.
+function checkAgentsMdProjection() {
+  if (!existsSync(REGISTERS)) return;
+  const stale = findStaleness(read(REGISTERS), existsSync(AGENTS_MD) ? read(AGENTS_MD) : null);
+  if (stale) fail(`AGENTS.md projection: ${stale}`);
 }
 
 // 3. Every command file carries an agent-notes block.
@@ -451,7 +548,7 @@ function checkReviewSentinels() {
 }
 
 export function runAllChecks() {
-  for (const check of [checkAgentFiles, checkPersonaRoster, checkPersonaVoice, checkVoiceDelivery, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels]) {
+  for (const check of [checkAgentFiles, checkPersonaRoster, checkPersonaVoice, checkVoiceDelivery, checkRegisterBinding, checkAgentsMdProjection, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels]) {
     try {
       check();
     } catch (err) {

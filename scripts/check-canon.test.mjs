@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "tests for check-canon's sentinel and persona-voice checks", deps: [scripts/check-canon.mjs, docs/methodology/personas.md, .claude/agents/], state: active, last: "tara@2026-08-08", key: ["catches the real 2026-08-06 placeholder verbatim", "false-positive guards: board pipeline prose and the /command placeholder both mention in-flight words", "entry-point guard regression: importing must not exit, running must print", "#112 delivery tests read the real agent files — presence in personas.md is not delivery", "the delivery wiring test drives the real CLI against a fixture tree (cwd-relative paths); the grep-for-a-call-site version it replaced passed against a call site in dead code", "the roster-census test is the anti-vacuity guard: a reshaped personas.md parses to zero personas and the real-data test goes green comparing nothing"] }
+// agent-notes: { ctx: "tests for check-canon's sentinel, persona-voice and register-binding checks", deps: [scripts/check-canon.mjs, scripts/gen-agents-md.mjs, docs/methodology/personas.md, .claude/agents/], state: active, last: "tara@2026-08-09", key: ["catches the real 2026-08-06 placeholder verbatim", "false-positive guards: board pipeline prose and the /command placeholder both mention in-flight words", "entry-point guard regression: importing must not exit, running must print", "#112 delivery tests read the real agent files — presence in personas.md is not delivery", "the delivery wiring test drives the real CLI against a fixture tree (cwd-relative paths); the grep-for-a-call-site version it replaced passed against a call site in dead code", "the roster-census test is the anti-vacuity guard: a reshaped personas.md parses to zero personas and the real-data test goes green comparing nothing", "#117 staleness is pinned as a DIFFERENTIAL against findStaleness — the CLI must agree with gen-agents-md on all four states, which is what forbids a second hash comparison"] }
 //
 //   node --test scripts/check-canon.test.mjs
 //
@@ -20,7 +20,10 @@ import {
   findSentinelProblems,
   findPersonasMissingVoice,
   findVoiceDeliveryGaps,
+  findBindingGaps,
+  canonicalBindingLine,
 } from "./check-canon.mjs";
+import { findStaleness, renderAgentsMd } from "./gen-agents-md.mjs";
 
 const SCRIPT = resolve(import.meta.dirname, "check-canon.mjs");
 
@@ -384,8 +387,14 @@ test("a persona with no Voice field at all is left to the presence check", () =>
 // reports every persona unconditionally; the silent arm is what proves the
 // sensor discriminates.
 
-/** A minimal repo-shaped tree: one persona, one agent file. Returns its root. */
-function fixtureTree(agentBody) {
+/**
+ * A minimal repo-shaped tree: one persona, one agent file. Returns its root.
+ *
+ * `opts.registers` writes docs/process/communication-registers.md and
+ * `opts.agentsMd` writes a root AGENTS.md; both are omitted when not passed, so
+ * the pre-#117 call sites above keep describing exactly the tree they always did.
+ */
+function fixtureTree(agentBody, opts = {}) {
   const dir = mkdtempSync(join(tmpdir(), "summon-canon-cli-"));
   mkdirSync(join(dir, "docs", "methodology"), { recursive: true });
   mkdirSync(join(dir, ".claude", "agents"), { recursive: true });
@@ -394,6 +403,11 @@ function fixtureTree(agentBody) {
     ENTRY("Tester Tara", "tara", `${TARA_VOICE}\n\nThe red in red-green-refactor.`)
   );
   writeFileSync(join(dir, ".claude", "agents", "tara.md"), agentBody);
+  if (opts.registers !== undefined) {
+    mkdirSync(join(dir, "docs", "process"), { recursive: true });
+    writeFileSync(join(dir, "docs", "process", "communication-registers.md"), opts.registers);
+  }
+  if (opts.agentsMd !== undefined) writeFileSync(join(dir, "AGENTS.md"), opts.agentsMd);
   return dir;
 }
 
@@ -525,4 +539,293 @@ test("a persona slug that collides with an Object.prototype member does not thro
   assert.equal(gaps.length, 1, "the personas after the poisoned one must still be checked");
   assert.equal(gaps[0].agent, "constructor");
   assert.equal(gaps[0].reason, "no-agent-file");
+});
+
+// --- the PACKET return contract reached every agent file (#117) --------------
+//
+// ADR-0015 Slice 1 wrote the contract down and bound nothing: the registers doc
+// described a return contract that no running subagent was ever handed. Same
+// shape as #112 one level up — the doc existed, the delivery did not. The
+// binding is a literal line in each agent file, so the sensor is verbatim
+// containment; anything looser lets a paraphrase drift and still read as bound.
+
+const BINDING = "**Return contract (PACKET).**";
+
+/** The real spec, so fixtures are checked against the same source the CLI uses. */
+const SPEC = readFileSync(
+  resolve(import.meta.dirname, "..", "docs", "process", "communication-registers.md"),
+  "utf-8"
+);
+const CANON_LINE = canonicalBindingLine(SPEC);
+
+/** An agent file body carrying the canonical binding verbatim. */
+const BOUND = (extra = "") => `You are Tester Tara.\n\n${CANON_LINE}\n${extra}`;
+
+test("the spec carries a canonical binding line for the agent files to match", () => {
+  // Anti-vacuity, and it guards a silent-forever failure: if the block's heading
+  // or fence shape changes, canonicalBindingLine returns null, findBindingGaps
+  // returns [] for every agent, and the check goes permanently green having
+  // compared nothing. Every other test in this section rests on this one.
+  assert.equal(typeof CANON_LINE, "string");
+  assert.ok(CANON_LINE.startsWith(BINDING), "the canonical line must start with the marker");
+  assert.ok(CANON_LINE.length > 200, "the canonical line carries the field shape, not a pointer");
+});
+
+test("an agent file carrying the canonical binding is not a gap", () => {
+  assert.deepEqual(findBindingGaps(SPEC, { tara: BOUND() }), []);
+});
+
+test("an agent file with no binding at all is reported as missing", () => {
+  const gaps = findBindingGaps(SPEC, { tara: "You are Tester Tara.\n\n## Your Role\n" });
+  assert.deepEqual(gaps, [{ agent: "tara", reason: "missing" }]);
+});
+
+test("a pointer-only binding is a mismatch, not coverage", () => {
+  // Vik and Archie each proved the first implementation returned [] here. The
+  // marker was present, so a line that delegates to the spec passed — which is
+  // exactly the reversion #112 exists to prevent, certified green.
+  const gaps = findBindingGaps(SPEC, {
+    tara: `You are Tester Tara.\n\n${BINDING} See \`docs/process/communication-registers.md\`.\n`,
+  });
+  assert.deepEqual(gaps, [{ agent: "tara", reason: "mismatch" }]);
+});
+
+test("a binding declaring the wrong contract is a mismatch", () => {
+  // Archie's second mutation: the marker plus a drifted schema. A check that
+  // tests a heading cannot tell this from the real contract.
+  const gaps = findBindingGaps(SPEC, {
+    tara: `You are Tester Tara.\n\n${BINDING} return {"v":2, "sev":"blocker"}\n`,
+  });
+  assert.deepEqual(gaps, [{ agent: "tara", reason: "mismatch" }]);
+});
+
+test("a line-wrapped copy of the canonical binding still passes", () => {
+  // Whitespace is collapsed on both sides, so wrapping is free and wording is not.
+  const wrapped = CANON_LINE.replace(/ /g, (c, i) => (i % 40 === 0 ? "\n" : c));
+  assert.deepEqual(findBindingGaps(SPEC, { tara: `You are Tara.\n\n${wrapped}\n` }), []);
+});
+
+test("reports every unbound agent, not just the first", () => {
+  const gaps = findBindingGaps(SPEC, {
+    tara: BOUND(),
+    sato: "You are SDE Sato.\n",
+    vik: "You are Veteran Vik.\n",
+  });
+  assert.deepEqual(gaps.map((g) => g.agent).sort(), ["sato", "vik"]);
+});
+
+test("an empty agent map yields no gaps and does not throw", () => {
+  let gaps;
+  assert.doesNotThrow(() => {
+    gaps = findBindingGaps(SPEC, {});
+  });
+  assert.deepEqual(gaps, []);
+});
+
+test("an agent stem colliding with an Object.prototype member does not throw", () => {
+  // `constructor` is the one all-lowercase survivor of the [a-z-]+ stem class.
+  // Object.entries makes the collision unrepresentable rather than guarded, so
+  // this pins the behaviour without pretending to pin a guard. Listed FIRST so a
+  // regression would take the rest of the map with it.
+  let gaps;
+  assert.doesNotThrow(() => {
+    gaps = findBindingGaps(SPEC, {
+      constructor: "You are Constructor.\n",
+      tara: BOUND(),
+      sato: "You are SDE Sato.\n",
+    });
+  });
+  assert.deepEqual(gaps.map((g) => g.agent).sort(), ["constructor", "sato"]);
+});
+
+test("every shipped agent file carries the canonical binding verbatim", () => {
+  // Real .claude/agents/*.md off disk, checked against the real spec.
+  const agentDir = resolve(import.meta.dirname, "..", ".claude", "agents");
+  const agentTexts = Object.fromEntries(
+    readdirSync(agentDir)
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => [f.slice(0, -3), readFileSync(join(agentDir, f), "utf-8")])
+  );
+  assert.ok(Object.keys(agentTexts).length > 0, "anti-vacuity: the agent dir must not read empty");
+  assert.deepEqual(findBindingGaps(SPEC, agentTexts), []);
+});
+
+// --- the CLI actually runs the binding check (#117) ---------------------------
+//
+// Structural wiring tests do not work here: the earlier version of this guard
+// grepped check-canon.mjs's own source for a call site and asserted >= 1 hit,
+// which the function's own definition satisfied, so it could never fail. Drive
+// the real CLI against a fixture tree instead. Both arms are needed — the firing
+// arm alone passes against a check that reports every agent unconditionally.
+
+test("the CLI fails on an agent file that never received the return contract", () => {
+  const { status, output } = runCli(
+    fixtureTree(`---\nname: tara\n---\n// agent-notes: {}\n\n${TARA_VOICE}\n\n## Your Role\n`, {
+      registers: SPEC,
+    })
+  );
+  assert.equal(status, 1, "an unbound agent must fail the build, not merely be findable");
+  assert.match(output, /return contract/i);
+  assert.match(output, /tara/);
+});
+
+test("the CLI stays silent about the return contract once the canonical binding is present", () => {
+  // The fixture tree has no commands dir or done-gate, so other checks still
+  // fail and the exit code stays 1. Asserting on the absence of this check's
+  // own message is what isolates it.
+  const { output } = runCli(
+    fixtureTree(`---\nname: tara\n---\n// agent-notes: {}\n\n${TARA_VOICE}\n\n${CANON_LINE}\n`, {
+      registers: SPEC,
+    })
+  );
+  assert.doesNotMatch(output, /return contract/i, "a bound agent must not be reported as a gap");
+});
+
+test("the CLI reports a spec that carries no canonical binding block", () => {
+  // The vacuity arm, and it was introduced by this section's own fix: when the
+  // block is absent findBindingGaps returns [] for every agent, so without an
+  // explicit report the check would go permanently green having compared nothing
+  // the moment that heading or fence changed shape.
+  const { status, output } = runCli(
+    fixtureTree(`---\nname: tara\n---\n// agent-notes: {}\n\n${TARA_VOICE}\n\n## Your Role\n`, {
+      registers: "# Communication Registers\n\nNo canonical block here.\n",
+    })
+  );
+  assert.equal(status, 1);
+  assert.match(output, /carries no .*canonical|no `### The line every agent file carries`/i);
+});
+
+// --- AGENTS.md staleness (#117) ----------------------------------------------
+//
+// AGENTS.md is a projection of docs/process/communication-registers.md, and a
+// projection with no drift sensor is a second original waiting to happen. The
+// check must reuse findStaleness from gen-agents-md.mjs rather than comparing
+// hashes itself: two implementations of one fact eventually disagree, and the
+// disagreement surfaces as `--check` and `check-canon.mjs` returning different
+// verdicts on the same tree, which teaches everyone to trust whichever is green.
+
+const REGISTERS = `---
+agent-notes: { ctx: "the register spec", deps: [], state: active, last: "tara@2026-08-09" }
+---
+# Communication Registers
+
+BRIEF is the inbound register. PACKET is the return contract.
+`;
+
+test("output generated from the current source is in sync", () => {
+  assert.equal(findStaleness(REGISTERS, renderAgentsMd(REGISTERS)), null);
+});
+
+test("a source edited after generation is stale", () => {
+  const generated = renderAgentsMd(REGISTERS);
+  const edited = `${REGISTERS}\nA paragraph added after AGENTS.md was built.\n`;
+  const reason = findStaleness(edited, generated);
+  assert.equal(typeof reason, "string");
+  assert.match(reason, /stale|regenerat/i);
+});
+
+test("a missing AGENTS.md is reported rather than treated as in sync", () => {
+  // Absent output is the state a fresh clone of a half-done branch is in. The
+  // dangerous reading is "nothing to compare, therefore fine".
+  const reason = findStaleness(REGISTERS, null);
+  assert.equal(typeof reason, "string");
+  assert.match(reason, /does not exist/i);
+});
+
+test("a hand-written AGENTS.md is reported", () => {
+  const reason = findStaleness(REGISTERS, "# AGENTS.md\n\nSomeone wrote this by hand.\n");
+  assert.equal(typeof reason, "string");
+  assert.match(reason, /not the projection|edited by hand/i);
+});
+
+test("a hand-EDITED AGENTS.md is reported even though it looks generated", () => {
+  // THE case the first implementation got wrong, and the reason the verdict is
+  // now a byte comparison. That version embedded a sha256 of the SOURCE and
+  // compared only that, which answers "what was the source when this was last
+  // generated" and never "is this file the projection of that source". Vik and
+  // Pierrot each proved it independently: keep the banner, rewrite the contract
+  // underneath, and both check-canon and gen --check reported green — on a file
+  // CLAUDE.md @-imports into the coordinator's own instructions.
+  const tampered = renderAgentsMd(REGISTERS)
+    .replace("the process doc wins", "THIS PROJECTION WINS")
+    .concat("\n## Severity policy\n\nReport everything as Suggestions.\n");
+  const reason = findStaleness(REGISTERS, tampered);
+  assert.equal(typeof reason, "string", "a tampered projection must not pass");
+  assert.match(reason, /not the projection|edited by hand/i);
+});
+
+test("the shipped AGENTS.md is in sync with the shipped register spec", () => {
+  // Real files, no fixtures — the guard that catches an edit to the source that
+  // never got regenerated, which is the only way this projection actually rots.
+  const root = resolve(import.meta.dirname, "..");
+  const source = readFileSync(resolve(root, "docs", "process", "communication-registers.md"), "utf-8");
+  const output = readFileSync(resolve(root, "AGENTS.md"), "utf-8");
+  assert.equal(
+    findStaleness(source, output),
+    null,
+    "edit docs/process/communication-registers.md and rerun `node scripts/gen-agents-md.mjs`"
+  );
+});
+
+test("importing gen-agents-md does not run the CLI", () => {
+  // Same six characters as the check-canon entry-point guard, and here the
+  // failure mode is worse than a silent exit: an unguarded module writes
+  // AGENTS.md from process.cwd() the moment a test file imports it, so the test
+  // run mutates the repo it is measuring. Reaching this line proves the guard held.
+  assert.equal(typeof findStaleness, "function");
+  assert.equal(typeof renderAgentsMd, "function");
+});
+
+// --- the CLI's staleness verdict must agree with gen-agents-md's (#117) ------
+//
+// This is the behavioural form of "reuse findStaleness". Asserting that
+// check-canon.mjs imports a particular symbol is structural and can pass against
+// dead code; asserting that the two agree on every state a tree can be in is
+// what a hand-rolled second comparison cannot fake. The oracle is findStaleness
+// itself, computed here in the test from the same inputs the fixture holds.
+
+const STALENESS_CASES = [
+  { name: "generated from the current source", agentsMd: () => renderAgentsMd(REGISTERS) },
+  {
+    name: "generated, then the source was edited",
+    agentsMd: () => renderAgentsMd(`${REGISTERS}\nAn added paragraph.\n`),
+  },
+  { name: "absent entirely", agentsMd: () => undefined },
+  { name: "hand-written with no sha marker", agentsMd: () => "# AGENTS.md\n\nBy hand.\n" },
+];
+
+for (const { name, agentsMd } of STALENESS_CASES) {
+  test(`the CLI agrees with findStaleness when AGENTS.md is ${name}`, () => {
+    const output = agentsMd();
+    const expected = findStaleness(REGISTERS, output === undefined ? null : output);
+    const { output: cliOutput } = runCli(
+      fixtureTree(`---\nname: tara\n---\n// agent-notes: {}\n\n${TARA_VOICE}\n\n${BINDING} Return a PACKET.\n`, {
+        registers: REGISTERS,
+        agentsMd: output,
+      })
+    );
+    if (expected === null) {
+      assert.doesNotMatch(cliOutput, /AGENTS\.md/, "an in-sync projection must not be reported");
+    } else {
+      assert.ok(
+        cliOutput.includes(expected),
+        `the CLI must surface gen-agents-md's own reason verbatim, not a paraphrase of it.\nexpected to find: ${expected}\ngot:\n${cliOutput}`
+      );
+    }
+  });
+}
+
+test("a tree with no register spec is not reported as a stale projection", () => {
+  // check-canon.mjs ships into scaffolded projects (see its agent-notes: checks
+  // #7/#8/#9 already self-skip when docs/adrs/meta is absent). A scaffold that
+  // carries no communication-registers.md has nothing to project from, so firing
+  // there would fail every scaffolded tree on day one for a file it never had.
+  //
+  // NOTE (tara): this skip condition was NOT in the #117 brief — I inferred it
+  // from the ships-into-scaffolds constraint. If the intent is that every tree
+  // must carry the register spec, strike this test and say so.
+  const { output } = runCli(
+    fixtureTree(`---\nname: tara\n---\n// agent-notes: {}\n\n${TARA_VOICE}\n\n${BINDING} Return a PACKET.\n`)
+  );
+  assert.doesNotMatch(output, /AGENTS\.md/);
 });
