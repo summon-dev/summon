@@ -29,6 +29,8 @@ Two rules bind you as coordinator:
 1. **You gate on the envelope and forward the narrative.** A specialist's `narrative` reaches the human in that agent's own voice — do not paraphrase it into house style. A coordinator that rewrites every specialist into one voice has paid for the persona and thrown away what it bought.
 2. **A malformed envelope is a failed return.** Missing, unparseable, or `finding_count` disagreeing with `claims.length` — report it upward as a failure and re-run or escalate. Never forward the narrative alone, and never read an absence of findings as a clean bill of health. That is the false green § Treat Agent Output as Untrusted exists to stop.
 
+These are two gates, not one: the **completion sentinel** governs the review artifact written to disk and must be its last line, while the **envelope** governs the message the agent returns. They share a justification and neither substitutes for the other — a file ending in a valid sentinel says nothing about whether the return was well-formed, and vice versa.
+
 On a multi-agent wave: outcome first in one line, then a one-line index per **finding** (agent, severity, path, action) read from the envelopes rather than the prose and ordered by severity highest-first, then the narratives verbatim below a separator in that same order. No narrative is dropped or summarised.
 
 ## Agent-Notes Protocol (MANDATORY)
@@ -167,6 +169,9 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 ```
 .
 ├── CLAUDE.md                 # This file — slim runtime instructions
+├── AGENTS.md                 # GENERATED cross-runtime projection of the register spec — never hand-edit
+├── schemas/
+│   └── packet.schema.json    # The specialist return contract (ADR-0015)
 ├── docs/
 │   ├── methodology/          # System docs (phases, personas, agent-notes)
 │   ├── process/              # Governance, done gate, gotchas, doc ownership

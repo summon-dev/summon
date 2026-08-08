@@ -8,6 +8,8 @@ agent-notes: { ctx: "ADR: edge-conditioned communication registers; envelope+nar
 
 **Accepted** — 2026-08-07, ratified by the human. Work item: issue #94.
 
+**Amended twice, on 2026-08-08 and 2026-08-09, in place; the Decision is unchanged in both.** The second amendment (2026-08-09, issue #117) is recorded at Sub-decision 5 and at Slice 1's gate line: the per-agent binding is one line but not a pointer, per #112; and Slice 1 gate (3) is marked discharged with its receipt rather than left reading open. The first follows.
+
 **Amended once on 2026-08-08, in Sub-decision 2, in place; the Decision is unchanged.** A *vocabulary amendment* — the `epistemic` tag was spelled `"OBSERVED"` in one sentence and its value set was never enumerated. Issue #99 requires the tag be reconciled with the Done Gate's proof ladder rather than shipping two vocabularies for one concept, and inventing `INFERRED`/`HUMAN` alongside `OBSERVED` would have produced exactly that second vocabulary. The set is now enumerated as `deterministic` / `inferential` / `human-judgement`, matching the ladder `docs/process/communication-registers.md` shipped in Slice 1. Struck text is left visible rather than deleted. Status is untouched and remains **Accepted**. Work item: issue #113. Settled before Slice 2 because Slice 2 ships the schema and validator that consume these strings as enum values, after which the change stops being a rename.
 
 Architecture Gate completed 2026-08-07. Point-by-point dispositions: `docs/history/tracking/2026-08-07-comms-register-gate.md`. Originating brief: `docs/history/design/2026-08-07-comms-refit.md`.
@@ -223,6 +225,8 @@ Three authored sources, everything else a pointer:
 
 The originating proposal also appended a ~19-line register block to each of the sixteen agent files. Item (3) is **one line** per agent for that reason: ~300 lines of copy-paste with no single source is a drift generator, where the next persona edit forgets one file and the contract silently forks.
 
+**Amended 2026-08-09 — one line, but not a pointer.** Issue #112, found after ratification, established that a pointer is not delivery: a subagent is handed its own agent file and nothing else, so the `@AGENTS.md` import above reaches the coordinator and buys the specialist nothing. The one line therefore carries the field shape inline and defers to this document only on disagreement. That satisfies the volume half of the grievance above; the *single source* half is satisfied separately, by `communication-registers.md` § The line every agent file carries holding the canonical text and `scripts/check-canon.mjs` asserting every agent file matches it verbatim. Recorded here because a later reader given only the paragraph above would "simplify" the line back to a reference — and before that check existed, doing so passed CI.
+
 **Precedence, stated explicitly because pointers rot:** where a pointer, a projection, and the process doc disagree, **the process doc wins.** Projections are rebuilt; pointers are corrected.
 
 **`CLAUDE.md` wiring.** The `@AGENTS.md` import goes **immediately after** the First-Run Detection block — not at line 1, where the originating proposal placed it. First-Run Detection is a guard clause whose job is to short-circuit before anything else applies; an uninitialised project should not be loading the register contract at all.
@@ -262,7 +266,7 @@ Four slices plus a probe. Each gate is decidable; none is a judgment call.
 
 **Slice 1 — prose canon. No trust surface. Ships first.**
 `docs/process/communication-registers.md`; deletion of `team-governance.md:183-199` plus the five-line pointer; additive coordinator rules in `CLAUDE.md` with lines 43 and 137 repointed; the `doc-ownership.md` row.
-**Gate — receipts before the deletion commit, not after.** This is the only slice containing an irreversible deletion, and the deletion is licensed by repo-state equivalences that must be proven rather than assumed. All in the same PR: (1) the inbound-link grep receipt — **discharged 2026-08-07, clean**; (2) the line-level `188-193 ⊆ personas.md` comparison — **discharged 2026-08-07, result 4 of 6**; (3) consequent to (2), Tara's and Pat's tone descriptors migrated into `docs/methodology/personas.md` before the bullets are removed. **Gate (3) is open.**
+**Gate — receipts before the deletion commit, not after.** This is the only slice containing an irreversible deletion, and the deletion is licensed by repo-state equivalences that must be proven rather than assumed. All in the same PR: (1) the inbound-link grep receipt — **discharged 2026-08-07, clean**; (2) the line-level `188-193 ⊆ personas.md` comparison — **discharged 2026-08-07, result 4 of 6**; (3) consequent to (2), Tara's and Pat's tone descriptors migrated into `docs/methodology/personas.md` before the bullets are removed. ~~**Gate (3) is open.**~~ **Discharged 2026-08-08, commit `952de7b`** — Tara at `personas.md:62`, Pat at `personas.md:74`.
 Value rationale: BRIEF conduct is the highest-value piece of the model, and claim tagging plus `unknowns[]` costs nothing to implement.
 
 **Slice 2 — the contract surfaces.**

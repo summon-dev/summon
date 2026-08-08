@@ -5,20 +5,32 @@
   "description": "The envelope+narrative return contract from ADR-0015. Authored source for the prose is docs/process/communication-registers.md; where this schema and that document disagree, the process doc wins. DELIBERATELY FLAT WITH NO $ref — do not factor out shared subschemas. Two independent reasons, and both must fail before the constraint is worth relaxing: (1) a flat schema converts cleanly to a GBNF-style grammar for grammar-constrained decoding in a future harness port, and $ref indirection does not; (2) flatness is what makes the hand-rolled zero-dependency Node validator about 40 lines instead of a dependency. NOT EXPRESSIBLE HERE: finding_count must equal claims.length. JSON Schema cannot relate two sibling values, so that assertion belongs to the validator (ADR-0015 Slice 3), not to this file. Everything else in the correspondence rule — no fact only in narrative, no claim only in claims[] — is prose discipline and must never be described as enforced.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["v", "agent", "state", "finding_count", "claims", "unknowns", "narrative"],
+  "required": [
+    "v",
+    "agent",
+    "state",
+    "finding_count",
+    "claims",
+    "unknowns",
+    "narrative"
+  ],
   "properties": {
     "v": {
       "const": 1,
-      "description": "Schema version. Required. A contract that ships to strangers without a version key has no migration signal at its first breaking change and no way for a consumer to tell which contract it holds. Four bytes, and the only affordance that makes v2 survivable."
+      "description": "Schema version. Required. A contract that ships to strangers without a version key has no migration signal at its first breaking change and no way for a consumer to tell which contract it holds. Four bytes, and the only affordance that makes v2 survivable.",
+      "x-register": "mechanical"
     },
     "agent": {
       "type": "string",
-      "pattern": "^[a-z][a-z-]*$",
+      "pattern": "^[a-z]([a-z-]*[a-z])?$",
       "description": "Which persona is returning, as the .claude/agents/<name>.md stem. Deliberately a pattern rather than an enum of the roster: personas.md and the agent files are already checked against each other by scripts/check-canon.mjs, and a third copy of the roster here would be a third thing to drift.",
       "x-register": "mechanical"
     },
     "state": {
-      "enum": ["complete", "stopped_early"],
+      "enum": [
+        "complete",
+        "stopped_early"
+      ],
       "description": "Did this invocation finish, or stop early? An agent that ran out of turns says so here. A return that says nothing at all is the false green the whole contract exists to prevent, so this key is required and has no default.",
       "x-register": "mechanical"
     },
@@ -34,7 +46,13 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["summary", "epistemic", "severity", "evidence", "action"],
+        "required": [
+          "summary",
+          "epistemic",
+          "severity",
+          "evidence",
+          "action"
+        ],
         "properties": {
           "summary": {
             "type": "string",
@@ -43,12 +61,20 @@
             "x-register": "damped"
           },
           "epistemic": {
-            "enum": ["deterministic", "inferential", "human-judgement"],
+            "enum": [
+              "deterministic",
+              "inferential",
+              "human-judgement"
+            ],
             "description": "How the claim was established, using the same three grades as the Done Gate's proof ladder, because it is the same ladder — the gate grades an item, a claim grades itself. One vocabulary, two subjects. These three are the whole set; nothing else is valid under v: 1. Grade honestly in both directions: forcing a taste call to look deterministic is as wrong as eyeballing something a one-line check would settle.",
             "x-register": "mechanical"
           },
           "severity": {
-            "enum": ["Critical", "Important", "Suggestions"],
+            "enum": [
+              "Critical",
+              "Important",
+              "Suggestions"
+            ],
             "description": "Matches the vocabulary the review lenses already use (.claude/agents/code-reviewer.md). One set of words for one concept: a finding's severity in a packet means what it means in a review document.",
             "x-register": "mechanical"
           },
@@ -65,18 +91,32 @@
           }
         },
         "if": {
-          "properties": { "epistemic": { "const": "deterministic" } },
-          "required": ["epistemic"]
+          "properties": {
+            "epistemic": {
+              "const": "deterministic"
+            }
+          },
+          "required": [
+            "epistemic"
+          ]
         },
         "then": {
-          "properties": { "evidence": { "minLength": 1 } },
-          "description": "A deterministic claim with empty evidence is malformed. That pairing is the entire reason the tag exists: \"the agent said it looked clean\" and \"this command exited 0, here it is\" are different epistemic states that plain prose renders identically."
+          "properties": {
+            "evidence": {
+              "minLength": 1
+            }
+          },
+          "description": "A deterministic claim with empty evidence is malformed. That pairing is the entire reason the tag exists: \"the agent said it looked clean\" and \"this command exited 0, here it is\" are different epistemic states that plain prose renders identically. FOR SLICE 3'S VALIDATOR: hardcode this single conditional rather than implementing a generic draft-07 if/then engine, treat an `if` failure as skip-then rather than as an error, and INTERSECT this `then` with the base schema rather than replacing it — otherwise `evidence` loses its type check on exactly the claims that most need one, and it fails open. The validator must throw on any keyword it does not implement: one that silently no-ops produces a pass certifying nothing, which is the laundered false green this contract exists to stop."
         }
-      }
+      },
+      "x-register": "mechanical"
     },
     "unknowns": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "description": "What the agent could not determine. MANDATORY, and may be empty. An empty array is an assertion — \"I looked, and there was nothing I couldn't determine\" — while a missing key is a defect. Those are different claims and the schema must not let them collapse into each other, which is why this key has no default and is listed in required.",
       "x-register": "damped"
     },

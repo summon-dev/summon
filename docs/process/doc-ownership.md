@@ -14,6 +14,8 @@ Extracted from CLAUDE.md to reduce context window load. Referenced by CLAUDE.md 
 | Doc | Owner | Path | Update trigger |
 |-----|-------|------|---------------|
 | Communication registers | Diego | `docs/process/communication-registers.md` | A register, the return contract, or the correspondence rule changes (ADR-0015) |
+| PACKET schema | Archie | `schemas/packet.schema.json` | The envelope's fields or their value sets change. It is a contract, so it moves with the register spec — which wins on any disagreement |
+| AGENTS.md (**generated**) | — | `AGENTS.md` | Never edited directly. Regenerate with `pnpm gen:agents` whenever `docs/process/communication-registers.md` changes; `check-canon` fails if the two diverge |
 | SBOM + dependency decisions | Pierrot | `docs/sbom/sbom.md`, `docs/sbom/dependency-decisions.md` | Dependency add/remove/upgrade |
 | Threat model | Pierrot | `docs/security/threat-model.md` | New endpoints, data types, integrations, auth flows; new owner-harm (C1–C8) or tool-supply surface |
 | Design profile | The human (Dani cites) | `docs/design-profile.md` | A visual decision is made that outlives one PR. Dani never authors House rules (ADR-0013 §5 rule 4) |
