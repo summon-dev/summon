@@ -355,18 +355,23 @@ async function main() {
   const claudeMdPath = resolve(targetDir, "CLAUDE.md");
   if (existsSync(claudeMdPath)) {
     let content = readFileSync(claudeMdPath, "utf-8");
-    content = content.replace(
-      /\*\*Project Name:\*\* .+/,
-      "**Project Name:** [Your Project Name]"
-    );
-    content = content.replace(
-      /\*\*Description:\*\* .+/,
-      "**Description:** [Your project description]"
-    );
-    content = content.replace(
-      /\*\*Tech Stack:\*\* .+/,
-      "**Tech Stack:** [Your tech stack]"
-    );
+    // Each value runs until the next field label or end of line, never past it.
+    // A plain `.+` is greedy to EOL, and Summon's own CLAUDE.md carries all three
+    // fields on one line under the no-hard-wrap convention — so the first
+    // replacement swallowed the other two and deleted them outright, leaving a
+    // new project with no Description or Tech Stack at all (#111). The lookahead
+    // is what keeps each field's replacement inside its own field.
+    const NEXT_FIELD = String.raw`(?=\s*\*\*(?:Project Name|Description|Tech Stack):\*\*|\s*$)`;
+    for (const [label, placeholder] of [
+      ["Project Name", "[Your Project Name]"],
+      ["Description", "[Your project description]"],
+      ["Tech Stack", "[Your tech stack]"],
+    ]) {
+      content = content.replace(
+        new RegExp(String.raw`\*\*${label}:\*\* .+?${NEXT_FIELD}`, "m"),
+        `**${label}:** ${placeholder}`
+      );
+    }
     writeFileSync(claudeMdPath, content);
   }
 

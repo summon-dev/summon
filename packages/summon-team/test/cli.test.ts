@@ -175,9 +175,17 @@ describe("summon-team CLI", () => {
     expect(existsSync(join(projectDir, "pnpm-lock.yaml"))).toBe(false);
     expect(existsSync(join(projectDir, "package.json"))).toBe(false);
 
-    // CLAUDE.md was reset to template placeholders
+    // CLAUDE.md was reset to template placeholders — all three of them.
+    // Asserting only the name passed on a file where the greedy `.+` in the name
+    // regex had eaten Description and Tech Stack off the same line and deleted
+    // them outright (#111). A narrow assertion survived the defect it existed to
+    // catch, so the fields are checked individually.
     const claudeMd = readFileSync(join(projectDir, "CLAUDE.md"), "utf-8");
     expect(claudeMd).toContain("[Your Project Name]");
+    expect(claudeMd).toContain("[Your project description]");
+    expect(claudeMd).toContain("[Your tech stack]");
+    // Summon's own values must not survive the reset
+    expect(claudeMd).not.toContain("An AI-powered virtual team framework");
 
     // git init ran
     expect(existsSync(join(projectDir, ".git"))).toBe(true);
