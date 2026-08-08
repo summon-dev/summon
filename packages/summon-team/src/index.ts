@@ -20,6 +20,7 @@ import {
   isSummonProject,
   runHealth,
 } from "./doctor";
+import { PROVENANCE_FILE, buildProvenance } from "./provenance";
 import {
   buildTemplateSpec,
   describeDownloadFailure,
@@ -354,18 +355,23 @@ async function main() {
   const claudeMdPath = resolve(targetDir, "CLAUDE.md");
   if (existsSync(claudeMdPath)) {
     let content = readFileSync(claudeMdPath, "utf-8");
-    content = content.replace(
-      /\*\*Project Name:\*\* .+/,
-      "**Project Name:** [Your Project Name]"
-    );
-    content = content.replace(
-      /\*\*Description:\*\* .+/,
-      "**Description:** [Your project description]"
-    );
-    content = content.replace(
-      /\*\*Tech Stack:\*\* .+/,
-      "**Tech Stack:** [Your tech stack]"
-    );
+    // Each value runs until the next field label or end of line, never past it.
+    // A plain `.+` is greedy to EOL, and Summon's own CLAUDE.md carries all three
+    // fields on one line under the no-hard-wrap convention — so the first
+    // replacement swallowed the other two and deleted them outright, leaving a
+    // new project with no Description or Tech Stack at all (#111). The lookahead
+    // is what keeps each field's replacement inside its own field.
+    const NEXT_FIELD = String.raw`(?=\s*\*\*(?:Project Name|Description|Tech Stack):\*\*|\s*$)`;
+    for (const [label, placeholder] of [
+      ["Project Name", "[Your Project Name]"],
+      ["Description", "[Your project description]"],
+      ["Tech Stack", "[Your tech stack]"],
+    ]) {
+      content = content.replace(
+        new RegExp(String.raw`\*\*${label}:\*\* .+?${NEXT_FIELD}`, "m"),
+        `**${label}:** ${placeholder}`
+      );
+    }
     writeFileSync(claudeMdPath, content);
   }
 
@@ -378,6 +384,25 @@ async function main() {
     cpSync(readmeTemplatePath, resolve(targetDir, "README.md"));
     rmSync(readmeTemplatePath, { force: true });
   }
+
+  // Record where this project came from, before git init so it lands in the
+  // initial commit. Without it a scaffolded tree cannot say which ref produced
+  // it — and since an upstream revert never reaches a project already scaffolded
+  // (that project holds a copy), asking each project what it was built from is
+  // the only way to find the affected ones.
+  writeFileSync(
+    resolve(targetDir, PROVENANCE_FILE),
+    JSON.stringify(
+      buildProvenance({
+        template: localPath ? resolve(localPath) : TEMPLATE,
+        ref,
+        cliVersion: VERSION,
+        installedAt: new Date().toISOString(),
+      }),
+      null,
+      2
+    ) + "\n"
+  );
 
   // Initialize git repo with an initial commit
   try {

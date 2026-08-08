@@ -175,9 +175,17 @@ describe("summon-team CLI", () => {
     expect(existsSync(join(projectDir, "pnpm-lock.yaml"))).toBe(false);
     expect(existsSync(join(projectDir, "package.json"))).toBe(false);
 
-    // CLAUDE.md was reset to template placeholders
+    // CLAUDE.md was reset to template placeholders — all three of them.
+    // Asserting only the name passed on a file where the greedy `.+` in the name
+    // regex had eaten Description and Tech Stack off the same line and deleted
+    // them outright (#111). A narrow assertion survived the defect it existed to
+    // catch, so the fields are checked individually.
     const claudeMd = readFileSync(join(projectDir, "CLAUDE.md"), "utf-8");
     expect(claudeMd).toContain("[Your Project Name]");
+    expect(claudeMd).toContain("[Your project description]");
+    expect(claudeMd).toContain("[Your tech stack]");
+    // Summon's own values must not survive the reset
+    expect(claudeMd).not.toContain("An AI-powered virtual team framework");
 
     // git init ran
     expect(existsSync(join(projectDir, ".git"))).toBe(true);
@@ -330,6 +338,59 @@ describe("summon-team CLI", () => {
     });
     expect(check.code).toBe(0);
     expect(check.out).toContain("OK");
+  }, 30_000);
+
+  it("records install provenance in the scaffolded project", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--local", REPO_ROOT, "prov-test"], { cwd });
+    expect(result.code).toBe(0);
+
+    const record = JSON.parse(
+      readFileSync(join(cwd, "prov-test", ".summon-install.json"), "utf-8")
+    );
+    expect(record.schema).toBe(1);
+    // --local has no git ref to resolve, so null is the honest value
+    expect(record.ref).toBeNull();
+    expect(record.template).toBe(REPO_ROOT);
+    expect(typeof record.installedAt).toBe("string");
+    expect(Number.isNaN(Date.parse(record.installedAt))).toBe(false);
+  }, 30_000);
+
+  it("provenance is tracked by git, never an untracked stray", async () => {
+    // It is written before `git init` deliberately. A provenance file arriving as
+    // an untracked change in a brand-new project is noise the user has to make a
+    // decision about, and one that never enters git cannot answer the question it
+    // exists for once the directory is shared.
+    //
+    // Assert on the UNTRACKED marker specifically, not on absence from the status
+    // output. An earlier version of this test checked absence and passed locally
+    // for the wrong reason: it conflated "committed" with "tracked". On a machine
+    // with no git identity configured — CI, for one — `git init` and `git add`
+    // succeed while `git commit` fails, so every file sits staged (`A `) and the
+    // absence assertion fires on a project that is in fact perfectly fine.
+    const cwd = makeTempDir();
+    expect((await run(["--local", REPO_ROOT, "prov-git"], { cwd })).code).toBe(0);
+
+    const status = await new Promise<string>((res) => {
+      execFile(
+        "git",
+        ["status", "--porcelain"],
+        { cwd: join(cwd, "prov-git") },
+        (_e, stdout) => res(stdout.toString())
+      );
+    });
+    expect(status).not.toContain("?? .summon-install.json");
+    // And it is not silently excluded by the shipped .gitignore either: staged or
+    // committed, git must know about it.
+    const tracked = await new Promise<string>((res) => {
+      execFile(
+        "git",
+        ["ls-files", "--cached", "--", ".summon-install.json"],
+        { cwd: join(cwd, "prov-git") },
+        (_e, stdout) => res(stdout.toString())
+      );
+    });
+    expect(tracked.trim()).toBe(".summon-install.json");
   }, 30_000);
 
   it("rejects when target directory already exists and is non-empty", async () => {
