@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "claude@2026-08-06", key: ["9 checks: agent files, persona roster, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering, review-sentinel integrity", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8/#9 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes", "check #9 catches the Placeholder-Sentinel anti-pattern; its marker regex is anchored to a Status: line because matching prose false-positived on two real reviews", "exports findSentinelProblems + runAllChecks behind an entry-point guard, so the module is importable by its tests"] }
+// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "sato@2026-08-08", key: ["10 checks: agent files, persona roster, persona voice + delivery, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering, review-sentinel integrity", "voice delivery (#112) asserts each personas.md voice appears verbatim (whitespace-collapsed) in .claude/agents/<name>.md — the agent file is the runtime surface, personas.md is only a doc it points at", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8/#9 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes", "check #9 catches the Placeholder-Sentinel anti-pattern; its marker regex is anchored to a Status: line because matching prose false-positived on two real reviews", "exports findSentinelProblems + runAllChecks behind an entry-point guard, so the module is importable by its tests"] }
 //
 // Fitness function for Summon's canon. Our agent/persona/process docs duplicate
 // facts across many files; the agent-notes protocol keeps them in sync by hand.
@@ -97,6 +97,66 @@ function checkPersonaVoice() {
       `persona voice: "${name}" (${agent}.md) has no **Voice:** field in personas.md — ` +
         `ADR-0015 requires every persona to have a documented voice, and a blank is a defect rather than an opt-out`
     );
+  }
+}
+
+// 2c. Voice DELIVERY: the voice recorded in personas.md must actually appear in
+// the agent file, because that is the only one of the two a running subagent
+// sees. `.claude/agents/<name>.md` becomes the subagent's system prompt;
+// personas.md is a document those files merely point at, and an agent under a
+// maxTurns budget that is briefed to write on turn 1 never opens it.
+//
+// #97 put sixteen voices into personas.md and zero of them reached an agent
+// file — and findPersonasMissingVoice stayed green throughout, because it
+// measures the authoring end of the pipe. This one measures the delivery end.
+//
+// The rule is verbatim containment after collapsing whitespace runs, on both
+// sides, so a line-wrapped projection still passes and nothing looser does.
+// ADR-0006's projection model is why verbatim is the right bar: the `.claude/*`
+// Markdown is authored and other surfaces are derived from it, so a derived
+// copy that has been reworded is drift, not a variant. Requiring the
+// `**Voice:**` marker (rather than just finding the sentence anywhere) is what
+// separates today's bug — `missing`, the voice never arrived — from tomorrow's:
+// `mismatch`, someone edits personas.md and the projection goes stale.
+//
+// A persona with no **Voice:** at all is checkPersonaVoice's finding, so it is
+// skipped here rather than reported twice.
+export function findVoiceDeliveryGaps(personasText, agentTexts) {
+  const collapse = (s) => s.replace(/\s+/g, " ").trim();
+  const gaps = [];
+  for (const section of personasText.split(/^### /m).slice(1)) {
+    const agentFile = /\*\*Agent file:\*\* `\.claude\/agents\/([a-z-]+)\.md`/.exec(section);
+    if (!agentFile) continue; // a prose heading, not a persona entry
+    const voice = /^\*\*Voice:\*\*[ \t]*(.+)$/m.exec(section);
+    if (!voice) continue; // absent voice is checkPersonaVoice's report, not ours
+    const agent = agentFile[1];
+    const name = section.split("\n")[0].trim();
+    const agentText = agentTexts[agent];
+    if (agentText === undefined) {
+      gaps.push({ name, agent, reason: "no-agent-file" });
+    } else if (!agentText.includes("**Voice:**")) {
+      gaps.push({ name, agent, reason: "missing" });
+    } else if (!collapse(agentText).includes(collapse(voice[1]))) {
+      gaps.push({ name, agent, reason: "mismatch" });
+    }
+  }
+  return gaps;
+}
+
+function checkVoiceDelivery() {
+  const agentTexts = Object.fromEntries(
+    mdFiles(AGENTS_DIR).map((f) => [f.replace(/\.md$/, ""), read(join(AGENTS_DIR, f))])
+  );
+  const reasons = {
+    "no-agent-file": (agent) =>
+      `personas.md names .claude/agents/${agent}.md but no such file exists — create it or fix the reference in personas.md`,
+    missing: (agent) =>
+      `.claude/agents/${agent}.md carries no **Voice:** field — a pointer to personas.md is not delivery, because a subagent is handed the agent file and never reads the doc. Copy the voice from personas.md into ${agent}.md`,
+    mismatch: (agent) =>
+      `.claude/agents/${agent}.md has a **Voice:** field that does not contain the voice recorded in personas.md — personas.md is the source and the agent file carries the projection, so re-copy it verbatim (whitespace/wrapping may differ, wording may not)`,
+  };
+  for (const { name, agent, reason } of findVoiceDeliveryGaps(read(PERSONAS), agentTexts)) {
+    fail(`voice delivery: "${name}" — ${reasons[reason](agent)}`);
   }
 }
 
@@ -371,7 +431,7 @@ function checkReviewSentinels() {
 }
 
 export function runAllChecks() {
-  for (const check of [checkAgentFiles, checkPersonaRoster, checkPersonaVoice, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels]) {
+  for (const check of [checkAgentFiles, checkPersonaRoster, checkPersonaVoice, checkVoiceDelivery, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels]) {
     try {
       check();
     } catch (err) {
