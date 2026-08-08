@@ -3,7 +3,7 @@ agent-notes:
   ctx: "implementation gotchas and established patterns"
   deps: [CLAUDE.md]
   state: active
-  last: "diego@2026-08-07"
+  last: "claude@2026-08-08"
 ---
 # Known Patterns and Gotchas
 
@@ -34,6 +34,12 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 
 <!-- Sato: add codebase-specific implementation patterns, performance learnings,
      and quirks here. Examples: which abstractions work well, fragile areas, API client behaviors that differ from their types. -->
+
+## Agent Authoring
+
+- **A pointer to a document is not a delivered instruction.** `.claude/agents/<name>.md` becomes the subagent's **system prompt** — that file is the runtime surface. Everything else, including `docs/methodology/personas.md`, is documentation the agent has to choose to open, and a `maxTurns`-limited agent briefed to write on turn 1 will not. **Detection signal:** a behaviour is specified in a doc that agent files merely reference ("your full persona is defined in…"), and nobody can point to the invocation where the agent read it. **Fix:** put anything you need an agent to *do* in the agent file itself, and treat the doc as the authored source that the agent file projects from (ADR-0006's model). Evidence: sixteen persona voices were written into `personas.md` and none reached any agent; the only two personas that actually sounded like themselves had their voice inline.
+
+- **A sensor can measure the wrong end of the pipe.** The canon check for that same work asserted every persona had a `**Voice:**` field in `personas.md`. It passed while fourteen agents had no voice at runtime, because it verified *authorship* and the property that mattered was *delivery*. **Detection signal:** the check and the symptom are separated by a hop the check never crosses. **Fix:** when adding a sensor, name the failure you are trying to make impossible and confirm the check would fail on it — then actually break the file and watch it fail, because a check that has never gone red has never been tested.
 
 ## Architecture Patterns (Archie)
 
