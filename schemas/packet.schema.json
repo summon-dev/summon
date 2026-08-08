@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://summon.dev/schemas/packet.schema.json",
+  "title": "PACKET — a specialist return",
+  "description": "The envelope+narrative return contract from ADR-0015. Authored source for the prose is docs/process/communication-registers.md; where this schema and that document disagree, the process doc wins. DELIBERATELY FLAT WITH NO $ref — do not factor out shared subschemas. Two independent reasons, and both must fail before the constraint is worth relaxing: (1) a flat schema converts cleanly to a GBNF-style grammar for grammar-constrained decoding in a future harness port, and $ref indirection does not; (2) flatness is what makes the hand-rolled zero-dependency Node validator about 40 lines instead of a dependency. NOT EXPRESSIBLE HERE: finding_count must equal claims.length. JSON Schema cannot relate two sibling values, so that assertion belongs to the validator (ADR-0015 Slice 3), not to this file. Everything else in the correspondence rule — no fact only in narrative, no claim only in claims[] — is prose discipline and must never be described as enforced.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["v", "agent", "state", "finding_count", "claims", "unknowns", "narrative"],
+  "properties": {
+    "v": {
+      "const": 1,
+      "description": "Schema version. Required. A contract that ships to strangers without a version key has no migration signal at its first breaking change and no way for a consumer to tell which contract it holds. Four bytes, and the only affordance that makes v2 survivable."
+    },
+    "agent": {
+      "type": "string",
+      "pattern": "^[a-z][a-z-]*$",
+      "description": "Which persona is returning, as the .claude/agents/<name>.md stem. Deliberately a pattern rather than an enum of the roster: personas.md and the agent files are already checked against each other by scripts/check-canon.mjs, and a third copy of the roster here would be a third thing to drift.",
+      "x-register": "mechanical"
+    },
+    "state": {
+      "enum": ["complete", "stopped_early"],
+      "description": "Did this invocation finish, or stop early? An agent that ran out of turns says so here. A return that says nothing at all is the false green the whole contract exists to prevent, so this key is required and has no default.",
+      "x-register": "mechanical"
+    },
+    "finding_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How many findings. MUST equal claims.length — asserted by the validator, not here. Two sources for one number is a defect in a v1 schema; the assertion makes them one, and it makes a smuggled finding unreportable rather than merely unrecorded, because an agent that wants a finding to count has to put it in claims[] where it is counted.",
+      "x-register": "mechanical"
+    },
+    "claims": {
+      "type": "array",
+      "description": "The findings themselves. Never capped: capping the record is dropping findings, and finding thirteen would simply go unreported.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["summary", "epistemic", "severity", "evidence", "action"],
+        "properties": {
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The finding in one line.",
+            "x-register": "damped"
+          },
+          "epistemic": {
+            "enum": ["deterministic", "inferential", "human-judgement"],
+            "description": "How the claim was established, using the same three grades as the Done Gate's proof ladder, because it is the same ladder — the gate grades an item, a claim grades itself. One vocabulary, two subjects. These three are the whole set; nothing else is valid under v: 1. Grade honestly in both directions: forcing a taste call to look deterministic is as wrong as eyeballing something a one-line check would settle.",
+            "x-register": "mechanical"
+          },
+          "severity": {
+            "enum": ["Critical", "Important", "Suggestions"],
+            "description": "Matches the vocabulary the review lenses already use (.claude/agents/code-reviewer.md). One set of words for one concept: a finding's severity in a packet means what it means in a review document.",
+            "x-register": "mechanical"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "What the claim rests on. Required as a key; may be empty only when the grade allows it. For deterministic, this must name what was RUN — a grade is a claim about what was actually executed, so it decays silently when the command behind it goes missing.",
+            "x-register": "mechanical"
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What to do about it.",
+            "x-register": "damped"
+          }
+        },
+        "if": {
+          "properties": { "epistemic": { "const": "deterministic" } },
+          "required": ["epistemic"]
+        },
+        "then": {
+          "properties": { "evidence": { "minLength": 1 } },
+          "description": "A deterministic claim with empty evidence is malformed. That pairing is the entire reason the tag exists: \"the agent said it looked clean\" and \"this command exited 0, here it is\" are different epistemic states that plain prose renders identically."
+        }
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "What the agent could not determine. MANDATORY, and may be empty. An empty array is an assertion — \"I looked, and there was nothing I couldn't determine\" — while a missing key is a defect. Those are different claims and the schema must not let them collapse into each other, which is why this key has no default and is listed in required.",
+      "x-register": "damped"
+    },
+    "narrative": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The persona's own voice, written as that agent would write it. The coordinator gates on the envelope and FORWARDS this — it does not paraphrase it into house style, because a coordinator that rewrites every specialist into one voice has paid for the persona and thrown away what it bought. The narrative must CARRY each finding, not flavour it: every claim reappears with its path, its severity, and its action. \"This one's ugly. Fix it before it ships.\" is a failing narrative. Where voice and precision pull against each other, clarity beats character.",
+      "x-register": "full-voice"
+    }
+  },
+  "x-register-legend": {
+    "description": "Voice intensity is edge-conditioned, and a schema that treated all prose alike would not carry that. The test is WHO CONSUMES THE TEXT, not who carries it — transport is not consumption.",
+    "mechanical": "Machine-consumed structure. Not prose.",
+    "damped": "Machine-consumed prose: parsimony and pragmatism, no set-pieces, no extended metaphors, no jokes. Identity survives in word choice and in what the agent puts first, not in performance.",
+    "full-voice": "The persona as written, unhedged. Its receiver is the human even though its wire is internal — the coordinator only relays it."
+  }
+}

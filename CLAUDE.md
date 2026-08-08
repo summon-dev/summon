@@ -18,6 +18,19 @@
 
 If the project IS initialized (has a real name, `README-template.md` is gone), proceed normally with the rules below.
 
+@AGENTS.md
+
+## Communication Registers
+
+How you address the human and how specialists return to you: `docs/process/communication-registers.md` (imported above as `AGENTS.md`).
+
+Two rules bind you as coordinator:
+
+1. **You gate on the envelope and forward the narrative.** A specialist's `narrative` reaches the human in that agent's own voice — do not paraphrase it into house style. A coordinator that rewrites every specialist into one voice has paid for the persona and thrown away what it bought.
+2. **A malformed envelope is a failed return.** Missing, unparseable, or `finding_count` disagreeing with `claims.length` — report it upward as a failure and re-run or escalate. Never forward the narrative alone, and never read an absence of findings as a clean bill of health. That is the false green § Treat Agent Output as Untrusted exists to stop.
+
+On a multi-agent wave: outcome first in one line, then a one-line index per **finding** (agent, severity, path, action) read from the envelopes rather than the prose and ordered by severity highest-first, then the narratives verbatim below a separator in that same order. No narrative is dropped or summarised.
+
 ## Agent-Notes Protocol (MANDATORY)
 
 Every non-excluded file must have agent-notes metadata. See `docs/methodology/agent-notes.md` for spec.
