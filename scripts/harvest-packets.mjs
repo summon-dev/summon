@@ -590,7 +590,7 @@ function main(argv) {
     console.log("That is NOT a report of zero violations — nothing was measured. If the harness");
     console.log("transcript layout has changed, point this at the directory that now holds the");
     console.log("session .jsonl files.");
-    return 0;
+    return 2; // could not measure — the prose said so, and now the exit code does too
   }
 
   console.log(renderTable(rows));
@@ -614,8 +614,33 @@ function main(argv) {
     console.log(
       `\nnote: ${unattributed} transcript(s) carry no persona attribution — those are main-session\n` +
         "transcripts, not subagent returns, and owe no packet. Point this at a `subagents/`\n" +
-        "directory to measure only specialist returns. --strict currently counts them."
+        "directory to measure only specialist returns. They contribute no violations, and\n" +
+        "--strict does NOT count them."
     );
+  }
+
+  // Every row unattributed is NOT a clean fleet — it is a failure to measure.
+  //
+  // This exists because the fix above created it. Unattributed rows were being
+  // counted as violations (38 of 41 in the first real run), so they were made
+  // incapable of carrying one — which converted a false positive into a false
+  // negative. `attributionAgent` is undocumented harness internals: rename it
+  // upstream and every specialist return becomes unattributed, every violation
+  // is suppressed, and this prints "0 violation(s) found" over a wholly
+  // non-compliant fleet. Pierrot reproduced exactly that.
+  //
+  // Absent input is not clean input. That is the distinction ADR-0015
+  // Sub-decision 3 demands of Slice 3's validator, and the one this tool was
+  // built to make measurable — rebuilding it in here would be the joke telling
+  // itself.
+  if (unattributed === rows.length) {
+    console.log(
+      "\nNOT MEASURED: no transcript carried a persona attribution, so nothing here was\n" +
+        "gradeable against the return contract. This is a failure to measure, not a clean\n" +
+        "result. `attributionAgent` is undocumented harness internals — if it has been\n" +
+        "renamed or moved, this tool needs updating before its numbers mean anything."
+    );
+    return 2;
   }
 
   const totalViolations = rows.reduce((n, r) => n + r.violations.length, 0);
