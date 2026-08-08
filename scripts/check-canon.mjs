@@ -200,21 +200,67 @@ function checkVoiceDelivery() {
 // all. Closed by construction rather than by a guard a later edit could drop.
 export const BINDING_MARKER = "**Return contract (PACKET).**";
 
-export function findAgentsMissingBinding(agentTexts) {
-  return Object.entries(agentTexts)
-    .filter(([, text]) => !String(text).includes(BINDING_MARKER))
-    .map(([agent]) => agent);
+/**
+ * The canonical binding line, read from the process doc that wins on disagreement.
+ * Returns null when the spec carries no such block (a scaffolded tree mid-upgrade).
+ */
+export function canonicalBindingLine(specText) {
+  const m = /### The line every agent file carries[\s\S]*?```text\n([\s\S]*?)\n```/.exec(specText);
+  return m ? m[1].trim() : null;
+}
+
+/**
+ * Vik and Archie each proved the first version of this check was hollow: it
+ * asserted only that the marker string was present, so `**Return contract
+ * (PACKET).** figure it out` passed, and so did a line declaring `v:2` with a
+ * severity of "blocker". A check that tests a heading is not testing a contract
+ * — the same label-versus-content defect as #112, one layer along.
+ *
+ * So it compares verbatim against a single source, exactly as
+ * findVoiceDeliveryGaps does for voices twenty lines up. That closes the other
+ * half of ADR-0015 Sub-decision 5's grievance: the ADR cut the *volume* of the
+ * originating proposal's per-agent block, but "no single source" stayed true
+ * until the canonical line lived in the spec.
+ */
+export function findBindingGaps(specText, agentTexts) {
+  const canonical = canonicalBindingLine(specText);
+  if (!canonical) return [];
+  const collapse = (s) => String(s).replace(/\s+/g, " ").trim();
+  const want = collapse(canonical);
+  const gaps = [];
+  // Object.entries iterates own properties only, so the `constructor` collision
+  // that bit findVoiceDeliveryGaps cannot arise here at all.
+  for (const [agent, text] of Object.entries(agentTexts)) {
+    if (!String(text).includes(BINDING_MARKER)) gaps.push({ agent, reason: "missing" });
+    else if (!collapse(text).includes(want)) gaps.push({ agent, reason: "mismatch" });
+  }
+  return gaps;
 }
 
 function checkRegisterBinding() {
   const agentTexts = Object.fromEntries(
     mdFiles(AGENTS_DIR).map((f) => [f.replace(/\.md$/, ""), read(join(AGENTS_DIR, f))])
   );
-  for (const agent of findAgentsMissingBinding(agentTexts)) {
+  if (!existsSync(REGISTERS)) return; // a scaffolded tree without the spec
+  // Present-but-unparseable is drift, not silence. findBindingGaps returns [] when
+  // the canonical block is missing, so without this the check would go green having
+  // compared nothing the moment that heading or fence changed shape — the same
+  // vacuity failure this whole slice keeps rediscovering, introduced by its own fix.
+  if (canonicalBindingLine(read(REGISTERS)) === null) {
     fail(
-      `register binding: .claude/agents/${agent}.md carries no ${BINDING_MARKER} line — ` +
-        `a specialist is handed its agent file and nothing else, so the return contract has to be in it (ADR-0015 Slice 2)`
+      "register binding: docs/process/communication-registers.md carries no `### The line every agent file carries` block with a ```text fence — " +
+        "that block is the single source the sixteen agent files are checked against, so without it this check silently compares nothing"
     );
+    return;
+  }
+  const reasons = {
+    missing: (agent) =>
+      `.claude/agents/${agent}.md carries no ${BINDING_MARKER} line — a specialist is handed its agent file and nothing else, so the return contract has to be in it, not referenced from it (ADR-0015 Slice 2, issue #112)`,
+    mismatch: (agent) =>
+      `.claude/agents/${agent}.md has a ${BINDING_MARKER} line that differs from the canonical one in docs/process/communication-registers.md § The line every agent file carries — that block is the single source, so re-copy it verbatim (wrapping may differ, wording may not)`,
+  };
+  for (const { agent, reason } of findBindingGaps(read(REGISTERS), agentTexts)) {
+    fail(`register binding: ${reasons[reason](agent)}`);
   }
 }
 

@@ -1,7 +1,6 @@
 <!-- agent-notes: { ctx: "cross-runtime projection of the communication contract", deps: [docs/process/communication-registers.md], state: generated, last: "gen-agents-md@2026-08-09", key: ["GENERATED — edit the source and rerun, never this file", "the process doc wins over this projection on any disagreement"] } -->
 <!-- GENERATED FILE — DO NOT EDIT. -->
 <!-- Source: docs/process/communication-registers.md · regenerate with `node scripts/gen-agents-md.mjs` -->
-<!-- source-sha256: 4f68e41780f044bae9f5bad7e073b289b36704d4d7aa9fede8c881b5e8bfaaca -->
 
 # AGENTS.md
 
@@ -47,7 +46,7 @@ One JSON object carrying both halves.
 |---|---|
 | `v` | Schema version. Currently `1`. |
 | `agent` | Which persona is returning. |
-| `state` | Did this invocation finish, or stop early? |
+| `state` | Did this invocation finish, or stop early? One of `complete` or `stopped_early`. |
 | `finding_count` | How many findings. Must equal `claims.length`. |
 | `claims[]` | The findings themselves. |
 | `unknowns[]` | What the agent could not determine. Mandatory; may be empty. |
@@ -64,6 +63,16 @@ Two envelope rules that look pedantic and are not:
 
 - **`unknowns[]` is mandatory and may be empty.** An empty array is an assertion: *"I looked, and there was nothing I couldn't determine."* A missing key is a defect. Those are different claims, and the schema should not let them collapse into each other.
 - **`v` is required.** A contract that ships without a version key has no migration signal at its first breaking change, and no way for a reader to tell which contract it holds.
+
+The structure is also written as a JSON Schema at [`schemas/packet.schema.json`](docs/../schemas/packet.schema.json). This document is the authoritative one: where the schema and this text disagree, this text wins and the schema is corrected.
+
+### The line every agent file carries
+
+Each `.claude/agents/*.md` carries this line verbatim. It is **one line, not a pointer** — a subagent is handed its own agent file and nothing else, so a reference to this document would not reach it (issue #112). This block is the single source; `scripts/check-canon.mjs` asserts every agent file matches it.
+
+```text
+**Return contract (PACKET).** End your return with one JSON object: `{"v":1, "agent", "state": "complete"|"stopped_early", "finding_count", "claims":[{"summary", "epistemic":"deterministic"|"inferential"|"human-judgement", "severity":"Critical"|"Important"|"Suggestions", "evidence", "action"}], "unknowns":[], "narrative"}` — `finding_count` must equal `claims.length`, `unknowns` is mandatory and may be empty, a `deterministic` claim needs non-empty `evidence` naming what was run, and `narrative` restates every claim with its path, severity, and action **in your own voice**. Full spec, which wins on any disagreement: `docs/process/communication-registers.md`.
+```
 
 ### Severity
 

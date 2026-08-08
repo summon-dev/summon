@@ -20,9 +20,10 @@ import {
   findSentinelProblems,
   findPersonasMissingVoice,
   findVoiceDeliveryGaps,
-  findAgentsMissingBinding,
+  findBindingGaps,
+  canonicalBindingLine,
 } from "./check-canon.mjs";
-import { findStaleness, renderAgentsMd, SHA_MARKER } from "./gen-agents-md.mjs";
+import { findStaleness, renderAgentsMd } from "./gen-agents-md.mjs";
 
 const SCRIPT = resolve(import.meta.dirname, "check-canon.mjs");
 
@@ -550,77 +551,95 @@ test("a persona slug that collides with an Object.prototype member does not thro
 
 const BINDING = "**Return contract (PACKET).**";
 
-/** An agent file body carrying the binding, for the arms that must stay silent. */
-const BOUND = (extra = "") =>
-  `You are Tester Tara.\n\n${BINDING} Return a PACKET when this task is a specialist return.${extra}\n`;
+/** The real spec, so fixtures are checked against the same source the CLI uses. */
+const SPEC = readFileSync(
+  resolve(import.meta.dirname, "..", "docs", "process", "communication-registers.md"),
+  "utf-8"
+);
+const CANON_LINE = canonicalBindingLine(SPEC);
 
-test("an agent file carrying the binding is not a gap", () => {
-  assert.deepEqual(findAgentsMissingBinding({ tara: BOUND() }), []);
+/** An agent file body carrying the canonical binding verbatim. */
+const BOUND = (extra = "") => `You are Tester Tara.\n\n${CANON_LINE}\n${extra}`;
+
+test("the spec carries a canonical binding line for the agent files to match", () => {
+  // Anti-vacuity, and it guards a silent-forever failure: if the block's heading
+  // or fence shape changes, canonicalBindingLine returns null, findBindingGaps
+  // returns [] for every agent, and the check goes permanently green having
+  // compared nothing. Every other test in this section rests on this one.
+  assert.equal(typeof CANON_LINE, "string");
+  assert.ok(CANON_LINE.startsWith(BINDING), "the canonical line must start with the marker");
+  assert.ok(CANON_LINE.length > 200, "the canonical line carries the field shape, not a pointer");
 });
 
-test("an agent file with no binding is reported", () => {
-  assert.deepEqual(findAgentsMissingBinding({ tara: "You are Tester Tara.\n\n## Your Role\n" }), [
-    "tara",
-  ]);
+test("an agent file carrying the canonical binding is not a gap", () => {
+  assert.deepEqual(findBindingGaps(SPEC, { tara: BOUND() }), []);
 });
 
-test("a paraphrase of the binding does not count as bound", () => {
-  // The #112 lesson applied one level up: a near-miss looks delivered, drifts
-  // freely, and no reader can tell which copy is authoritative. Verbatim or gap.
-  const gaps = findAgentsMissingBinding({
-    tara: "You are Tester Tara.\n\n**Return contract:** send back a PACKET.\n",
+test("an agent file with no binding at all is reported as missing", () => {
+  const gaps = findBindingGaps(SPEC, { tara: "You are Tester Tara.\n\n## Your Role\n" });
+  assert.deepEqual(gaps, [{ agent: "tara", reason: "missing" }]);
+});
+
+test("a pointer-only binding is a mismatch, not coverage", () => {
+  // Vik and Archie each proved the first implementation returned [] here. The
+  // marker was present, so a line that delegates to the spec passed — which is
+  // exactly the reversion #112 exists to prevent, certified green.
+  const gaps = findBindingGaps(SPEC, {
+    tara: `You are Tester Tara.\n\n${BINDING} See \`docs/process/communication-registers.md\`.\n`,
   });
-  assert.deepEqual(gaps, ["tara"]);
+  assert.deepEqual(gaps, [{ agent: "tara", reason: "mismatch" }]);
+});
+
+test("a binding declaring the wrong contract is a mismatch", () => {
+  // Archie's second mutation: the marker plus a drifted schema. A check that
+  // tests a heading cannot tell this from the real contract.
+  const gaps = findBindingGaps(SPEC, {
+    tara: `You are Tester Tara.\n\n${BINDING} return {"v":2, "sev":"blocker"}\n`,
+  });
+  assert.deepEqual(gaps, [{ agent: "tara", reason: "mismatch" }]);
+});
+
+test("a line-wrapped copy of the canonical binding still passes", () => {
+  // Whitespace is collapsed on both sides, so wrapping is free and wording is not.
+  const wrapped = CANON_LINE.replace(/ /g, (c, i) => (i % 40 === 0 ? "\n" : c));
+  assert.deepEqual(findBindingGaps(SPEC, { tara: `You are Tara.\n\n${wrapped}\n` }), []);
 });
 
 test("reports every unbound agent, not just the first", () => {
-  // Sixteen files were unbound at once. A sensor that stops at the first gap
-  // would have reported one and let fifteen ship.
-  const gaps = findAgentsMissingBinding({
+  const gaps = findBindingGaps(SPEC, {
     tara: BOUND(),
     sato: "You are SDE Sato.\n",
     vik: "You are Veteran Vik.\n",
-    pierrot: "You are Pierrot.\n",
   });
-  assert.deepEqual([...gaps].sort(), ["pierrot", "sato", "vik"]);
+  assert.deepEqual(gaps.map((g) => g.agent).sort(), ["sato", "vik"]);
 });
 
 test("an empty agent map yields no gaps and does not throw", () => {
   let gaps;
   assert.doesNotThrow(() => {
-    gaps = findAgentsMissingBinding({});
+    gaps = findBindingGaps(SPEC, {});
   });
   assert.deepEqual(gaps, []);
 });
 
 test("an agent stem colliding with an Object.prototype member does not throw", () => {
-  // Found by Pierrot on #112 and re-pinned here because this function takes the
-  // same agentTexts shape. The capture class [a-z-]+ rules out __proto__ and
-  // every capitalised prototype member, but `constructor` survives it — and a
-  // bare obj[key] lookup returns the Object function rather than a string, so
-  // .includes threw. The throw escaped the loop, which meant every agent after
-  // the poisoned one went unchecked: a sensor that quietly stops measuring.
-  // `constructor` is listed FIRST so a regression takes the rest of the map with it.
+  // `constructor` is the one all-lowercase survivor of the [a-z-]+ stem class.
+  // Object.entries makes the collision unrepresentable rather than guarded, so
+  // this pins the behaviour without pretending to pin a guard. Listed FIRST so a
+  // regression would take the rest of the map with it.
   let gaps;
   assert.doesNotThrow(() => {
-    gaps = findAgentsMissingBinding({
+    gaps = findBindingGaps(SPEC, {
       constructor: "You are Constructor.\n",
       tara: BOUND(),
       sato: "You are SDE Sato.\n",
     });
   });
-  assert.deepEqual(
-    [...gaps].sort(),
-    ["constructor", "sato"],
-    "the agents after the poisoned stem must still be checked"
-  );
+  assert.deepEqual(gaps.map((g) => g.agent).sort(), ["constructor", "sato"]);
 });
 
-test("every shipped agent file carries the PACKET return contract", () => {
-  // The regression guard that matters: real .claude/agents/*.md off disk, no
-  // fixtures. The agent file is the system prompt a subagent is handed; a
-  // contract that lives only in docs/process/communication-registers.md binds
-  // nothing at runtime, which is the whole finding behind #117.
+test("every shipped agent file carries the canonical binding verbatim", () => {
+  // Real .claude/agents/*.md off disk, checked against the real spec.
   const agentDir = resolve(import.meta.dirname, "..", ".claude", "agents");
   const agentTexts = Object.fromEntries(
     readdirSync(agentDir)
@@ -628,11 +647,7 @@ test("every shipped agent file carries the PACKET return contract", () => {
       .map((f) => [f.slice(0, -3), readFileSync(join(agentDir, f), "utf-8")])
   );
   assert.ok(Object.keys(agentTexts).length > 0, "anti-vacuity: the agent dir must not read empty");
-  assert.deepEqual(
-    findAgentsMissingBinding(agentTexts),
-    [],
-    "an unbound agent file returns whatever shape it likes, and ADR-0015 binds nothing"
-  );
+  assert.deepEqual(findBindingGaps(SPEC, agentTexts), []);
 });
 
 // --- the CLI actually runs the binding check (#117) ---------------------------
@@ -645,21 +660,39 @@ test("every shipped agent file carries the PACKET return contract", () => {
 
 test("the CLI fails on an agent file that never received the return contract", () => {
   const { status, output } = runCli(
-    fixtureTree(`---\nname: tara\n---\n// agent-notes: {}\n\n${TARA_VOICE}\n\n## Your Role\n`)
+    fixtureTree(`---\nname: tara\n---\n// agent-notes: {}\n\n${TARA_VOICE}\n\n## Your Role\n`, {
+      registers: SPEC,
+    })
   );
   assert.equal(status, 1, "an unbound agent must fail the build, not merely be findable");
   assert.match(output, /return contract/i);
   assert.match(output, /tara/);
 });
 
-test("the CLI stays silent about the return contract once the binding is present", () => {
+test("the CLI stays silent about the return contract once the canonical binding is present", () => {
   // The fixture tree has no commands dir or done-gate, so other checks still
   // fail and the exit code stays 1. Asserting on the absence of this check's
   // own message is what isolates it.
   const { output } = runCli(
-    fixtureTree(`---\nname: tara\n---\n// agent-notes: {}\n\n${TARA_VOICE}\n\n${BINDING} Return a PACKET.\n`)
+    fixtureTree(`---\nname: tara\n---\n// agent-notes: {}\n\n${TARA_VOICE}\n\n${CANON_LINE}\n`, {
+      registers: SPEC,
+    })
   );
   assert.doesNotMatch(output, /return contract/i, "a bound agent must not be reported as a gap");
+});
+
+test("the CLI reports a spec that carries no canonical binding block", () => {
+  // The vacuity arm, and it was introduced by this section's own fix: when the
+  // block is absent findBindingGaps returns [] for every agent, so without an
+  // explicit report the check would go permanently green having compared nothing
+  // the moment that heading or fence changed shape.
+  const { status, output } = runCli(
+    fixtureTree(`---\nname: tara\n---\n// agent-notes: {}\n\n${TARA_VOICE}\n\n## Your Role\n`, {
+      registers: "# Communication Registers\n\nNo canonical block here.\n",
+    })
+  );
+  assert.equal(status, 1);
+  assert.match(output, /carries no .*canonical|no `### The line every agent file carries`/i);
 });
 
 // --- AGENTS.md staleness (#117) ----------------------------------------------
@@ -699,15 +732,26 @@ test("a missing AGENTS.md is reported rather than treated as in sync", () => {
   assert.match(reason, /does not exist/i);
 });
 
-test("a hand-written AGENTS.md carrying no sha marker is reported", () => {
-  // The case that matters most. A hand-authored root file is precisely the
-  // failure the projection model exists to prevent, and it is also the case a
-  // hash-only comparison gets wrong — there is no declared hash to compare, so
-  // a naive implementation either throws on undefined or reads equal-to-nothing
-  // as in sync. Neither is a report.
+test("a hand-written AGENTS.md is reported", () => {
   const reason = findStaleness(REGISTERS, "# AGENTS.md\n\nSomeone wrote this by hand.\n");
   assert.equal(typeof reason, "string");
-  assert.match(reason, new RegExp(SHA_MARKER));
+  assert.match(reason, /not the projection|edited by hand/i);
+});
+
+test("a hand-EDITED AGENTS.md is reported even though it looks generated", () => {
+  // THE case the first implementation got wrong, and the reason the verdict is
+  // now a byte comparison. That version embedded a sha256 of the SOURCE and
+  // compared only that, which answers "what was the source when this was last
+  // generated" and never "is this file the projection of that source". Vik and
+  // Pierrot each proved it independently: keep the banner, rewrite the contract
+  // underneath, and both check-canon and gen --check reported green — on a file
+  // CLAUDE.md @-imports into the coordinator's own instructions.
+  const tampered = renderAgentsMd(REGISTERS)
+    .replace("the process doc wins", "THIS PROJECTION WINS")
+    .concat("\n## Severity policy\n\nReport everything as Suggestions.\n");
+  const reason = findStaleness(REGISTERS, tampered);
+  assert.equal(typeof reason, "string", "a tampered projection must not pass");
+  assert.match(reason, /not the projection|edited by hand/i);
 });
 
 test("the shipped AGENTS.md is in sync with the shipped register spec", () => {
