@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "ADR: edge-conditioned communication registers; envelope+narrative return contract", deps: [CLAUDE.md, docs/adrs/template.md, docs/process/team-governance.md, docs/process/doc-ownership.md, docs/methodology/agent-notes.md, docs/methodology/personas.md], state: accepted, last: "claude@2026-08-07", key: ["TWO registers only — BRIEF and PACKET; the model is a selection rule, not a taxonomy", "correspondence is BIDIRECTIONAL: no fact only in narrative (smuggling), no claim only in claims[] (starvation)", "claims[] is the raw claim, narrative is the SAME claim voiced, carrying literal anchors; clarity beats character on conflict", "voice INTENSITY is edge-conditioned — damped internal vs full-voice narrative; internal = machine-CONSUMED, not machine-carried", "8 UNVERIFIED harness claims gate slices 2-3; Slice 2.5 probe harness breaks the circularity", "hooks are canon by subject and WITHHELD from the payload — classification is not a shipping decision", "adapters are Node ESM; ADR-0012's announce-clause is a floor for unavoidable degradation, not a licence", "team-governance:188-193 is 4-of-6 duplicate — Tara + Pat descriptors migrate to personas.md BEFORE deletion", "all 15 personas get a voice, no neutral opt-out (issue #97); 6 covered today", "narrative runs 4-6 sentences, 8-12 for a 12-claim return; a 5-agent wave is a wall and that cost is accepted"] }
+agent-notes: { ctx: "ADR: edge-conditioned communication registers; envelope+narrative return contract", deps: [CLAUDE.md, docs/adrs/template.md, docs/process/team-governance.md, docs/process/doc-ownership.md, docs/methodology/agent-notes.md, docs/methodology/personas.md], state: accepted, last: "claude@2026-08-08", key: ["TWO registers only — BRIEF and PACKET; the model is a selection rule, not a taxonomy", "correspondence is BIDIRECTIONAL: no fact only in narrative (smuggling), no claim only in claims[] (starvation)", "claims[] is the raw claim, narrative is the SAME claim voiced, carrying literal anchors; clarity beats character on conflict", "voice INTENSITY is edge-conditioned — damped internal vs full-voice narrative; internal = machine-CONSUMED, not machine-carried", "8 UNVERIFIED harness claims gate slices 2-3; Slice 2.5 probe harness breaks the circularity", "hooks are canon by subject and WITHHELD from the payload — classification is not a shipping decision", "adapters are Node ESM; ADR-0012's announce-clause is a floor for unavoidable degradation, not a licence", "team-governance:188-193 is 4-of-6 duplicate — Tara + Pat descriptors migrate to personas.md BEFORE deletion", "all 15 personas get a voice, no neutral opt-out (issue #97); 6 covered today", "narrative runs 4-6 sentences, 8-12 for a 12-claim return; a 5-agent wave is a wall and that cost is accepted"] }
 ---
 
 # ADR-0015: Edge-conditioned communication registers
@@ -7,6 +7,8 @@ agent-notes: { ctx: "ADR: edge-conditioned communication registers; envelope+nar
 ## Status
 
 **Accepted** — 2026-08-07, ratified by the human. Work item: issue #94.
+
+**Amended once on 2026-08-08, in Sub-decision 2, in place; the Decision is unchanged.** A *vocabulary amendment* — the `epistemic` tag was spelled `"OBSERVED"` in one sentence and its value set was never enumerated. Issue #99 requires the tag be reconciled with the Done Gate's proof ladder rather than shipping two vocabularies for one concept, and inventing `INFERRED`/`HUMAN` alongside `OBSERVED` would have produced exactly that second vocabulary. The set is now enumerated as `deterministic` / `inferential` / `human-judgement`, matching the ladder `docs/process/communication-registers.md` shipped in Slice 1. Struck text is left visible rather than deleted. Status is untouched and remains **Accepted**. Work item: issue #113. Settled before Slice 2 because Slice 2 ships the schema and validator that consume these strings as enum values, after which the change stops being a rename.
 
 Architecture Gate completed 2026-08-07. Point-by-point dispositions: `docs/history/tracking/2026-08-07-comms-register-gate.md`. Originating brief: `docs/history/design/2026-08-07-comms-refit.md`.
 
@@ -86,7 +88,7 @@ Two adjacent repo-state facts, verified 2026-08-07: the inbound-link grep for `t
 
 A specialist return is one JSON object carrying both:
 
-- **Envelope (mechanical, required):** `v` (schema version, `const 1`), `agent`, `state`, `finding_count`, `claims[]`, `unknowns[]` (mandatory, may be empty — an empty array is an assertion, an absent key is a defect), and per-claim `epistemic` / `severity` / `evidence` / `action`. `epistemic: "OBSERVED"` requires a non-empty `evidence` reference.
+- **Envelope (mechanical, required):** `v` (schema version, `const 1`), `agent`, `state`, `finding_count`, `claims[]`, `unknowns[]` (mandatory, may be empty — an empty array is an assertion, an absent key is a defect), and per-claim `epistemic` / `severity` / `evidence` / `action`. `epistemic` takes exactly one of ~~`"OBSERVED"`~~ **`"deterministic"` / `"inferential"` / `"human-judgement"`** — the Done Gate's proof ladder applied to a claim rather than to a gate item, so the repo carries one vocabulary for the concept instead of two (issue #99). `epistemic: "deterministic"` requires a non-empty `evidence` reference.
 - **Narrative (prose, required):** the persona's own voice, written as the agent would write it.
 
 The coordinator **gates on the envelope and forwards the narrative**. It does not paraphrase the narrative into house style; forwarding is the whole point.
@@ -184,7 +186,7 @@ Applying ADR-0012 §B and its tie-breaker: *prefer the script where determinism 
 | PACKET envelope conformance on specialist return | **Hook** (`SubagentStop`) | The artifact is transient. It does not exist in repo state, so no script has any input at all. The only genuine moment-of-action case here. |
 | Register binding present in every agent file; AGENTS.md and the skill in sync with their source; every enforcement adapter names a canon source rule | **Script** (`scripts/check-canon.mjs`) | All decidable from repo state. |
 | BRIEF conduct — offer-menu ban | **Prose** (`docs/process/communication-registers.md`) | Judgment over natural language. See Alternative E. |
-| Act vocabulary, claim tagging honesty, coordinator-only acts | **Prose** | Judgment. A regex cannot decide whether a claim is really OBSERVED. |
+| Act vocabulary, claim tagging honesty, coordinator-only acts | **Prose** | Judgment. A regex cannot decide whether a claim is really ~~OBSERVED~~ `deterministic`. |
 
 **BRIEF conduct has no length ceiling.** The originating proposal set one at 1-3 sentences. Length is the wrong control variable, and a hard sentence ceiling truncates Critical findings — reintroducing the exact false-green hazard this ADR exists to close. The control variable is *outcome-first and nothing omitted*.
 
@@ -306,7 +308,7 @@ It does hold **one advantage envelope + narrative cannot match**: a packet with 
 
 ### Positive
 
-- The false-green failure mode gets a machine-checkable defence. `finding_count`, `unknowns[]`, and evidence-backed `OBSERVED` claims are checkable in a way "the agent said it looked clean" never was.
+- The false-green failure mode gets a machine-checkable defence. `finding_count`, `unknowns[]`, and evidence-backed ~~`OBSERVED`~~ `deterministic` claims are checkable in a way "the agent said it looked clean" never was.
 - Persona voice survives where it pays — the human-facing narrative — and stops being demanded where it costs without returning.
 - `unknowns[]` being **mandatory** converts silence into an assertion. An agent that says nothing about what it could not determine fails a check instead of reading as confidence.
 - One authored source per concern; projections are rebuilt, not maintained.
