@@ -131,12 +131,32 @@ export function findVoiceDeliveryGaps(personasText, agentTexts) {
     if (!voice) continue; // absent voice is checkPersonaVoice's report, not ours
     const agent = agentFile[1];
     const name = section.split("\n")[0].trim();
-    const agentText = agentTexts[agent];
+    // Object.hasOwn rather than a bare lookup: the capture class is [a-z-]+,
+    // which rules out __proto__ and every capitalised Object.prototype member —
+    // but `constructor` survives it, and agentTexts.constructor is the Object
+    // function rather than undefined. The bare lookup therefore skipped the
+    // no-agent-file branch and threw on .includes, and because the throw escaped
+    // the loop, every persona after the poisoned one went unchecked. Failing
+    // closed on a red build is the good half; silently ceasing to measure
+    // partway through is exactly this issue's own failure mode.
+    const agentText = Object.hasOwn(agentTexts, agent) ? agentTexts[agent] : undefined;
+    // Scope the comparison to the agent file's own **Voice:** paragraph — the
+    // field line plus any continuation lines up to the first blank one. Asking
+    // whether the marker and the sentence each appear *somewhere* in the file
+    // reads like one question but is two, and nothing tied them together: an
+    // agent file could carry a flatly wrong **Voice:** field and still pass so
+    // long as the canonical sentence survived anywhere else in the prose. That
+    // is not hypothetical — it is the shape pat.md was in before #112, with its
+    // descriptor sitting mid-paragraph under ## Your Role. Paragraph scoping
+    // also means a stale first field is no longer rescued by a canonical second
+    // one, and a **Voice:** mention inside an agent-notes comment no longer
+    // counts as delivery (the ^ anchor keeps mid-line mentions out).
+    const projected = /^\*\*Voice:\*\*[ \t]*(.+(?:\n(?!\n).+)*)/m.exec(agentText ?? "");
     if (agentText === undefined) {
       gaps.push({ name, agent, reason: "no-agent-file" });
-    } else if (!agentText.includes("**Voice:**")) {
+    } else if (!projected) {
       gaps.push({ name, agent, reason: "missing" });
-    } else if (!collapse(agentText).includes(collapse(voice[1]))) {
+    } else if (!collapse(projected[1]).includes(collapse(voice[1]))) {
       gaps.push({ name, agent, reason: "mismatch" });
     }
   }

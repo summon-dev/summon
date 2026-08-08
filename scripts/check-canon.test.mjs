@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "tests for check-canon's sentinel and persona-voice checks", deps: [scripts/check-canon.mjs, docs/methodology/personas.md, .claude/agents/], state: active, last: "tara@2026-08-08", key: ["catches the real 2026-08-06 placeholder verbatim", "false-positive guards: board pipeline prose and the /command placeholder both mention in-flight words", "entry-point guard regression: importing must not exit, running must print", "#112 delivery tests read the real agent files — presence in personas.md is not delivery"] }
+// agent-notes: { ctx: "tests for check-canon's sentinel and persona-voice checks", deps: [scripts/check-canon.mjs, docs/methodology/personas.md, .claude/agents/], state: active, last: "tara@2026-08-08", key: ["catches the real 2026-08-06 placeholder verbatim", "false-positive guards: board pipeline prose and the /command placeholder both mention in-flight words", "entry-point guard regression: importing must not exit, running must print", "#112 delivery tests read the real agent files — presence in personas.md is not delivery", "the delivery wiring test drives the real CLI against a fixture tree (cwd-relative paths); the grep-for-a-call-site version it replaced passed against a call site in dead code", "the roster-census test is the anti-vacuity guard: a reshaped personas.md parses to zero personas and the real-data test goes green comparing nothing"] }
 //
 //   node --test scripts/check-canon.test.mjs
 //
@@ -11,7 +11,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -359,15 +359,87 @@ test("reports a named agent file that does not exist instead of throwing", () =>
   assert.equal(gaps[0].reason, "no-agent-file");
 });
 
-test("the delivery check is on the CLI's path, not merely exported", () => {
-  // This issue is a sensor that measured the wrong end of a pipe. An exported
-  // function nobody calls from runAllChecks would be the same defect wearing a
-  // new hat: green unit tests, and `node scripts/check-canon.mjs` still blind.
-  // Structural rather than behavioural because the CLI prints only a verdict;
-  // replace this with an assertion on a check registry if one ever exists.
-  const source = readFileSync(SCRIPT, "utf-8");
-  const calls = [...source.matchAll(/findVoiceDeliveryGaps\s*\(/g)];
-  assert.ok(calls.length >= 1, "findVoiceDeliveryGaps must be called by a check, not just defined");
+test("a persona with no Voice field at all is left to the presence check", () => {
+  // findVoiceDeliveryGaps deliberately skips these rather than reporting the
+  // same persona twice — checkPersonaVoice already names it, and a duplicate
+  // entry under a "did not arrive" heading would send the reader to the agent
+  // file to copy a sentence that does not exist yet.
+  const gaps = findVoiceDeliveryGaps(ENTRY("Tester Tara", "tara", "The red in red-green-refactor."), {
+    tara: "You are Tester Tara.\n",
+  });
+  assert.deepEqual(gaps, [], "an absent voice is an authoring gap, not a delivery gap");
+});
+
+// --- the CLI actually runs this check (#112) ---------------------------------
+//
+// This issue is a sensor wired to the wrong end of a pipe. An exported function
+// nobody calls from runAllChecks is the same defect wearing a new hat: green
+// unit tests and `node scripts/check-canon.mjs` still blind. The first version
+// of this guard grepped the script's own source for a call site, which would
+// have passed on a call sitting in dead code. The script resolves every path
+// from `process.cwd()`, so it can be pointed at a fixture tree and made to
+// speak — that is a strictly better assertion, so it replaces the grep.
+//
+// Both arms are needed. The firing arm alone would pass against a check that
+// reports every persona unconditionally; the silent arm is what proves the
+// sensor discriminates.
+
+/** A minimal repo-shaped tree: one persona, one agent file. Returns its root. */
+function fixtureTree(agentBody) {
+  const dir = mkdtempSync(join(tmpdir(), "summon-canon-cli-"));
+  mkdirSync(join(dir, "docs", "methodology"), { recursive: true });
+  mkdirSync(join(dir, ".claude", "agents"), { recursive: true });
+  writeFileSync(
+    join(dir, "docs", "methodology", "personas.md"),
+    ENTRY("Tester Tara", "tara", `${TARA_VOICE}\n\nThe red in red-green-refactor.`)
+  );
+  writeFileSync(join(dir, ".claude", "agents", "tara.md"), agentBody);
+  return dir;
+}
+
+/** Run the real CLI against a fixture root and return its exit code + stderr. */
+function runCli(cwd) {
+  const r = spawnSync(process.execPath, [SCRIPT], { cwd, encoding: "utf8" });
+  return { status: r.status, output: `${r.stdout}${r.stderr}` };
+}
+
+test("the CLI reports a voice that never reached the agent file", () => {
+  const { status, output } = runCli(
+    fixtureTree("---\nname: tara\n---\n// agent-notes: {}\n\nYour persona is in `docs/methodology/personas.md`.\n")
+  );
+  assert.equal(status, 1, "an undelivered voice must fail the build, not just be findable");
+  assert.match(output, /voice delivery: "Tester Tara"/);
+  assert.match(output, /carries no \*\*Voice:\*\* field/);
+});
+
+test("the CLI stays silent about voice delivery once the projection is present", () => {
+  // The fixture tree has no commands dir or done-gate, so other checks still
+  // fail and the exit code stays 1. Asserting on the absence of this check's
+  // own message is what isolates it.
+  const { output } = runCli(
+    fixtureTree(`---\nname: tara\n---\n// agent-notes: {}\n\n${TARA_VOICE}\n\n## Your Role\n`)
+  );
+  assert.doesNotMatch(output, /voice delivery:/, "a delivered voice must not be reported as a gap");
+});
+
+test("the shipped personas.md still parses into the full persona roster", () => {
+  // Guards the vacuity hole the real-data test below cannot see. That test
+  // asserts "no gaps", and a personas.md whose heading level or **Agent file:**
+  // line changed shape would yield zero parsed sections, zero gaps, and a green
+  // check that compared nothing — permanently, and silently. Mutating an agent
+  // file does not expose this; only counting what the parser found does.
+  // The expectation is derived from disk rather than hardcoded to 16, so adding
+  // a persona does not fail this test — checkPersonaRoster owns set equality.
+  const root = resolve(import.meta.dirname, "..");
+  const personas = readFileSync(resolve(root, "docs", "methodology", "personas.md"), "utf-8");
+  const onDisk = readdirSync(resolve(root, ".claude", "agents"))
+    .filter((f) => f.endsWith(".md"))
+    .map((f) => f.slice(0, -3))
+    .sort();
+  // Every persona is a gap against an empty agent map, so the gap list is a
+  // faithful census of what the parser recognised as a persona entry.
+  const parsed = findVoiceDeliveryGaps(personas, {}).map((g) => g.agent).sort();
+  assert.deepEqual(parsed, onDisk, "the delivery check must see every persona, not silently zero of them");
 });
 
 test("every shipped persona's voice reached its shipped agent file", () => {
@@ -387,4 +459,70 @@ test("every shipped persona's voice reached its shipped agent file", () => {
     [],
     "a voice recorded in personas.md but absent from the agent file never reaches a running subagent"
   );
+});
+
+// --- the comparison is scoped to the agent file's own Voice field ------------
+//
+// Found by Vik reviewing #112. The first implementation asked two questions
+// that read as one: does `**Voice:**` appear anywhere in the file, and does the
+// canonical sentence appear anywhere in the file. Nothing tied them to each
+// other, so an agent file could carry a flatly wrong Voice field and pass on
+// the strength of the canonical sentence surviving elsewhere in its prose.
+//
+// Case A below is not hypothetical. It is the shape pat.md was in before #112,
+// with its tone descriptor sitting mid-paragraph under `## Your Role` — add a
+// wrong `**Voice:**` line above that and the sensor blessed it.
+
+const CANON = TARA_VOICE.replace("**Voice:** ", "");
+
+test("a wrong Voice field is not rescued by the canonical sentence elsewhere", () => {
+  const gaps = findVoiceDeliveryGaps(TARA_ENTRY, {
+    tara: `**Voice:** Chipper and vague, never mentions edge cases.\n\n## Your Role\n\nShe is ${CANON}\n`,
+  });
+  assert.equal(gaps.length, 1, "the Voice field is what has to carry the projection");
+  assert.equal(gaps[0].reason, "mismatch");
+});
+
+test("a **Voice:** mention inside agent-notes is not delivery", () => {
+  // The marker occurs mid-line inside the notes comment, so the ^ anchor keeps
+  // it out. Any agent file that ever documents this protocol would otherwise
+  // have earned itself a free pass.
+  const gaps = findVoiceDeliveryGaps(TARA_ENTRY, {
+    tara: `<!-- agent-notes: { key: ["carries a **Voice:** field"] } -->\n\n## Your Role\n\nShe is ${CANON}\n`,
+  });
+  assert.equal(gaps.length, 1);
+  assert.equal(gaps[0].reason, "missing");
+});
+
+test("a stale first Voice field is not rescued by a canonical second one", () => {
+  const gaps = findVoiceDeliveryGaps(TARA_ENTRY, {
+    tara: `**Voice:** Stale wording that is wrong.\n\n${TARA_VOICE}\n`,
+  });
+  assert.equal(gaps.length, 1);
+  assert.equal(gaps[0].reason, "mismatch");
+});
+
+test("an exemplar quote in a paragraph below the field still passes", () => {
+  // vik.md and pierrot.md both keep their exemplar quote under the projection.
+  // Paragraph scoping must not read that separation as the field ending short.
+  const gaps = findVoiceDeliveryGaps(TARA_ENTRY, {
+    tara: `${TARA_VOICE}\n\n"Untested is not the same as probably fine."\n\n## Your Role\n`,
+  });
+  assert.deepEqual(gaps, []);
+});
+
+test("a persona slug that collides with an Object.prototype member does not throw", () => {
+  // Found by Pierrot reviewing #112. The capture class is [a-z-]+, which rules
+  // out __proto__ and every capitalised prototype member — but `constructor`
+  // survives it, and agentTexts.constructor is the Object function rather than
+  // undefined, so a bare lookup skipped the no-agent-file branch and threw on
+  // .includes. The throw escaped the loop, so every persona after the poisoned
+  // one went unchecked: a sensor that quietly stops measuring partway through.
+  const gaps = findVoiceDeliveryGaps(
+    ENTRY("Constructor", "constructor", TARA_VOICE) + "\n" + TARA_ENTRY,
+    { tara: `${TARA_VOICE}\n` }
+  );
+  assert.equal(gaps.length, 1, "the personas after the poisoned one must still be checked");
+  assert.equal(gaps[0].agent, "constructor");
+  assert.equal(gaps[0].reason, "no-agent-file");
 });
