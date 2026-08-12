@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "CLI-level exit-code tests for the packet harvester", deps: [scripts/harvest-packets.mjs], state: active, last: "claude@2026-08-09", key: ["the exit code is the ONLY part a machine consumes, and it had no coverage", "three separate paths once exited 0 having measured nothing — all three are pinned here", "exit 2 = could not measure; absent input is not clean input"] }
+// agent-notes: { ctx: "CLI-level exit-code tests for the packet harvester", deps: [scripts/harvest-packets.mjs], state: active, last: "claude@2026-08-13", key: ["an exit-code assertion alone cannot tell `judged correctly` from `never ran` — a syntax error also exits 1, so every case here also asserts on stdout", "the exit code is the ONLY part a machine consumes, and it had no coverage", "three separate paths once exited 0 having measured nothing — all three are pinned here", "exit 2 = could not measure; absent input is not clean input"] }
 //
 //   node --test scripts/harvest-packets.cli.test.mjs
 //
@@ -37,6 +37,8 @@ const CONFORMANT = JSON.stringify({
   narrative: "One thing, at src/a.ts:1, Important, and you fix it by deleting the branch.",
   claims: [{ summary: "s", epistemic: "inferential", severity: "Important", evidence: "src/a.ts:1", action: "delete it" }],
 });
+
+const CONFORMANT_SATO = CONFORMANT.replace(/"vik"/g, '"sato"');
 
 // --- the three paths that once exited 0 having measured nothing ---------------
 //
@@ -118,4 +120,74 @@ test("no arguments exits 2 and prints usage", () => {
 
 test("an unrecognised flag exits 2 rather than being ignored", () => {
   assert.equal(run(treeOf([]), "--strictly").status, 2);
+});
+
+// --- the two categories that owe no violation but must not read as a pass (#128)
+
+import { mkdirSync } from "node:fs";
+
+/** A project dir binding `names` as personas. */
+function projectBinding(names) {
+  const proj = mkdtempSync(join(tmpdir(), "summon-cli-project-"));
+  mkdirSync(join(proj, ".claude", "agents"), { recursive: true });
+  for (const n of names) writeFileSync(join(proj, ".claude", "agents", `${n}.md`), "# persona\n");
+  return proj;
+}
+
+test("--strict exits 1 when an agent never returned", () => {
+  // A truncated agent carries no contract violation — it never reached a turn
+  // in which it could comply. Without its own count it lands in a report
+  // reading "0 violation(s) found" over a dead agent, which is precisely the
+  // false green CLAUDE.md § Treat Agent Output as Untrusted names.
+  const proj = projectBinding(["sato"]);
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-cli-trunc-"));
+  writeFileSync(
+    join(dir, "agent-sato.jsonl"),
+    JSON.stringify({ type: "assistant", attributionAgent: "sato", cwd: proj, message: { content: "Now the C1 fix." } }) +
+      "\n" +
+      JSON.stringify({
+        type: "assistant",
+        attributionAgent: "sato",
+        cwd: proj,
+        message: { stop_reason: "tool_use", content: [{ type: "tool_use", name: "Bash", input: { command: "pytest" } }] },
+      }) +
+      "\n"
+  );
+  const r = run(dir, SCHEMA, "--strict");
+  assert.equal(r.status, 1, "an agent that died mid-run must not exit 0 under --strict");
+  assert.match(r.stdout, /never returned/);
+});
+
+test("--strict does NOT exit 1 for an out-of-scope agent alone", () => {
+  // The discriminating arm. `general-purpose` has no agent file, so it never
+  // received the binding — billing it inflated the miss count five-fold. But
+  // an all-out-of-scope run measured nothing about the contract, so it exits 2
+  // rather than 0: that is a failure to measure, not a clean fleet.
+  const proj = projectBinding(["sato"]);
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-cli-oos-"));
+  writeFileSync(
+    join(dir, "agent-gp.jsonl"),
+    JSON.stringify({ type: "assistant", attributionAgent: "general-purpose", cwd: proj, message: { content: "Prose." } }) + "\n"
+  );
+  writeFileSync(
+    join(dir, "agent-sato.jsonl"),
+    JSON.stringify({ type: "assistant", attributionAgent: "sato", cwd: proj, message: { content: CONFORMANT_SATO } }) + "\n"
+  );
+  const r = run(dir, SCHEMA, "--strict");
+  assert.equal(r.status, 0, "an unbound agent type was never addressed by the contract and cannot fail it");
+  assert.match(r.stdout, /out-of-scope/);
+});
+
+test("a run whose every transcript is out-of-scope exits 2, not 0", () => {
+  // Nothing here was gradeable against the contract. Exiting 0 would report a
+  // clean fleet over a measurement that never happened.
+  const proj = projectBinding(["sato"]);
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-cli-alloos-"));
+  writeFileSync(
+    join(dir, "agent-gp.jsonl"),
+    JSON.stringify({ type: "assistant", attributionAgent: "general-purpose", cwd: proj, message: { content: "Prose." } }) + "\n"
+  );
+  const r = run(dir, SCHEMA, "--strict");
+  assert.equal(r.status, 2);
+  assert.match(r.stdout, /NOT MEASURED/);
 });

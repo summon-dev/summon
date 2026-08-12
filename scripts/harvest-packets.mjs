@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "post-hoc PACKET compliance harvester over subagent transcripts", deps: [schemas/packet.schema.json, docs/process/communication-registers.md], state: active, last: "sato@2026-08-09", key: ["read-only measurement, NOT an enforcement adapter — no hook, nothing blocks", "exit 0 = measured (violations go in the output), exit 2 = could not measure; --strict opts into exit 1 on violations", "harvest THROWS on an unreadable directory: an empty row set reads as `no violations` over a directory nobody read", "extractPacket recognises a packet ATTEMPT structurally (>=3 packet keys); conformance is validatePacket's question, never the extractor's", "brace scanning is string- and escape-aware — a narrative quoting code with braces in it is the common case", "CHECKED_KEYWORDS is a claim, not a label: every keyword listed fires, and an unlisted assertion keyword in a supplied schema throws rather than passing clean", "if/then is the ONE hardcoded conditional the schema instructs; an unrecognised if/then is refused rather than ignored", "a packet whose `agent` disagrees with the line's attributionAgent is a provenance violation, reported by harvest (validatePacket never sees the transcript)"] }
+// agent-notes: { ctx: "post-hoc PACKET compliance harvester over subagent transcripts", deps: [schemas/packet.schema.json, docs/process/communication-registers.md], state: active, last: "claude@2026-08-13", key: ["the FINAL assistant record is the return, text or not — walking back past a tool-use-only turn graded a turn 92 records stale as if it were the return (#128)", "no-return carries NO contract violation but DOES trip --strict: a silently dead agent is the false green this tool exists to expose", "countsAsDeadAgent, not the status, drives the report — 17 of 24 main-session logs end mid-tool-call and are not dead agents", "out-of-scope = the target project does not bind that agent in .claude/agents/; roster comes from the transcript`s own cwd", "a roster that could not be READ is null, never an empty Set — an empty roster marks every agent out-of-scope and silences every violation", "read-only measurement, NOT an enforcement adapter — no hook, nothing blocks", "exit 0 = measured (violations go in the output), exit 2 = could not measure; --strict opts into exit 1 on violations", "harvest THROWS on an unreadable directory: an empty row set reads as `no violations` over a directory nobody read", "extractPacket recognises a packet ATTEMPT structurally (>=3 packet keys); conformance is validatePacket's question, never the extractor's", "brace scanning is string- and escape-aware — a narrative quoting code with braces in it is the common case", "CHECKED_KEYWORDS is a claim, not a label: every keyword listed fires, and an unlisted assertion keyword in a supplied schema throws rather than passing clean", "if/then is the ONE hardcoded conditional the schema instructs; an unrecognised if/then is refused rather than ignored", "a packet whose `agent` disagrees with the line's attributionAgent is a provenance violation, reported by harvest (validatePacket never sees the transcript)"] }
 //
 // ADR-0015 gave every specialist return a PACKET envelope, and then made it
 // unmeasurable: the envelope is machine-consumed, the coordinator forwards only
@@ -75,14 +75,27 @@ function contentText(content) {
 }
 
 /**
- * The final assistant turn, plus the persona the transcript attributes it to.
+ * The final assistant turn, plus the persona the transcript attributes it to and
+ * the working directory it ran in.
  * Lines that are not valid JSON are skipped: a transcript truncated mid-write is
  * normal, and dying on one bad line reports nothing about the other thirty-nine.
+ *
+ * THE FINAL ASSISTANT RECORD IS THE AGENT'S LAST ACT, whether or not it carried
+ * text. This used to `continue` past a tool-use-only turn and keep walking
+ * backwards for text, which meant an agent killed mid-tool-loop was graded on
+ * whatever it last narrated — for one `sato` run, a turn 92 records before the
+ * end of the transcript reading "Now the C1 fix in `bodies.py`.", reported as a
+ * missing packet. That agent did not decline the contract; it never reached a
+ * turn in which it could comply. `stop_reason` corroborates but cannot decide
+ * it: across the 36 transcripts that surfaced this, the key was absent on 4.
  */
 function finalAssistantTurn(jsonlText) {
   let text = null;
   let agent = null;
   let lastSeenAgent = null;
+  let cwd = null;
+  let sawAssistant = false;
+  let endedMidToolCall = false;
   for (const raw of String(jsonlText ?? "").split("\n")) {
     const trimmed = raw.trim();
     if (!trimmed) continue;
@@ -96,14 +109,23 @@ function finalAssistantTurn(jsonlText) {
     if (typeof entry.attributionAgent === "string" && entry.attributionAgent) {
       lastSeenAgent = entry.attributionAgent;
     }
+    if (typeof entry.cwd === "string" && entry.cwd) cwd = entry.cwd;
     if (entry.type !== "assistant") continue;
+    sawAssistant = true;
     const found = contentText(entry.message?.content);
-    if (found === null) continue; // a tool-use-only turn carries no return text
+    endedMidToolCall = found === null;
+    if (found === null) continue;
     text = found;
     agent = typeof entry.attributionAgent === "string" ? entry.attributionAgent : null;
   }
+  // The agent's last act was a tool call, so nothing it said earlier is its
+  // return. Discard the stale text rather than grade it.
+  if (sawAssistant && endedMidToolCall) {
+    text = null;
+    agent = null;
+  }
   if (text === null && lastSeenAgent === null) return null;
-  return { text, agent: agent ?? lastSeenAgent };
+  return { text, agent: agent ?? lastSeenAgent, cwd, endedMidToolCall: sawAssistant && endedMidToolCall };
 }
 
 /** The text of the last assistant turn in a JSONL transcript, or null. */
@@ -428,7 +450,37 @@ export const STATUS = Object.freeze({
   malformed: "malformed",
   noPacket: "no-packet",
   noReturn: "no-return",
+  outOfScope: "out-of-scope",
 });
+
+/**
+ * The personas a project binds, as a Set of agent-file stems, or `null` when the
+ * roster could not be determined.
+ *
+ * `null` IS NOT AN EMPTY ROSTER, and the distinction is the whole point. An
+ * unreadable roster read as "this project binds nobody" would make every agent
+ * out-of-scope and silence every violation — a clean report over a wholly
+ * non-compliant fleet. That false negative is the same one this tool has now
+ * produced in three other guises, so an existing-but-empty `.claude/agents/`
+ * is also `null`: a directory with no personas in it cannot be the roster of a
+ * project that just ran nine of them.
+ */
+const rosterCache = new Map();
+function rosterFor(cwd) {
+  if (typeof cwd !== "string" || !cwd) return null;
+  if (rosterCache.has(cwd)) return rosterCache.get(cwd);
+  let stems = null;
+  try {
+    stems = readdirSync(join(cwd, ".claude", "agents"), { withFileTypes: true })
+      .filter((e) => e.isFile() && e.name.endsWith(".md"))
+      .map((e) => e.name.slice(0, -".md".length));
+  } catch {
+    stems = null;
+  }
+  const roster = stems && stems.length > 0 ? new Set(stems) : null;
+  rosterCache.set(cwd, roster);
+  return roster;
+}
 
 function transcriptFiles(dir) {
   const out = [];
@@ -447,9 +499,39 @@ function gradeTranscript(file, root, schema) {
   const attributed = turn?.agent ?? null;
   const agent =
     attributed ?? (packet && typeof packet.agent === "string" && packet.agent ? packet.agent : UNATTRIBUTED);
-  const row = { file: relative(root, file) || basename(file), agent, status: STATUS.noReturn, violations: [] };
+  const roster = rosterFor(turn?.cwd ?? null);
+  const row = {
+    file: relative(root, file) || basename(file),
+    agent,
+    status: STATUS.noReturn,
+    violations: [],
+    rosterKnown: roster !== null,
+    countsAsDeadAgent: false,
+  };
 
-  if (text === null || text.trim() === "") return row; // nothing to grade, and saying so is not a finding
+  // Only agents this project actually binds were ever addressed by the contract.
+  // `general-purpose` is a built-in Claude Code agent type with no
+  // `.claude/agents/` file: it never received the binding, and billing its nine
+  // returns as eight violations overstated the miss count five-fold in a number
+  // ADR-0015's reversal checkpoint is read off. Checked BEFORE the no-return
+  // arm on purpose — if the contract never addressed this agent, whether it
+  // finished is not this tool's question to answer.
+  if (attributed && roster && !roster.has(attributed)) {
+    row.status = STATUS.outOfScope;
+    return row;
+  }
+
+  if (text === null || text.trim() === "") {
+    // A specialist killed mid-tool-loop is worth surfacing. A main-session log
+    // that ends mid-tool-call is just a session that stopped, and 17 of the 24
+    // in the validation project do — reporting those as dead agents re-inflates
+    // the count in a new column and makes --strict unusable at a project root,
+    // which is the regression #128 exists to undo. Same rule as the missing
+    // packet: only a transcript the harness attributed to a persona owes a
+    // return in the first place.
+    row.countsAsDeadAgent = Boolean(attributed) && turn?.endedMidToolCall === true;
+    return row;
+  }
 
   if (!packet) {
     row.status = STATUS.noPacket;
@@ -511,17 +593,24 @@ const USAGE = `usage: node scripts/harvest-packets.mjs <transcript-dir> [schema.
 Grades PACKET compliance from subagent transcripts after the fact. Read-only:
 it blocks nothing and gates nothing.
 
-  --strict   exit 1 when violations were found (default: violations are output,
-             not an exit code)
+  --strict   exit 1 when violations were found OR an agent never returned
+             (default: both are output, not an exit code)
 
 exit 0  measurement succeeded, whatever it found
-exit 1  --strict only, violations found
-exit 2  could not measure (missing directory, bad usage, unusable schema)`;
+exit 1  --strict only, violations found or an agent never returned
+exit 2  could not measure (missing directory, bad usage, unusable schema,
+        or nothing under it was addressed by the contract)
+
+Statuses. "no-return" is an agent whose last act was a tool call — it was killed
+mid-loop and never reached a turn in which it could comply, so it carries no
+contract violation but IS surfaced, because a silently dead agent is the failure
+this tool exists to expose. "out-of-scope" is an agent the target project does
+not bind in .claude/agents/, which was never addressed by the contract at all.`;
 
 const pad = (s, width) => String(s).padEnd(width);
 
 function renderTable(rows) {
-  const statuses = [STATUS.conformant, STATUS.malformed, STATUS.noPacket, STATUS.noReturn];
+  const statuses = [STATUS.conformant, STATUS.malformed, STATUS.noPacket, STATUS.noReturn, STATUS.outOfScope];
   const byAgent = new Map();
   for (const row of rows) {
     if (!byAgent.has(row.agent)) byAgent.set(row.agent, { total: 0, violations: 0, ...Object.fromEntries(statuses.map((s) => [s, 0])) });
@@ -615,7 +704,9 @@ function main(argv) {
       `\nnote: ${unattributed} transcript(s) carry no persona attribution — those are main-session\n` +
         "transcripts, not subagent returns, and owe no packet. Point this at a `subagents/`\n" +
         "directory to measure only specialist returns. They contribute no violations, and\n" +
-        "--strict does NOT count them."
+        "--strict does NOT count them. Some sit under no-return because a session log stops\n" +
+        "mid-tool-call when the session does — that is not an agent that died, so the\n" +
+        "no-return column and the specialist count below deliberately differ."
     );
   }
 
@@ -633,22 +724,77 @@ function main(argv) {
   // Sub-decision 3 demands of Slice 3's validator, and the one this tool was
   // built to make measurable — rebuilding it in here would be the joke telling
   // itself.
-  if (unattributed === rows.length) {
+  // An agent killed mid-tool-loop carries no contract violation — it never
+  // reached a turn in which it could comply — so without this it would land in
+  // a report reading "0 violation(s) found" over two dead agents. That is the
+  // false green in CLAUDE.md § Treat Agent Output as Untrusted, printed by the
+  // tool built to expose it. It gets its own count, its own section, and it
+  // trips --strict.
+  const noReturn = rows.filter((r) => r.countsAsDeadAgent);
+  if (noReturn.length > 0) {
+    console.log("\nspecialists that never returned (killed mid-tool-call — no contract violation, but not a pass):");
+    for (const row of noReturn) console.log(`  ${row.file} (${row.agent})`);
+  }
+
+  const outOfScope = rows.filter((r) => r.status === STATUS.outOfScope).length;
+  if (outOfScope > 0) {
     console.log(
-      "\nNOT MEASURED: no transcript carried a persona attribution, so nothing here was\n" +
-        "gradeable against the return contract. This is a failure to measure, not a clean\n" +
-        "result. `attributionAgent` is undocumented harness internals — if it has been\n" +
-        "renamed or moved, this tool needs updating before its numbers mean anything."
+      `\nnote: ${outOfScope} transcript(s) ran under an agent type the project does not bind in\n` +
+        ".claude/agents/ — a built-in type such as `general-purpose` never received the\n" +
+        "return contract, so it is out of scope rather than non-compliant. Counted, shown,\n" +
+        "and excluded from violations and from --strict."
+    );
+  }
+
+  // Rows whose project roster could not be read are graded as bound, and the
+  // reader is told. The alternative — assuming an unreadable roster binds
+  // nobody — would mark every agent out-of-scope and silence every violation.
+  const rosterUnknown = rows.filter((r) => r.rosterKnown === false && r.agent !== UNATTRIBUTED).length;
+  if (rosterUnknown > 0) {
+    console.log(
+      `\nnote: ${rosterUnknown} transcript(s) could not be matched to a project roster (no cwd, or\n` +
+        "no readable .claude/agents/ under it) and were graded as though bound. An unknown\n" +
+        "roster is not an empty one; assuming otherwise would suppress every violation."
+    );
+  }
+
+  // Every row unattributed or out-of-scope is NOT a clean fleet — it is a
+  // failure to measure.
+  //
+  // The unattributed half exists because the fix above created it. Unattributed
+  // rows were being counted as violations (38 of 41 in the first real run), so
+  // they were made incapable of carrying one — which converted a false positive
+  // into a false negative. `attributionAgent` is undocumented harness
+  // internals: rename it upstream and every specialist return becomes
+  // unattributed, every violation is suppressed, and this prints "0
+  // violation(s) found" over a wholly non-compliant fleet. Pierrot reproduced
+  // exactly that. Out-of-scope joins it for the same reason: a run in which
+  // nothing was addressed by the contract measured nothing about the contract.
+  //
+  // Absent input is not clean input. That is the distinction ADR-0015
+  // Sub-decision 3 demands of Slice 3's validator, and the one this tool was
+  // built to make measurable — rebuilding it in here would be the joke telling
+  // itself.
+  if (unattributed + outOfScope === rows.length) {
+    console.log(
+      "\nNOT MEASURED: no transcript here was gradeable against the return contract — every\n" +
+        "one was either unattributed or run by an agent type the project does not bind. This\n" +
+        "is a failure to measure, not a clean result. `attributionAgent` and `cwd` are\n" +
+        "undocumented harness internals — if either has been renamed or moved, this tool\n" +
+        "needs updating before its numbers mean anything."
     );
     return 2;
   }
 
   const totalViolations = rows.reduce((n, r) => n + r.violations.length, 0);
+  const stopped = noReturn.length > 0 ? `, ${noReturn.length} specialist(s) never returned` : "";
   console.log(
-    `\n${rows.length} transcript(s) measured, ${totalViolations} violation(s) found.` +
-      (totalViolations > 0 && !flags.includes("--strict") ? " Exit 0: this is a measurement, not a gate." : "")
+    `\n${rows.length} transcript(s) measured, ${totalViolations} violation(s) found${stopped}.` +
+      ((totalViolations > 0 || noReturn.length > 0) && !flags.includes("--strict")
+        ? " Exit 0: this is a measurement, not a gate."
+        : "")
   );
-  return flags.includes("--strict") && totalViolations > 0 ? 1 : 0;
+  return flags.includes("--strict") && (totalViolations > 0 || noReturn.length > 0) ? 1 : 0;
 }
 
 // Entry-point guard, so importing this module does not scan a directory and
