@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "claude@2026-08-09", key: ["12 checks: agent files, persona roster, persona voice + delivery, register binding, AGENTS.md projection, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering, review-sentinel integrity", "voice delivery (#112) asserts each personas.md voice appears verbatim (whitespace-collapsed) in .claude/agents/<name>.md — the agent file is the runtime surface, personas.md is only a doc it points at", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8/#9 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes", "check #9 catches the Placeholder-Sentinel anti-pattern; its marker regex is anchored to a Status: line because matching prose false-positived on two real reviews", "exports findSentinelProblems + runAllChecks behind an entry-point guard, so the module is importable by its tests"] }
+// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "claude@2026-08-09", key: ["13 checks: agent files, persona roster, persona voice + delivery, register binding, AGENTS.md projection, packet-schema fallback, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering, review-sentinel integrity", "voice delivery (#112) asserts each personas.md voice appears verbatim (whitespace-collapsed) in .claude/agents/<name>.md — the agent file is the runtime surface, personas.md is only a doc it points at", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8/#9 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes", "check #9 catches the Placeholder-Sentinel anti-pattern; its marker regex is anchored to a Status: line because matching prose false-positived on two real reviews", "exports findSentinelProblems + runAllChecks behind an entry-point guard, so the module is importable by its tests"] }
 //
 // Fitness function for Summon's canon. Our agent/persona/process docs duplicate
 // facts across many files; the agent-notes protocol keeps them in sync by hand.
@@ -15,6 +15,7 @@ import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { findStaleness } from "./gen-agents-md.mjs";
+import { DEFAULT_SCHEMA as HARVESTER_FALLBACK } from "./harvest-packets.mjs";
 
 const ROOT = process.cwd();
 const AGENTS_DIR = join(ROOT, ".claude", "agents");
@@ -23,6 +24,7 @@ const PERSONAS = join(ROOT, "docs", "methodology", "personas.md");
 const DONE_GATE = join(ROOT, "docs", "process", "done-gate.md");
 const REGISTERS = join(ROOT, "docs", "process", "communication-registers.md");
 const AGENTS_MD = join(ROOT, "AGENTS.md");
+const PACKET_SCHEMA = join(ROOT, "schemas", "packet.schema.json");
 
 const failures = [];
 const fail = (msg) => failures.push(msg);
@@ -275,6 +277,44 @@ function checkAgentsMdProjection() {
   if (!existsSync(REGISTERS)) return;
   const stale = findStaleness(read(REGISTERS), existsSync(AGENTS_MD) ? read(AGENTS_MD) : null);
   if (stale) fail(`AGENTS.md projection: ${stale}`);
+}
+
+// 2f. The harvester's fallback schema must agree with the shipped one.
+//
+// harvest-packets.mjs carries a DEFAULT_SCHEMA so validatePacket works with no
+// schema argument. That is a second hand-written copy of schemas/packet.schema.json,
+// and two copies of one fact with nothing between them is the defect this whole
+// file exists to catch — a stale value set there would grade real packets against
+// a vocabulary the contract no longer uses, and report them clean.
+//
+// Compares only the assertions that decide a verdict: the required key sets and
+// the enums. Descriptions and x-register annotations are documentation and are
+// free to differ.
+export function findSchemaFallbackDrift(shipped, fallback) {
+  const drift = [];
+  const eq = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  const pairs = [
+    ["required", shipped.required, fallback.required],
+    ["claims.items.required", shipped.properties?.claims?.items?.required, fallback.properties?.claims?.items?.required],
+    ["state.enum", shipped.properties?.state?.enum, fallback.properties?.state?.enum],
+    ["epistemic.enum", shipped.properties?.claims?.items?.properties?.epistemic?.enum, fallback.properties?.claims?.items?.properties?.epistemic?.enum],
+    ["severity.enum", shipped.properties?.claims?.items?.properties?.severity?.enum, fallback.properties?.claims?.items?.properties?.severity?.enum],
+    ["v.const", shipped.properties?.v?.const, fallback.properties?.v?.const],
+  ];
+  for (const [what, a, b] of pairs) {
+    if (!eq(a, b)) drift.push(`${what}: schema has ${JSON.stringify(a)}, harvester fallback has ${JSON.stringify(b)}`);
+  }
+  return drift;
+}
+
+function checkSchemaFallback() {
+  if (!existsSync(PACKET_SCHEMA) || !existsSync(join(ROOT, "scripts", "harvest-packets.mjs"))) return;
+  for (const d of findSchemaFallbackDrift(JSON.parse(read(PACKET_SCHEMA)), HARVESTER_FALLBACK)) {
+    fail(
+      `packet schema fallback: ${d} — scripts/harvest-packets.mjs's DEFAULT_SCHEMA is a copy of schemas/packet.schema.json, ` +
+        `and a stale copy grades real returns against a vocabulary the contract dropped`
+    );
+  }
 }
 
 // 3. Every command file carries an agent-notes block.
@@ -548,7 +588,7 @@ function checkReviewSentinels() {
 }
 
 export function runAllChecks() {
-  for (const check of [checkAgentFiles, checkPersonaRoster, checkPersonaVoice, checkVoiceDelivery, checkRegisterBinding, checkAgentsMdProjection, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels]) {
+  for (const check of [checkAgentFiles, checkPersonaRoster, checkPersonaVoice, checkVoiceDelivery, checkRegisterBinding, checkAgentsMdProjection, checkSchemaFallback, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels]) {
     try {
       check();
     } catch (err) {

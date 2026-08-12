@@ -10,6 +10,7 @@
     "gen:agents": "node scripts/gen-agents-md.mjs",
     "check:css": "node scripts/check-css-contrast-motion.mjs",
     "check:doctor": "node packages/summon-team/dist/index.js doctor",
-    "harvest:debt": "node scripts/harvest-debt.mjs"
+    "harvest:debt": "node scripts/harvest-debt.mjs",
+    "harvest:packets": "node scripts/harvest-packets.mjs"
   }
 }
