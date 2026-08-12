@@ -27,7 +27,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, utimesSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -38,7 +38,9 @@ import {
   CHECKED_KEYWORDS,
   harvest,
   STATUS,
+  isDeadAgent,
 } from "./harvest-packets.mjs";
+import { BINDING_MARKER } from "./check-canon.mjs";
 
 /** The real, committed schema. Stable enough to be a fixture. */
 const REAL_SCHEMA = JSON.parse(
@@ -744,7 +746,10 @@ const toolUseLine = (agent = "sato", cwd = null) =>
     ...(cwd ? { cwd } : {}),
     message: {
       role: "assistant",
-      stop_reason: "tool_use",
+      // No stop_reason ON PURPOSE. Nothing reads it, and it is absent on 4 of
+      // 36 real tool-only finals — a fixture that carries it invites the reader
+      // to think it drives the classification. The CLI suite keeps one that has
+      // it, so both shapes are covered.
       content: [{ type: "tool_use", name: "Bash", input: { command: "uv run pytest" } }],
     },
   });
@@ -760,7 +765,7 @@ const truncatedTranscript = (text, agent = "sato", cwd = null) =>
 test("a transcript ending in a tool call is no-return, not no-packet", () => {
   const dir = mkdtempSync(join(tmpdir(), "summon-harvest-trunc-"));
   writeFileSync(join(dir, "agent-sato.jsonl"), truncatedTranscript("Now the C1 fix in `bodies.py`."));
-  const [row] = harvest(dir, REAL_SCHEMA);
+  const [row] = harvest(dir, REAL_SCHEMA, { now: Date.now() + 3_600_000 });
   assert.equal(row.agent, "sato", "the row must still name the agent that died");
   assert.equal(
     row.status,
@@ -775,7 +780,7 @@ test("a truncated agent carries no CONTRACT violation", () => {
   // the agent refused to write.
   const dir = mkdtempSync(join(tmpdir(), "summon-harvest-trunc2-"));
   writeFileSync(join(dir, "agent-grace.jsonl"), truncatedTranscript("Now verifying the statuses took.", "grace"));
-  const [row] = harvest(dir, REAL_SCHEMA);
+  const [row] = harvest(dir, REAL_SCHEMA, { now: Date.now() + 3_600_000 });
   assert.deepEqual(row.violations, [], "a dead agent did not fail the contract; it never reached it");
 });
 
@@ -788,7 +793,7 @@ test("the final turn is what gets graded — an earlier packet is not the return
   const dir = mkdtempSync(join(tmpdir(), "summon-harvest-stale-"));
   const stale = returnText(packet({ agent: "sato", finding_count: 9 }, ["unknowns"]));
   writeFileSync(join(dir, "agent-sato.jsonl"), truncatedTranscript(stale));
-  const [row] = harvest(dir, REAL_SCHEMA);
+  const [row] = harvest(dir, REAL_SCHEMA, { now: Date.now() + 3_600_000 });
   assert.equal(row.status, STATUS.noReturn, `a packet from an abandoned turn is not this run's return (got ${row.status})`);
   assert.deepEqual(row.violations, [], "and its staleness must not be reported as this run's non-compliance");
 });
@@ -813,14 +818,6 @@ test("a transcript that ENDS with prose and no packet is still a violation", () 
 // off. `cwd` is on every transcript record and carries the true project path,
 // so the roster comes from the project being measured.
 
-/** A project dir binding `names` as personas, the way a scaffolded repo does. */
-function projectBinding(names) {
-  const proj = mkdtempSync(join(tmpdir(), "summon-project-"));
-  mkdirSync(join(proj, ".claude", "agents"), { recursive: true });
-  for (const n of names) writeFileSync(join(proj, ".claude", "agents", `${n}.md`), "# persona\n");
-  return proj;
-}
-
 /** A transcript ending in prose with no packet, run inside `cwd`. */
 const proseTranscriptIn = (cwd, agent) =>
   line({ type: "user", cwd, message: { role: "user", content: "Go." } }) +
@@ -831,7 +828,6 @@ test("an agent the project does not bind is out-of-scope, not violating", () => 
   const dir = mkdtempSync(join(tmpdir(), "summon-harvest-unbound-"));
   writeFileSync(join(dir, "agent-gp.jsonl"), proseTranscriptIn(proj, "general-purpose"));
   const [row] = harvest(dir, REAL_SCHEMA);
-  assert.ok(typeof STATUS.outOfScope === "string" && STATUS.outOfScope.length > 0, "out-of-scope needs its own status");
   assert.equal(row.status, STATUS.outOfScope, "a return the contract never addressed cannot have failed it");
   assert.deepEqual(row.violations, []);
 });
@@ -888,9 +884,10 @@ test("a main-session log that ends mid-tool-call is not a dead agent", () => {
         message: { role: "assistant", stop_reason: "tool_use", content: [{ type: "tool_use", name: "Bash", input: {} }] },
       })
   );
-  const [row] = harvest(dir, REAL_SCHEMA);
+  const [row] = harvest(dir, REAL_SCHEMA, { now: Date.now() + 3_600_000 });
   assert.equal(row.agent, "(unknown)", "fixture sanity: this row is unattributed");
-  assert.equal(row.countsAsDeadAgent, false, "a session log is not a specialist that died mid-return");
+  assert.equal(row.status, STATUS.noReturn, "fixture sanity: it did end mid-tool-call");
+  assert.equal(isDeadAgent(row), false, "a session log is not a specialist that died mid-return");
 });
 
 test("an ATTRIBUTED transcript ending mid-tool-call IS a dead agent", () => {
@@ -898,6 +895,180 @@ test("an ATTRIBUTED transcript ending mid-tool-call IS a dead agent", () => {
   // test above and the whole truncation fix goes silent.
   const dir = mkdtempSync(join(tmpdir(), "summon-harvest-deadagent-"));
   writeFileSync(join(dir, "agent-sato.jsonl"), truncatedTranscript("Now the C1 fix."));
+  const [row] = harvest(dir, REAL_SCHEMA, { now: Date.now() + 3_600_000 });
+  assert.equal(isDeadAgent(row), true, "a specialist killed mid-tool-loop must stay visible");
+});
+
+// --- review round: what out-of-scope must NOT be able to silence -------------
+//
+// Pierrot's Critical. The out-of-scope fix stopped over-reporting and started
+// under-reporting: a roster read PERFECTLY that simply does not contain this
+// agent silenced it just as thoroughly as an unbound built-in. Four real
+// personas carrying genuine violations printed "0 violation(s) found" and
+// exited 0 under --strict. `null`-not-empty-Set only ever covered the roster
+// you could not READ.
+
+/** A project binding `names`, each agent file carrying the real binding marker. */
+function projectBinding(names, { withMarker = true } = {}) {
+  const proj = mkdtempSync(join(tmpdir(), "summon-project-"));
+  mkdirSync(join(proj, ".claude", "agents"), { recursive: true });
+  const body = withMarker ? `# persona\n\n${BINDING_MARKER} End your return with one JSON object.\n` : "# persona\n";
+  for (const n of names) writeFileSync(join(proj, ".claude", "agents", `${n}.md`), body);
+  return proj;
+}
+
+const proseIn = (cwd, agent) =>
+  line({ type: "user", cwd, message: { role: "user", content: "Go." } }) +
+  line({ type: "assistant", attributionAgent: agent, cwd, message: { role: "assistant", content: "Prose, no envelope." } });
+
+test("a REAL persona missing from a readable roster is graded, never silenced", () => {
+  // The Critical. `vik` is a Summon persona; this project's roster happens not
+  // to list it (a sibling cwd, a half-finished install, a user-scope persona).
+  // Silencing it is indistinguishable from silencing `general-purpose`, and
+  // exactly one of those is safe.
+  const proj = projectBinding(["sato"]);
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-realpersona-"));
+  writeFileSync(join(dir, "agent-vik.jsonl"), proseIn(proj, "vik"));
   const [row] = harvest(dir, REAL_SCHEMA);
-  assert.equal(row.countsAsDeadAgent, true, "a specialist killed mid-tool-loop must stay visible");
+  assert.notEqual(row.status, STATUS.outOfScope, "only a known built-in agent type may be treated as out of scope");
+  assert.ok(row.violations.length > 0, "a real persona's missing packet must survive the roster check");
+});
+
+test("a known built-in agent type IS out-of-scope", () => {
+  // The discriminating arm: the allowlist must still do its job, or #128's
+  // original five-fold overstatement comes straight back.
+  const proj = projectBinding(["sato"]);
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-builtin-"));
+  writeFileSync(join(dir, "agent-gp.jsonl"), proseIn(proj, "general-purpose"));
+  const [row] = harvest(dir, REAL_SCHEMA);
+  assert.equal(row.status, STATUS.outOfScope);
+  assert.deepEqual(row.violations, []);
+});
+
+test("an agent file with no binding marker does not count as bound", () => {
+  // Archie: the predicate was "a .md file exists", while check-canon.mjs owns
+  // the real one — the file must carry the canonical binding line. A stale
+  // scaffold or a user's own custom agent has a file and no contract, and was
+  // being billed for one. #128's error class, one layer in.
+  const proj = projectBinding(["sato"], { withMarker: false });
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-nomarker-"));
+  writeFileSync(join(dir, "agent-sato.jsonl"), proseIn(proj, "sato"));
+  const [row] = harvest(dir, REAL_SCHEMA);
+  assert.equal(row.rosterKnown, false, "a roster in which no file carries the binding is not a roster");
+  assert.ok(row.violations.length > 0, "and an unknown roster grades as bound rather than silencing");
+});
+
+test("an existing but EMPTY .claude/agents/ is not an empty roster", () => {
+  // Tara: mutating this guard left 78/78 green, because the only roster test
+  // used a directory that did not exist, so readdirSync threw and the
+  // length check was never reached.
+  const proj = projectBinding([]);
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-emptyroster-"));
+  writeFileSync(join(dir, "agent-vik.jsonl"), proseIn(proj, "vik"));
+  const [row] = harvest(dir, REAL_SCHEMA);
+  assert.equal(row.rosterKnown, false);
+  assert.notEqual(row.status, STATUS.outOfScope);
+  assert.ok(row.violations.length > 0, "a directory with no personas cannot be the roster of a project that ran one");
+});
+
+// --- review round: a return that said nothing is a return -------------------
+//
+// Vik, Archie and Pierrot converged on this independently. A blank-but-present
+// final text block shared a branch with a null one, so an agent that DID reach
+// a turn and used it to say nothing was filed under a label this commit defines
+// as "never reached a turn in which it could comply".
+
+test("a blank final text block is a missing packet, not a missing return", () => {
+  const proj = projectBinding(["sato"]);
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-blank-"));
+  writeFileSync(
+    join(dir, "agent-sato.jsonl"),
+    line({ type: "assistant", attributionAgent: "sato", cwd: proj, message: { content: "Working." } }) +
+      line({ type: "assistant", attributionAgent: "sato", cwd: proj, message: { content: [{ type: "text", text: "   " }] } })
+  );
+  const [row] = harvest(dir, REAL_SCHEMA);
+  assert.equal(row.status, STATUS.noPacket, "it reached a turn and used it; that is a return carrying no packet");
+  assert.ok(row.violations.length > 0, "and it must carry the violation, not vanish between two columns");
+});
+
+test("a tool-use-only tail is still a missing RETURN", () => {
+  // The discriminating arm, so the split above cannot be implemented by
+  // calling everything a missing packet.
+  const proj = projectBinding(["sato"]);
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-split-"));
+  writeFileSync(join(dir, "agent-sato.jsonl"), truncatedTranscript("Now the C1 fix.", "sato", proj));
+  const [row] = harvest(dir, REAL_SCHEMA, { now: Date.now() + 3_600_000 });
+  assert.equal(row.status, STATUS.noReturn);
+  assert.deepEqual(row.violations, [], "no contract was breached — there was no return to breach it with");
+});
+
+// --- review round: a live agent is not a dead one ---------------------------
+//
+// Pierrot found this by accident: the same directory gave different answers
+// minutes apart. A transcript still being appended to has a tool-use-only last
+// record BY DEFINITION, so `--strict` bills a running agent as a killed one.
+
+test("a transcript still being written is in-flight, not dead", () => {
+  const proj = projectBinding(["sato"]);
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-live-"));
+  const f = join(dir, "agent-sato.jsonl");
+  writeFileSync(f, truncatedTranscript("Still working.", "sato", proj));
+  const now = 1_760_000_000_000;
+  utimesSync(f, new Date(now - 5_000), new Date(now - 5_000)); // touched 5s ago
+  const [row] = harvest(dir, REAL_SCHEMA, { now });
+  assert.equal(row.status, STATUS.inFlight, "a file written seconds ago is a session in progress");
+});
+
+test("a transcript untouched for an hour IS dead", () => {
+  // The discriminating arm: without it, "never report a dead agent" passes.
+  const proj = projectBinding(["sato"]);
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-cold-"));
+  const f = join(dir, "agent-sato.jsonl");
+  writeFileSync(f, truncatedTranscript("Now the C1 fix.", "sato", proj));
+  const now = 1_760_000_000_000;
+  utimesSync(f, new Date(now - 3_600_000), new Date(now - 3_600_000));
+  const [row] = harvest(dir, REAL_SCHEMA, { now });
+  assert.equal(row.status, STATUS.noReturn, "an hour cold is not a session in progress");
+});
+
+// --- review round: smaller, but each one was a real hole --------------------
+
+test("cwd comes from the final assistant record, not from any later line", () => {
+  // Pierrot: :112 took the last cwd off ANY record. Real data has two cwd
+  // values in one project, one of them a vendor dir with zero agent files.
+  const real = projectBinding(["sato"]);
+  const vendor = mkdtempSync(join(tmpdir(), "summon-vendor-"));
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-cwd-"));
+  writeFileSync(
+    join(dir, "agent-sato.jsonl"),
+    line({ type: "assistant", attributionAgent: "sato", cwd: real, message: { content: "Prose, no envelope." } }) +
+      line({ type: "user", cwd: vendor, message: { role: "user", content: [{ type: "tool_result", content: "ok" }] } })
+  );
+  const [row] = harvest(dir, REAL_SCHEMA);
+  assert.equal(row.rosterKnown, true, "the roster must come from where the agent ran, not from a later tool result");
+});
+
+test("the roster cache does not memoize a failed read", () => {
+  // Vik: one transient readdir failure poisoned the project for the whole run
+  // and re-inflated the violation count invisibly.
+  const proj = mkdtempSync(join(tmpdir(), "summon-latecreate-"));
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-recache-"));
+  writeFileSync(join(dir, "agent-sato.jsonl"), proseIn(proj, "sato"));
+  assert.equal(harvest(dir, REAL_SCHEMA)[0].rosterKnown, false, "fixture sanity: no roster yet");
+  mkdirSync(join(proj, ".claude", "agents"), { recursive: true });
+  writeFileSync(join(proj, ".claude", "agents", "sato.md"), `# p\n\n${BINDING_MARKER} x\n`);
+  assert.equal(harvest(dir, REAL_SCHEMA)[0].rosterKnown, true, "a failed read must not be remembered as a verdict");
+});
+
+test("a symlinked transcript is not silently dropped", () => {
+  // Pierrot: entry.isFile() is false for a symlink Dirent, so the file
+  // vanished with no note — the same way an unmeasured agent reads as a
+  // compliant one.
+  const proj = projectBinding(["sato"]);
+  const real = mkdtempSync(join(tmpdir(), "summon-harvest-realdir-"));
+  writeFileSync(join(real, "agent-sato.jsonl"), proseIn(proj, "sato"));
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-symlink-"));
+  symlinkSync(join(real, "agent-sato.jsonl"), join(dir, "agent-sato.jsonl"));
+  const rows = harvest(dir, REAL_SCHEMA);
+  assert.equal(rows.length, 1, "a symlinked transcript is a transcript");
 });

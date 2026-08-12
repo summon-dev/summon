@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "CLI-level exit-code tests for the packet harvester", deps: [scripts/harvest-packets.mjs], state: active, last: "claude@2026-08-13", key: ["an exit-code assertion alone cannot tell `judged correctly` from `never ran` — a syntax error also exits 1, so every case here also asserts on stdout", "the exit code is the ONLY part a machine consumes, and it had no coverage", "three separate paths once exited 0 having measured nothing — all three are pinned here", "exit 2 = could not measure; absent input is not clean input"] }
+// agent-notes: { ctx: "CLI-level exit-code tests for the packet harvester", deps: [scripts/harvest-packets.mjs], state: active, last: "claude@2026-08-13", key: ["an exit-code assertion alone cannot tell `judged correctly` from `never ran` — a syntax error also exits 1, so every case pairs its exit code with an assertion on stdout or stderr", "the exit code is the ONLY part a machine consumes, and it had no coverage", "three separate paths once exited 0 having measured nothing — all three are pinned here", "exit 2 = could not measure; absent input is not clean input"] }
 //
 //   node --test scripts/harvest-packets.cli.test.mjs
 //
@@ -12,7 +12,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, utimesSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -25,7 +25,11 @@ const run = (...args) => spawnSync(process.execPath, [SCRIPT, ...args], { encodi
 function treeOf(entries) {
   const dir = mkdtempSync(join(tmpdir(), "summon-harvest-cli-"));
   for (const [name, text, agent] of entries) {
-    const line = { type: "assistant", message: { content: text } };
+    // A block array, because that is what the harness actually writes: across
+    // 668 real transcripts the final assistant content is a block array in all
+    // of them and a bare string in none. Testing the machine-consumed layer in
+    // a dialect the harness does not speak is how a population goes uncovered.
+    const line = { type: "assistant", message: { content: [{ type: "text", text }] } };
     if (agent) line.attributionAgent = agent;
     writeFileSync(join(dir, name), JSON.stringify(line) + "\n");
   }
@@ -57,7 +61,9 @@ test("a directory whose transcripts are under a different extension exits 2", ()
   // no .jsonl and must say it failed rather than that the fleet is clean.
   const dir = treeOf([]);
   writeFileSync(join(dir, "agent-1.json"), "{}\n");
-  assert.equal(run(dir, "--strict").status, 2);
+  const r = run(dir, "--strict");
+  assert.equal(r.status, 2);
+  assert.match(r.stdout, /NOT a report of zero violations/);
 });
 
 test("transcripts that are ALL unattributed exit 2, however non-compliant they are", () => {
@@ -85,8 +91,13 @@ test("a measurable directory with no violations exits 0", () => {
 });
 
 test("--strict exits 1 when an attributed specialist returned no packet", () => {
+  // Asserts on stdout as well as the code. A module with a SYNTAX ERROR also
+  // exits 1, so an exit-code assertion alone cannot tell "judged correctly"
+  // from "never ran" — this exact test was green against an unparseable module.
   const dir = treeOf([["agent-1.jsonl", "Findings in prose, no envelope.", "vik"]]);
-  assert.equal(run(dir, SCHEMA, "--strict").status, 1);
+  const r = run(dir, SCHEMA, "--strict");
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /no PACKET envelope/);
 });
 
 test("without --strict, violations still exit 0 — this is a measurement, not a gate", () => {
@@ -103,13 +114,17 @@ test("a mixed directory measures the attributed rows and does not exit 2", () =>
     ["agent-1.jsonl", "Main-session prose.", null],
     ["agent-2.jsonl", `Here it is.\n\n${CONFORMANT}`, "vik"],
   ]);
-  assert.equal(run(dir, SCHEMA, "--strict").status, 0);
+  const r = run(dir, SCHEMA, "--strict");
+  assert.equal(r.status, 0);
+  assert.match(r.stdout, /transcript\(s\) read/);
 });
 
 // --- usage errors -------------------------------------------------------------
 
 test("a missing directory exits 2", () => {
-  assert.equal(run(join(tmpdir(), "summon-does-not-exist-4f2a"), "--strict").status, 2);
+  const r = run(join(tmpdir(), "summon-does-not-exist-4f2a"), "--strict");
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /cannot read transcript directory/);
 });
 
 test("no arguments exits 2 and prints usage", () => {
@@ -119,18 +134,23 @@ test("no arguments exits 2 and prints usage", () => {
 });
 
 test("an unrecognised flag exits 2 rather than being ignored", () => {
-  assert.equal(run(treeOf([]), "--strictly").status, 2);
+  const r = run(treeOf([]), "--strictly");
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /unknown option/);
 });
 
 // --- the two categories that owe no violation but must not read as a pass (#128)
 
 import { mkdirSync } from "node:fs";
 
+/** Age a fixture past the in-flight grace window, so it reads as dead rather than live. */
+const age = (f) => utimesSync(f, new Date(Date.now() - 3_600_000), new Date(Date.now() - 3_600_000));
+
 /** A project dir binding `names` as personas. */
 function projectBinding(names) {
   const proj = mkdtempSync(join(tmpdir(), "summon-cli-project-"));
   mkdirSync(join(proj, ".claude", "agents"), { recursive: true });
-  for (const n of names) writeFileSync(join(proj, ".claude", "agents", `${n}.md`), "# persona\n");
+  for (const n of names) writeFileSync(join(proj, ".claude", "agents", `${n}.md`), "# persona\n\n**Return contract (PACKET).** End your return with one JSON object.\n");
   return proj;
 }
 
@@ -153,9 +173,10 @@ test("--strict exits 1 when an agent never returned", () => {
       }) +
       "\n"
   );
+  age(join(dir, "agent-sato.jsonl"));
   const r = run(dir, SCHEMA, "--strict");
   assert.equal(r.status, 1, "an agent that died mid-run must not exit 0 under --strict");
-  assert.match(r.stdout, /never returned/);
+  assert.match(r.stdout, /produced no return/);
 });
 
 test("--strict does NOT exit 1 for an out-of-scope agent alone", () => {
@@ -175,7 +196,7 @@ test("--strict does NOT exit 1 for an out-of-scope agent alone", () => {
   );
   const r = run(dir, SCHEMA, "--strict");
   assert.equal(r.status, 0, "an unbound agent type was never addressed by the contract and cannot fail it");
-  assert.match(r.stdout, /out-of-scope/);
+  assert.match(r.stdout, /ran under a built-in agent type/);
 });
 
 test("a run whose every transcript is out-of-scope exits 2, not 0", () => {
@@ -190,4 +211,38 @@ test("a run whose every transcript is out-of-scope exits 2, not 0", () => {
   const r = run(dir, SCHEMA, "--strict");
   assert.equal(r.status, 2);
   assert.match(r.stdout, /NOT MEASURED/);
+});
+
+test("a real persona missing from the roster is reported, not silenced", () => {
+  // The Critical, end to end. Four real personas carrying genuine violations
+  // were silenced as out-of-scope, printing "0 violation(s) found" and exiting
+  // 0 under --strict. Membership of the built-in allowlist is now the only
+  // thing that excuses a row.
+  const proj = projectBinding(["sato"]);
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-cli-mismatch-"));
+  writeFileSync(
+    join(dir, "agent-vik.jsonl"),
+    JSON.stringify({ type: "assistant", attributionAgent: "vik", cwd: proj, message: { content: [{ type: "text", text: "Prose, no envelope." }] } }) + "\n"
+  );
+  const r = run(dir, SCHEMA, "--strict");
+  assert.equal(r.status, 1, "a real persona's violation must survive a roster that omits it");
+  assert.match(r.stdout, /ROSTER MISMATCH/);
+  assert.match(r.stdout, /no PACKET envelope/);
+});
+
+test("the summary separates transcripts read from transcripts gradeable", () => {
+  // It read "60 transcript(s) measured" when 27 were gradeable, so every reader
+  // who divided got a different wrong answer.
+  const proj = projectBinding(["sato"]);
+  const dir = mkdtempSync(join(tmpdir(), "summon-harvest-cli-denom-"));
+  writeFileSync(
+    join(dir, "agent-gp.jsonl"),
+    JSON.stringify({ type: "assistant", attributionAgent: "general-purpose", cwd: proj, message: { content: [{ type: "text", text: "Prose." }] } }) + "\n"
+  );
+  writeFileSync(
+    join(dir, "agent-sato.jsonl"),
+    JSON.stringify({ type: "assistant", attributionAgent: "sato", cwd: proj, message: { content: [{ type: "text", text: CONFORMANT_SATO }] } }) + "\n"
+  );
+  const r = run(dir, SCHEMA);
+  assert.match(r.stdout, /2 transcript\(s\) read, 1 gradeable against the contract/);
 });
