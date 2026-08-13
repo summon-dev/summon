@@ -3,7 +3,7 @@ agent-notes:
   ctx: "implementation gotchas and established patterns"
   deps: [CLAUDE.md]
   state: active
-  last: "claude@2026-08-06"
+  last: "claude@2026-08-13"
 ---
 # Known Patterns and Gotchas
 
@@ -73,6 +73,16 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 - **Plans don't replace process (Plan-as-Bypass anti-pattern).** A detailed implementation plan (from plan mode, a prior session, or a human-provided spec) is **input** to the Summon team phases, not a bypass. The plan still needs: GitHub issues (Grace), architecture gate if applicable (Archie + Wei as standalone agents), TDD (Tara → Sato), code review (Vik + Tara + Pierrot), and Done Gate. **Detection signal:** if the coordinator's first tool call is `Read` on a source file (not `docs/code-map.md`, governance docs, or the sprint plan), it's likely in bypass mode. See `2026-02-20-process-violation-plan-bypass.md` for the full retro.
 
 - **Backlog-Blind Session Start anti-pattern.** A session dives straight into new work without checking what's already in flight — open PRs that still merge clean and fix real bugs, board items already In Progress, or `summon:` debt markers that overlap the planned change. New work lands on top of an untriaged backlog, and the stale-but-valid PR rots further (a CLI fix sat open for ~3 months while unrelated features shipped past it). **Detection signal:** the first substantive action of a long session is new implementation, but `gh pr list`, the board, and `pnpm harvest:debt` were never consulted. A PR sits open for weeks while unrelated work merges. **Fix:** Session Entry Protocol step 1 — reconnoiter open PRs, board state, and tech debt before starting substantial work, surface overlaps and stale-but-valid PRs, and **ask the human whether to clear any of it first**. Exempt one-line fixes and conversational turns; this is for sessions that will run long. See `CLAUDE.md` § Session Entry Protocol.
+
+- **Agreement standing in for evidence, in two shapes.** Both produce a green that was never at risk of being anything else.
+
+    - *A green gate whose defence never fired proves nothing.* Before believing a sweep, count how many subjects **could have failed**. A check over a roster where the property held by coincidence, or an injection guard whose count was zero because nothing ever reached it, reports success and measures nothing. **Detection signal:** a pass is reported without a denominator, or the denominator is unexamined. **Fix:** state how many subjects were at risk alongside the result; if the answer is zero, the run is not evidence.
+
+    - *Two methods agreeing tells you about their overlap, never about their common blind spot.* And decomposing a figure until it matches a number you already hold is **reconciliation, not replication** — even when the decomposition is mechanical and honest. **Detection signal:** a second measurement is reported *after* the first is known, and the reporting emphasises the agreement rather than the method. **Fix, and it has to be prospective:** exchange methods first, run both blind, compare figures afterwards. Once a number has been shared, the corroboration it could have provided is spent and no amount of care recovers it. The discipline is entirely in the sequencing, which is free before you start and impossible after.
+
+  Both were found the same day: two independent audits of stack-specific commands in canon agreed on a count because both greps had excluded the same directory, and the agreement was reported as mutual corroboration before either method was compared.
+
+- **`grep -c` counts matching lines, not occurrences.** A line naming a command twice counts once. When the question is *how many times does this string appear*, `grep -c` silently answers a different one, and the gap is invisible in the output. **Detection signal:** a count is cited as occurrences and the source was `grep -c`, `grep -l | wc -l`, or any line-oriented counter. **Fix:** `grep -o <pattern> | wc -l` for occurrences; keep `grep -c` for "how many lines" and say so. This produced a confidently wrong figure inside an audit whose whole output was counts.
 
 - **Wei must be invoked as a standalone agent.** The coordinator's own analysis of trade-offs is not a substitute for invoking Wei as a standalone agent during architecture debates. If an ADR claims "Wei debate resolved" but no Wei agent was spawned, the gate has not passed.
 
