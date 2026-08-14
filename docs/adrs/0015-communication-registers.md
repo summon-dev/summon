@@ -225,7 +225,28 @@ Three authored sources, everything else a pointer:
 
 The originating proposal also appended a ~19-line register block to each of the sixteen agent files. Item (3) is **one line** per agent for that reason: ~300 lines of copy-paste with no single source is a drift generator, where the next persona edit forgets one file and the contract silently forks.
 
-**Amended 2026-08-13 — the line carries values, not just keys.** Issue #127. Amendment 2 below established that the line carries the field shape inline rather than pointing at it, and did not say how far *shape* reaches. The line it produced enumerated values for `v`, `state`, `epistemic`, and `severity`, and left `agent` a bare key whose rule lived in the schema — the same pointer failure one field to the left, since the schema is a document the specialist never reads. The constraint therefore generalises: **the line carries every constraint its reader cannot look up, values included.** A key name the reader must resolve elsewhere is a pointer wearing a different costume. This binds every future edit to the line. The canonical text itself remains delegated to `communication-registers.md` § The line every agent file carries, per the amendment below; a change to that text is not an ADR event, and a change to the constraint the text must satisfy is.
+**Amended 2026-08-13 — the line carries values, not just keys.** Issue #127. Amendment 2 below established that the line carries the field shape inline rather than pointing at it, and did not say how far *shape* reaches. The line it produced enumerated values for `v`, `state`, `epistemic`, and `severity`, and left `agent` a bare key whose rule lived in the schema — the same pointer failure one field to the left, since the schema is a document the specialist never reads. The constraint therefore generalises: **the line carries every constraint its reader cannot look up, values included.** A key name the reader must resolve elsewhere is a pointer wearing a different costume.
+
+Value completeness is genuinely wider than the reachability licence Amendment 2 granted, and the proof is an object rather than an argument: a line naming `agent` as a bare key satisfies reachability **completely** — it carries the field shape inline and defers to the process doc only on disagreement — and still fails #112's own test, because the value's rule lives in a schema the specialist never reads. The counterexample is the line that shipped.
+
+**What is delegated, and what is not.** The canonical text remains delegated to `communication-registers.md` § The line every agent file carries. Delegation of text is not delegation of scope: the delegated document may refine the line **within** the constraints below, and changing a constraint requires an amendment here.
+
+The constraints, as of this amendment:
+
+1. **Volume** — one line per agent file, not a block (Sub-decision 5's originating grievance).
+2. **Reachability** — the line carries its content inline and defers to the process doc only on disagreement, because a subagent is handed its own agent file and nothing else (Amendment 2, issue #112).
+3. **Value completeness** — every constraint the reader cannot look up is carried, values included (this amendment, issue #127).
+
+**Silence in this list is not a licence.** A rule the list did not anticipate is not thereby permitted; it is tested by the construction below, and where the construction fires the list gains a fourth entry in that same amendment. A floor that grows, never a ceiling that expires — a list read as exhaustive would rot into a false negative wearing a lookup's authority, which is worse than the judgement it replaced.
+
+**When an edit to the delegated text is an ADR event, tested in both directions.** Name the sentence here constituting the licence, then ask:
+
+- Does the delegated document now **assert** something no sentence above licenses? That is an **amendment** — extend the list.
+- Does it now **fail** a sentence above? That is **not an amendment but a conformance failure** — fix the delegated document.
+
+The second direction is not symmetry for its own sake. Sub-decision 5's founding incident is contraction: *a later reader given only the paragraph above would "simplify" the line back to a reference,* and before `check-canon.mjs` existed, doing so passed CI. A forward-only test would be silent on the exact failure this sub-decision was written to catch.
+
+This test is **citable, not mechanised.** Both sides have addresses, so a third party can check a verdict and overturn it — but nothing runs it. `check-canon.mjs` asserts every agent file matches the canonical text; it does not assert that the canonical text satisfies this ADR, and that relation has no check in either direction. Whether it is mechanisable at all is open.
 
 **Amended 2026-08-09 — one line, but not a pointer.** Issue #112, found after ratification, established that a pointer is not delivery: a subagent is handed its own agent file and nothing else, so the `@AGENTS.md` import above reaches the coordinator and buys the specialist nothing. The one line therefore carries the field shape inline and defers to this document only on disagreement. That satisfies the volume half of the grievance above; the *single source* half is satisfied separately, by `communication-registers.md` § The line every agent file carries holding the canonical text and `scripts/check-canon.mjs` asserting every agent file matches it verbatim. Recorded here because a later reader given only the paragraph above would "simplify" the line back to a reference — and before that check existed, doing so passed CI.
 
