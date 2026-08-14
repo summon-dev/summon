@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "how agents address the human and each other; the specialist return contract", deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/agent-notes.md, docs/process/done-gate.md, docs/adrs/0015-communication-registers.md], state: canonical, last: "claude@2026-08-08", key: ["TWO registers — BRIEF and PACKET; a selection rule, not a taxonomy", "correspondence runs BOTH ways: nothing only in the narrative, nothing only in claims[]", "internal means machine-CONSUMED, not machine-carried; the test is who reads it", "on conflict the envelope governs and clarity beats character", "the correspondence and anchor rules are prose discipline, NOT machine-checkable"] }
+agent-notes: { ctx: "how agents address the human and each other; the specialist return contract", deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/agent-notes.md, docs/process/done-gate.md, docs/adrs/0015-communication-registers.md], state: canonical, last: "claude@2026-08-13", key: ["TWO registers — BRIEF and PACKET; a selection rule, not a taxonomy", "correspondence runs BOTH ways: nothing only in the narrative, nothing only in claims[]", "internal means machine-CONSUMED, not machine-carried; the test is who reads it", "on conflict the envelope governs and clarity beats character", "the correspondence and anchor rules are prose discipline, NOT machine-checkable"] }
 ---
 
 # Communication Registers
@@ -39,7 +39,7 @@ One JSON object carrying both halves.
 | Field | Meaning |
 |---|---|
 | `v` | Schema version. Currently `1`. |
-| `agent` | Which persona is returning. |
+| `agent` | Which persona is returning, as its `.claude/agents/<name>.md` stem — `cam`, not `coach-cam`. |
 | `state` | Did this invocation finish, or stop early? One of `complete` or `stopped_early`. |
 | `finding_count` | How many findings. Must equal `claims.length`. |
 | `claims[]` | The findings themselves. |
@@ -64,8 +64,10 @@ The structure is also written as a JSON Schema at [`schemas/packet.schema.json`]
 
 Each `.claude/agents/*.md` carries this line verbatim. It is **one line, not a pointer** — a subagent is handed its own agent file and nothing else, so a reference to this document would not reach it (issue #112). This block is the single source; `scripts/check-canon.mjs` asserts every agent file matches it.
 
+The line spells out what goes in `agent` for the same reason it exists at all. It used to say bare `"agent"`, and the only place the answer was written down was the JSON Schema's description — which a subagent never reads. Cam, whose display name is Coach Cam, duly signed `"coach-cam"` (issue #127). The personas that got it right were mostly unaffected rather than correct — their file stem and their display name are the same word — and a rule that holds only where two names happen to coincide is not holding.
+
 ```text
-**Return contract (PACKET).** End your return with one JSON object: `{"v":1, "agent", "state": "complete"|"stopped_early", "finding_count", "claims":[{"summary", "epistemic":"deterministic"|"inferential"|"human-judgement", "severity":"Critical"|"Important"|"Suggestions", "evidence", "action"}], "unknowns":[], "narrative"}` — `finding_count` must equal `claims.length`, `unknowns` is mandatory and may be empty, a `deterministic` claim needs non-empty `evidence` naming what was run, and `narrative` restates every claim with its path, severity, and action **in your own voice**. Full spec, which wins on any disagreement: `docs/process/communication-registers.md`.
+**Return contract (PACKET).** End your return with one JSON object: `{"v":1, "agent": "<your agent-file stem, e.g. cam not coach-cam>", "state": "complete"|"stopped_early", "finding_count", "claims":[{"summary", "epistemic":"deterministic"|"inferential"|"human-judgement", "severity":"Critical"|"Important"|"Suggestions", "evidence", "action"}], "unknowns":[], "narrative"}` — `finding_count` must equal `claims.length`, `unknowns` is mandatory and may be empty, a `deterministic` claim needs non-empty `evidence` naming what was run, and `narrative` restates every claim with its path, severity, and action **in your own voice**. Full spec, which wins on any disagreement: `docs/process/communication-registers.md`.
 ```
 
 ### Severity
