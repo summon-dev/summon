@@ -13,6 +13,13 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'Summon',
+			// Deprecation notice (2026-08-18). Starlight's `banner` is per-page
+			// frontmatter, so a site-wide notice needs a component override.
+			// Page.astro renders <Banner /> on both the doc and splash templates.
+			// To un-deprecate: delete this `components` block and the component file.
+			components: {
+				Banner: './src/components/DeprecationBanner.astro',
+			},
 			tagline: 'Ship like a team of 10. You\'re the only human.',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/summon-dev/summon' }],
 			customCss: ['./src/styles/global.css'],

@@ -1,12 +1,43 @@
 # Summon
 
+> [!WARNING]
+> **Temporarily deprecated as of 2026-08-18 — don't adopt Summon right now.**
+>
+> Summon is tuned for a version of Claude Code that no longer exists. Its multi-lens review
+> doesn't fail loudly when that tuning goes stale; it degrades into unanimous approval, which
+> reads like a team hitting its stride. See [Why this is deprecated](#why-this-is-deprecated).
+
 **A virtual engineering team for code you have to answer for later.**
 
 A lone agent says "looks clean, shipping." Summon is the engineering team that asks **"who decided this?"** — and holds the merge until someone has.
 
 Summon drops a full AI engineering team into [Claude Code](https://claude.ai/code) — 16 agents with real process: architecture gates, TDD, multi-lens code review, and the standing to say *no*. Not a bag of agents. A team that catches what a solo pass leaves out.
 
-**Try it:** `npx summon-team my-project` — full setup in [Quick Start](#quick-start).
+**Installation is paused.** `npx summon-team my-project` still runs, but see the section below before you use it.
+
+---
+
+## Why this is deprecated
+
+Between late July and early August 2026, three things moved underneath Summon.
+
+**Opus 5's prompting guidance inverted Summon's core assumptions.** Anthropic's guidance for Opus 5 is to rein delegation *in* with explicit caps and scenarios, and to strip explicit verification instructions because they cause over-verification and add cost without improving results. Summon pushes hard the other way. `CLAUDE.md` mandates spawning named personas as standalone subagents and calls doing the work inline "a process violation," and the review protocol wraps every agent's output in a completion-sentinel check on the premise that a truncated report reads as a false green.
+
+**Claude Code's subagent defaults moved repeatedly.** A cap on concurrent subagents, nested spawning switched off by default and then restored at depth 3 two versions later, a per-session cap added in July and removed in August — inside about two weeks. `code-reviewer` fans out across four sibling agent files and sits directly on that fault line.
+
+**Opus 5 sessions carry an instruction not to invoke agents unless the user explicitly asks for them.** It arrives after everything in `CLAUDE.md`, and it countermands the delegation the entire roster is built on.
+
+Every agent file also carries `maxTurns` and `model: inherit` — parameters that describe how to make one harness behave, not what the work requires. That part was always going to expire; I just hadn't noticed it was load-bearing.
+
+### The failure mode is the reason for this notice
+
+Multi-lens review is Summon's whole premise, and the four lenses are only worth running because they *disagree*. What stale tuning produces is not an error you can see — it's approval. A reviewer that always agrees with you carries no information, but from the inside it's indistinguishable from a codebase that has gotten good. That's a worse failure than a crash, and it's why this notice exists rather than a patch release.
+
+### What this is not
+
+Not archived, not deleted, not abandoned. The repo stays up. Issues and PRs stay open — most of the open ones are my own attempts to work around exactly these problems. Every ADR, review record, and history document remains readable, and the methodology docs are still worth reading on their own terms. What I don't have is a version I'd tell you to install today, or a date when I will.
+
+The full reasoning — what decayed, what might be worth keeping, and why patching was the wrong instinct — is in *I Killed My Agent Team*: POST_URL_PENDING
 
 ---
 
@@ -81,6 +112,10 @@ Then the interview is short. Cam isn't there to stall a clear vision; Cam's ther
 ---
 
 ## Quick Start
+
+> [!WARNING]
+> Summon is [temporarily deprecated](#why-this-is-deprecated). These steps still work, but the
+> multi-lens review they set up is the part that has gone stale.
 
 ```bash
 npx summon-team my-project
