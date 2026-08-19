@@ -1,0 +1,39 @@
+---
+// agent-notes: { ctx: "site-wide temporary-deprecation banner; overrides Starlight Banner", deps: ["site/astro.config.mjs"], state: active, last: "claude@2026-08-20", key: ["renders unconditionally on every page including splash", "delete this file + the components block in astro.config.mjs to un-deprecate", "links to the published post, the canonical rationale"] }
+
+// Overrides Starlight's built-in Banner, which renders only when a page sets
+// `banner` in its frontmatter. This one renders on every page. A page that does
+// set its own banner still wins, so nothing loses the ability to say something
+// more specific.
+const { banner } = Astro.locals.starlightRoute.entry.data;
+
+const DEPRECATION =
+	'<strong>Summon is temporarily deprecated.</strong> It is tuned for a version of Claude Code that no longer exists, and its multi-lens review does not fail loudly &mdash; it degrades into unanimous approval. <a href="https://innerloopai.substack.com/p/i-killed-my-agent-team">Read why</a>.';
+
+const content = banner?.content ?? DEPRECATION;
+---
+
+<div class="sl-banner" data-pagefind-ignore set:html={content} />
+
+<style>
+	@layer starlight.core {
+		.sl-banner {
+			/* #7c2d12 with #ffffff text is 9.3:1 — clears WCAG AAA, and reads as a
+			   warning in both themes without needing a light/dark pair. */
+			--__sl-banner-bg: #7c2d12;
+			--__sl-banner-text: #ffffff;
+			padding: var(--sl-nav-pad-y) var(--sl-nav-pad-x);
+			background-color: var(--__sl-banner-bg);
+			color: var(--__sl-banner-text);
+			line-height: var(--sl-line-height-headings);
+			text-align: center;
+			text-wrap: balance;
+			box-shadow: var(--sl-shadow-sm);
+		}
+		/* Underline the link so it is not signalled by color alone. */
+		.sl-banner :global(a) {
+			color: var(--__sl-banner-text);
+			text-decoration: underline;
+		}
+	}
+</style>
