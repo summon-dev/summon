@@ -1,5 +1,5 @@
 ---
-// agent-notes: { ctx: "site-wide temporary-deprecation banner; overrides Starlight Banner", deps: ["site/astro.config.mjs"], state: active, last: "claude@2026-08-18", key: ["renders unconditionally on every page including splash", "delete this file + the components block in astro.config.mjs to un-deprecate", "links to the README why-section, which carries the post URL"] }
+// agent-notes: { ctx: "site-wide temporary-deprecation banner; overrides Starlight Banner", deps: ["site/astro.config.mjs"], state: active, last: "claude@2026-08-20", key: ["renders unconditionally on every page including splash", "delete this file + the components block in astro.config.mjs to un-deprecate", "links to the published post, the canonical rationale"] }
 
 // Overrides Starlight's built-in Banner, which renders only when a page sets
 // `banner` in its frontmatter. This one renders on every page. A page that does
@@ -8,7 +8,7 @@
 const { banner } = Astro.locals.starlightRoute.entry.data;
 
 const DEPRECATION =
-	'<strong>Summon is temporarily deprecated.</strong> It is tuned for a version of Claude Code that no longer exists, and its multi-lens review does not fail loudly &mdash; it degrades into unanimous approval. <a href="https://github.com/summon-dev/summon#why-this-is-deprecated">Read why</a>.';
+	'<strong>Summon is temporarily deprecated.</strong> It is tuned for a version of Claude Code that no longer exists, and its multi-lens review does not fail loudly &mdash; it degrades into unanimous approval. <a href="https://innerloopai.substack.com/p/i-killed-my-agent-team">Read why</a>.';
 
 const content = banner?.content ?? DEPRECATION;
 ---

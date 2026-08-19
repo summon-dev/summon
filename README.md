@@ -37,7 +37,7 @@ Multi-lens review is Summon's whole premise, and the four lenses are only worth 
 
 Not archived, not deleted, not abandoned. The repo stays up. Issues and PRs stay open — most of the open ones are my own attempts to work around exactly these problems. Every ADR, review record, and history document remains readable, and the methodology docs are still worth reading on their own terms. What I don't have is a version I'd tell you to install today, or a date when I will.
 
-The full reasoning — what decayed, what might be worth keeping, and why patching was the wrong instinct — is in *I Killed My Agent Team*: POST_URL_PENDING
+The full reasoning — what decayed, what might be worth keeping, and why patching was the wrong instinct — is in **[I Killed My Agent Team](https://innerloopai.substack.com/p/i-killed-my-agent-team)**.
 
 ---
 
