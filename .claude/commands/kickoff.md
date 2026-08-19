@@ -1,7 +1,7 @@
 ---
 description: "Full 5-phase discovery workflow with architecture debate and mandatory board setup."
 ---
-<!-- agent-notes: { ctx: "full discovery workflow, 5-phase + mandatory board", deps: [docs/methodology/personas.md, docs/methodology/phases.md], state: active, last: "claude@2026-07-07", key: ["board creation is mandatory not optional", "issues created as repo issues then added to project", "project linked to repo via gh project link"] } -->
+<!-- agent-notes: { ctx: "full discovery workflow, 5-phase + mandatory board", deps: [docs/methodology/personas.md, docs/methodology/phases.md], state: active, last: "claude@2026-08-10", key: ["board creation is mandatory not optional", "issues created as repo issues then added to project", "project linked to repo via gh project link"] } -->
 Run a full discovery workflow for: $ARGUMENTS
 
 This is a phased process. Complete each phase and get explicit human confirmation before moving to the next. Reference `docs/methodology/personas.md` for persona details.
@@ -172,15 +172,17 @@ GitHub Projects v2 only creates default status options (Todo, In Progress, Done)
 gh project field-list <NUMBER> --owner @me --format json
 # Find the "Status" field — note its ID and existing option IDs/names
 
-# 2. Add missing status options via GraphQL
-# You need the project ID (from gh project list --owner @me --format json)
-# and the Status field ID (from step 1)
-
-# Add "Backlog" option
+# 2. Replace the status options via GraphQL.
+# The mutation REPLACES the whole option set, so list all five — anything
+# omitted is deleted. You need only the Status field ID from step 1.
+#
+# Do NOT pass projectId: `UpdateProjectV2FieldInput` does not accept it and
+# GitHub rejects the whole mutation with `argumentNotAccepted`. Its inputs are
+# clientMutationId, fieldId, name, singleSelectOptions, multiSelectOptions,
+# iterationConfiguration.
 gh api graphql -f query='
   mutation {
     updateProjectV2Field(input: {
-      projectId: "<PROJECT_NODE_ID>"
       fieldId: "<STATUS_FIELD_ID>"
       name: "Status"
       singleSelectOptions: [
@@ -195,12 +197,23 @@ gh api graphql -f query='
     }
   }'
 
-# 3. VERIFY all 5 statuses exist
-gh project field-list <NUMBER> --owner @me --format json
-# Confirm: Backlog, Ready, In Progress, In Review, Done all appear
+# 3. VERIFY — mechanically, not by eye. This must exit 0 before you continue.
+gh project field-list <NUMBER> --owner @me --format json | python3 -c '
+import json, sys
+want = ["Backlog", "Ready", "In Progress", "In Review", "Done"]
+fields = json.load(sys.stdin).get("fields", [])
+opts = [o["name"] for f in fields if f.get("name") == "Status" for o in f.get("options", [])]
+print("Status options:", opts)
+missing = [w for w in want if w not in opts]
+if missing:
+    sys.exit(f"BOARD SETUP FAILED — missing {missing}. Do NOT proceed to issue creation.")
+print("all 5 statuses present")
+'
 ```
 
-**Do NOT proceed to issue creation until all 5 statuses are confirmed.** If the GraphQL mutation fails, try adding options one at a time or use the GitHub web UI as a fallback — but the statuses MUST exist before any items are added.
+**Do NOT proceed to issue creation until that check exits 0.** If it fails, add the options in the GitHub web UI as a fallback — but the statuses MUST exist before any items are added.
+
+**Why the check is a script and not a glance.** This step fails *quietly*. `gh api graphql` returns HTTP 200 with an `errors` array on a rejected mutation, so the response looks structurally fine; and piping it into a parser discards the upstream exit status, so `$?` reports the parser's success rather than the API's failure. A real project hit exactly this: the mutation was rejected, the output looked like it worked, and the board was left with GitHub's three default statuses. Every later status transition then targets options that do not exist, and nothing notices until the sprint boundary finds a broken board — a whole sprint of lost tracking. If you do read the mutation's own response, check it for an `errors` key rather than trusting the exit code.
 
 #### Step 3: Create Issues and Add to Project
 

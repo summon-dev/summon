@@ -3,7 +3,7 @@ agent-notes:
   ctx: "implementation gotchas and established patterns"
   deps: [CLAUDE.md]
   state: active
-  last: "claude@2026-08-06"
+  last: "claude@2026-08-10"
 ---
 # Known Patterns and Gotchas
 
@@ -55,6 +55,10 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 ## Adapter / Integration Gotchas
 
 - **execa v9 `stdin: 'pipe'` default hangs subprocesses.** execa v9 changed `stdin` from `'inherit'` to `'pipe'`. CLI tools that check stdin connectivity (e.g., `claude -p`, `gemini`) see a connected pipe and wait for EOF, which never comes — the subprocess hangs until timeout. **Detection signal:** subprocess calls work with `--version` or `--help` (which exit immediately) but hang with actual workload flags. **Fix:** always set `stdin: 'ignore'` unless you explicitly need to write to the subprocess's stdin. Audit all execa/child_process calls to explicitly configure all three stdio channels. ⚠️ *Volatile — verified 2026-03-30, CLI 2.1.87. See `docs/research/claude-cli-invocation-patterns.md` Pattern 1.*
+
+- **`gh api graphql` returns HTTP 200 with an `errors` array — a rejected mutation looks like a success.** Found in a live `/kickoff`: the board-setup mutation passed `projectId` to `updateProjectV2Field`, which GitHub rejects with `argumentNotAccepted`, and the run continued with GitHub's three default statuses. Two things made it silent. The response is structurally well-formed, so a parser reading only `data` sees nothing wrong; and **piping the command into that parser discards the upstream exit status**, so `$?` reports the parser's success rather than the API's failure. **Detection signal:** a board operation "succeeds" and the very next status transition fails on an option that does not exist — often a whole sprint later, at the boundary. **Fix:** check the response for an `errors` key rather than trusting the exit code, and verify the *result* mechanically afterward (read the options back and exit non-zero on any missing) instead of eyeballing them. `UpdateProjectV2FieldInput` accepts `clientMutationId`, `fieldId`, `name`, `singleSelectOptions`, `multiSelectOptions`, `iterationConfiguration` — confirm with schema introspection rather than memory, since this argument set has already changed once. ⚠️ *Volatile — verified 2026-08-10 by introspecting `UpdateProjectV2FieldInput`.*
+
+- **A pipe hides the exit code of everything upstream of it.** The general form of the bug above, and it is not GitHub-specific: `cmd | parser` gives you `parser`'s status, so `cmd` can fail while the shell reports success. It bit twice on 2026-08-10 — once in the kickoff board setup, and once while verifying that a canon sensor fired, where `node script.mjs | tail -2` reported `exit=0` for three separate mutations that were correctly exiting 1. **Fix:** run the command without a pipe when you care about its status, or read `${PIPESTATUS[0]}`. A verification step that measures the wrong process is worse than no verification, because it produces confidence.
 
 - **Health checks that don't exercise the real code path.** A health check like `tool --version` exits immediately without reading stdin, so it succeeds even when the actual call (`tool -p "prompt"`) would hang. **Detection signal:** health check passes but actual tool invocation fails/hangs. **Fix:** health checks should exercise the same flags and stdio configuration as the real invocation, just with minimal input.
 

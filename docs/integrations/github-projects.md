@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "GitHub Projects v2 board adapter with gh CLI recipes", deps: [CLAUDE.md, .claude/agents/grace.md, .claude/commands/kickoff.md], state: canonical, last: "sato@2026-02-21", key: ["definitive gh CLI reference for board ops", "5 statuses required via GraphQL mutation", "per-item transitions only -- never batch"] }
+agent-notes: { ctx: "GitHub Projects v2 board adapter with gh CLI recipes", deps: [CLAUDE.md, .claude/agents/grace.md, .claude/commands/kickoff.md], state: canonical, last: "claude@2026-08-10", key: ["definitive gh CLI reference for board ops", "5 statuses required via GraphQL mutation", "per-item transitions only -- never batch"] }
 ---
 
 # GitHub Projects v2 Adapter
@@ -68,18 +68,20 @@ gh project link <NUMBER> --owner @me --repo <owner>/<repo>
 GitHub Projects v2 creates only default statuses (Todo, In Progress, Done). The methodology requires 5. Use a GraphQL mutation to replace them.
 
 ```bash
-# Get the project node ID and Status field ID
-gh project list --owner <OWNER> --format json
-# Note the project's node ID (id field)
-
+# Get the Status field ID
 gh project field-list <NUMBER> --owner <OWNER> --format json
 # Note the Status field's ID
 
-# Replace status options with the full set
+# Replace status options with the full set.
+# The mutation REPLACES the whole option set — anything omitted is deleted.
+#
+# Do NOT pass projectId: `UpdateProjectV2FieldInput` does not accept it and
+# GitHub rejects the mutation with `argumentNotAccepted`. Its inputs are
+# clientMutationId, fieldId, name, singleSelectOptions, multiSelectOptions,
+# iterationConfiguration.
 gh api graphql -f query='
   mutation {
     updateProjectV2Field(input: {
-      projectId: "<PROJECT_NODE_ID>"
       fieldId: "<STATUS_FIELD_ID>"
       name: "Status"
       singleSelectOptions: [
@@ -94,9 +96,21 @@ gh api graphql -f query='
     }
   }'
 
-# VERIFY all 5 statuses exist
-gh project field-list <NUMBER> --owner <OWNER> --format json
+# VERIFY — mechanically. This must exit 0 before any item is added.
+gh project field-list <NUMBER> --owner <OWNER> --format json | python3 -c '
+import json, sys
+want = ["Backlog", "Ready", "In Progress", "In Review", "Done"]
+fields = json.load(sys.stdin).get("fields", [])
+opts = [o["name"] for f in fields if f.get("name") == "Status" for o in f.get("options", [])]
+print("Status options:", opts)
+missing = [w for w in want if w not in opts]
+if missing:
+    sys.exit(f"BOARD SETUP FAILED — missing {missing}. Do NOT proceed.")
+print("all 5 statuses present")
+'
 ```
+
+**This step fails quietly, which is why the verification is a script.** `gh api graphql` returns HTTP 200 with an `errors` array on a rejected mutation, so the response looks structurally fine, and piping it into a parser discards the upstream exit status — `$?` reports the parser's success, not the API's failure. A real project hit exactly that: the mutation was rejected, the output looked like it worked, and the board kept GitHub's three default statuses. Every later status transition then targets options that do not exist, and nothing notices until the sprint boundary finds a broken board.
 
 **Do NOT proceed to issue creation until all 5 statuses are confirmed.** If the GraphQL mutation fails, try the GitHub web UI as a fallback.
 
