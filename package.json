@@ -5,6 +5,7 @@
     "build": "pnpm -r --if-present build",
     "dev": "pnpm --filter summon-team dev",
     "test": "pnpm test:scripts && pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
     "test:scripts": "node --test scripts/*.test.mjs",
     "check:canon": "node scripts/check-canon.mjs",
     "check:css": "node scripts/check-css-contrast-motion.mjs",

@@ -1,3 +1,5 @@
+// agent-notes: { ctx: "summon-team CLI entry — scaffold, --local, --ref, doctor", deps: ["src/doctor.ts", "src/template-ref.ts", "src/addons/impeccable.ts"], state: active, last: "sato@2026-08-08" }
+
 import * as p from "@clack/prompts";
 import { downloadTemplate } from "giget";
 import { execFileSync } from "node:child_process";
@@ -18,6 +20,11 @@ import {
   isSummonProject,
   runHealth,
 } from "./doctor";
+import {
+  buildTemplateSpec,
+  describeDownloadFailure,
+  validateRef,
+} from "./template-ref";
 
 declare const __VERSION__: string;
 
@@ -94,6 +101,89 @@ function runDoctor() {
   process.exit(exitCodeFor(results));
 }
 
+const USAGE =
+  "Usage: npx summon-team [--ref <branch|tag|commit>] [--local <path>] <project-name>";
+
+// The complete flag surface, in one place. `--yes` and `--non-interactive` are
+// read by the impeccable add-on (addons/impeccable.ts) rather than by main(),
+// but they belong here anyway: the unknown-flag check below rejects everything
+// it does not recognise, so a flag missing from these sets stops working.
+const VALUE_FLAGS = new Set(["--local", "--ref"]);
+const BOOLEAN_FLAGS = new Set([
+  "--version",
+  "-v",
+  "--help",
+  "-h",
+  "--yes",
+  "--non-interactive",
+]);
+
+type ParsedArgs = { values: Map<string, string>; positionals: string[] };
+
+/**
+ * Parse the argument list, rejecting anything not understood.
+ *
+ * Rejecting is the point. The previous scan located flags with `indexOf`, which
+ * matches only the space-separated form — so `--ref=feat/x` arrived as a single
+ * token that matched no flag, and, because it starts with `-`, was skipped by the
+ * project-name scan too. It was ignored in both directions: `--ref=no-such-ref`
+ * scaffolded the default branch and exited 0. A flag that is silently dropped is
+ * worse than one that does not exist, and worst of all in a feature whose whole
+ * purpose is knowing which template content you installed.
+ *
+ * So both forms are accepted, unknown `-`-prefixed tokens are refused rather than
+ * ignored, and a repeated value flag is an error instead of a first-one-wins race
+ * that would turn `--ref a --ref b` into a project named `b` built from `a`.
+ */
+function parseArgs(args: string[]): ParsedArgs | { error: string } {
+  const values = new Map<string, string>();
+  const positionals: string[] = [];
+
+  for (let i = 0; i < args.length; i++) {
+    const token = args[i];
+
+    if (!token.startsWith("-")) {
+      positionals.push(token);
+      continue;
+    }
+
+    const eq = token.indexOf("=");
+    const name = eq === -1 ? token : token.slice(0, eq);
+    const inline = eq === -1 ? undefined : token.slice(eq + 1);
+
+    if (VALUE_FLAGS.has(name)) {
+      if (values.has(name)) {
+        return { error: `${name} was given more than once.` };
+      }
+      // Only the space-separated form can swallow a following flag, so only it
+      // needs the lookahead guard. An inline value is unambiguous by construction.
+      const value = inline ?? args[i + 1];
+      if (value === undefined || value === "" || (inline === undefined && value.startsWith("-"))) {
+        return {
+          error:
+            name === "--local"
+              ? "--local requires a path argument."
+              : "--ref requires a ref argument.",
+        };
+      }
+      if (inline === undefined) i++;
+      values.set(name, value);
+      continue;
+    }
+
+    if (BOOLEAN_FLAGS.has(name)) {
+      if (inline !== undefined) {
+        return { error: `${name} does not take a value.` };
+      }
+      continue;
+    }
+
+    return { error: `Unknown flag: ${token}` };
+  }
+
+  return { values, positionals };
+}
+
 async function main() {
   const args = process.argv.slice(2);
 
@@ -120,24 +210,44 @@ async function main() {
     -v, --version        Show version
     -h, --help           Show this help
     --local <path>       Copy template from a local directory instead of GitHub
+    --ref <ref>          Scaffold from a branch, tag, or commit instead of the default branch
 `);
     process.exit(0);
   }
 
-  const localIdx = args.indexOf("--local");
-  if (localIdx !== -1) {
-    const next = args[localIdx + 1];
-    if (!next || next.startsWith("-")) {
-      console.error("Error: --local requires a path argument.\n");
-      console.error("Usage: npx summon-team [--local <path>] <project-name>");
+  const parsed = parseArgs(args);
+  if ("error" in parsed) {
+    console.error(`Error: ${parsed.error}\n`);
+    console.error(USAGE);
+    process.exit(1);
+  }
+
+  const localPath = parsed.values.get("--local");
+  const ref = parsed.values.get("--ref");
+
+  // A local directory copy has no git ref to check out. Honouring one flag and
+  // dropping the other silently is how a validation run passes against a payload
+  // nobody asked for, so contradictory flags are an error, not a preference order.
+  if (localPath !== undefined && ref !== undefined) {
+    console.error("Error: --ref and --local cannot be used together.\n");
+    console.error(
+      "--local copies a directory that is already on disk, so there is no ref to resolve."
+    );
+    process.exit(1);
+  }
+
+  // Validate before anything touches the disk or the network: a bad ref should
+  // cost a message, not a half-created project directory.
+  if (ref !== undefined) {
+    const check = validateRef(ref);
+    if (!check.ok) {
+      console.error(`Error: ${check.reason}\n`);
+      console.error(USAGE);
       process.exit(1);
     }
   }
-  const localPath = localIdx !== -1 ? args[localIdx + 1] : undefined;
-  const skipIdx = localIdx !== -1 ? localIdx + 1 : -1;
-  const projectArg = args.find(
-    (a, i) => !a.startsWith("-") && i !== skipIdx
-  );
+
+  const projectArg = parsed.positionals[0];
 
   p.intro("summon-team — Summon your AI dev team");
 
@@ -211,15 +321,12 @@ async function main() {
   } else {
     s.start("Downloading Summon template...");
     try {
-      await downloadTemplate(TEMPLATE, {
+      await downloadTemplate(buildTemplateSpec(TEMPLATE, ref), {
         dir: targetDir,
       });
     } catch (err) {
       s.stop("Download failed.");
-      const message = err instanceof Error ? err.message : String(err);
-      p.log.error(
-        `Could not download the template. Check your network connection.\n${message}`
-      );
+      p.log.error(describeDownloadFailure(err, ref));
       process.exit(1);
     }
     s.stop("Template downloaded.");

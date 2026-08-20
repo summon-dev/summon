@@ -1,4 +1,4 @@
-// agent-notes: { ctx: "integration tests for summon-team CLI", deps: ["dist/index.js", "src/index.ts"], state: active, last: "tara@2026-07-03" }
+// agent-notes: { ctx: "integration tests for summon-team CLI", deps: ["dist/index.js", "src/index.ts"], state: active, last: "tara@2026-08-08" }
 
 import { execFile } from "node:child_process";
 import {
@@ -12,7 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, describe, expect, it } from "vitest";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,6 +22,33 @@ const PKG = JSON.parse(
   readFileSync(resolve(__dirname, "..", "package.json"), "utf-8")
 );
 
+// execFile reports `code` as `string | number | undefined`: a number on a normal
+// process exit, but a string errno ("ENOENT") when the spawn itself fails. Passing
+// that through as an exit status would let a spawn failure fail an assertion for
+// the wrong reason — a test reporting the wrong cause is its own kind of false
+// green — so a non-numeric code collapses to 1.
+function exitCodeOf(error: { code?: string | number | null } | null): number {
+  if (!error) return 0;
+  return typeof error.code === "number" ? error.code : 1;
+}
+
+// This suite must never reach the network, and arranging for that is not the same
+// as being unable to. Two vars are needed, not one:
+//   GIGET_GITHUB_URL  — giget builds its tarball URL from it (giget 2.0.0 dist,
+//                       `tar: ${githubAPIURL}/repos/${repo}/tarball/${ref}`), so a
+//                       dead port makes a real download structurally impossible.
+//   XDG_CACHE_HOME    — giget serves from ~/.cache/giget/github before fetching.
+//                       With only the URL blocked, a warm cache still scaffolds a
+//                       complete project and exits 0 — verified by hand. A suite
+//                       that passes off a developer's cache is a false green.
+// A future opt-in test that wants a real download must override both.
+const DEAD_GITHUB_URL = "http://127.0.0.1:1";
+const CACHE_DIR = mkdtempSync(join(tmpdir(), "summon-test-cache-"));
+
+afterAll(() => {
+  rmSync(CACHE_DIR, { recursive: true, force: true });
+});
+
 function run(
   args: string[],
   options: { cwd?: string } = {}
@@ -30,10 +57,18 @@ function run(
     execFile(
       "node",
       [CLI, ...args],
-      { cwd: options.cwd, env: { ...process.env, NO_COLOR: "1" } },
+      {
+        cwd: options.cwd,
+        env: {
+          ...process.env,
+          NO_COLOR: "1",
+          GIGET_GITHUB_URL: DEAD_GITHUB_URL,
+          XDG_CACHE_HOME: CACHE_DIR,
+        },
+      },
       (error, stdout, stderr) => {
         resolve({
-          code: error?.code ?? 0,
+          code: exitCodeOf(error),
           stdout: stdout.toString(),
           stderr: stderr.toString(),
         });
@@ -290,7 +325,7 @@ describe("summon-team CLI", () => {
         [join(projectDir, "scripts", "check-canon.mjs")],
         { cwd: projectDir },
         (err, stdout, stderr) =>
-          res({ code: err?.code ?? 0, out: stdout.toString() + stderr.toString() })
+          res({ code: exitCodeOf(err), out: stdout.toString() + stderr.toString() })
       );
     });
     expect(check.code).toBe(0);
@@ -309,4 +344,204 @@ describe("summon-team CLI", () => {
     const output = result.stdout + result.stderr;
     expect(output).toContain("already exists");
   });
+
+  // --- --ref flag (issue #98) ---------------------------------------------
+  // Every case below must fail before any network call: the CLI is exercised
+  // with either a malformed flag, an invalid ref, or a target directory that
+  // is already occupied, all of which exit before downloadTemplate runs.
+
+  it("--ref without a value exits non-zero", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--ref"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("--ref requires");
+  });
+
+  it("--ref does not swallow the flag that follows it", async () => {
+    // --yes is consumed downstream by the add-on phase, not by main()'s early
+    // branches, so it makes a clean probe: if --ref eats it as a ref value the
+    // run proceeds instead of reporting the missing value. The target dir is
+    // pre-occupied so that a swallowed flag fails on "already exists" rather
+    // than reaching the network.
+    const cwd = makeTempDir();
+    const occupied = join(cwd, "proj");
+    mkdirSync(occupied);
+    writeFileSync(join(occupied, "file.txt"), "occupying the directory");
+
+    const result = await run(["--ref", "--yes", "proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("--ref requires");
+  });
+
+  it("--help still wins when --ref is missing its value", async () => {
+    // Deliberate, not a bug: --local behaves the same way (the --help
+    // short-circuit sits above every flag's arity check), and a global --help
+    // that an unrelated typo can defeat is worse than an unreported typo.
+    // Do not "fix" this into a non-zero exit — see the anti-swallow test above,
+    // which is what actually guards --ref from eating the next flag.
+    const result = await run(["--ref", "--help"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("Usage:");
+  });
+
+  it("does not mistake the ref value for the project name when the flag comes first", async () => {
+    // The ref value sits at the positional slot the name parser scans. If it is
+    // read as the project name, the run fails on name validation ("feat/x" has a
+    // slash) instead of on the occupied directory — so the two outcomes are
+    // distinguishable without a network call either way.
+    const cwd = makeTempDir();
+    const occupied = join(cwd, "proj-name");
+    mkdirSync(occupied);
+    writeFileSync(join(occupied, "file.txt"), "occupying the directory");
+
+    const result = await run(["--ref", "feat/x", "proj-name"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("proj-name");
+    expect(output).toContain("already exists");
+    expect(output).not.toMatch(/letters, numbers, hyphens, or underscores/i);
+  });
+
+  it("reads the project name when it comes before --ref", async () => {
+    const cwd = makeTempDir();
+    const occupied = join(cwd, "proj-name");
+    mkdirSync(occupied);
+    writeFileSync(join(occupied, "file.txt"), "occupying the directory");
+
+    const result = await run(["proj-name", "--ref", "feat/x"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("proj-name");
+    expect(output).toContain("already exists");
+    expect(output).not.toMatch(/letters, numbers, hyphens, or underscores/i);
+  });
+
+  it("rejects a ref containing a path traversal sequence", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--ref", "../../etc", "trav-proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toMatch(/ref/i);
+    expect(output).toContain("../../etc");
+    // The rejection is about the ref, not connectivity — and it happens before
+    // any download, so no project directory is left behind.
+    expect(output).not.toMatch(/network/i);
+    expect(existsSync(join(cwd, "trav-proj"))).toBe(false);
+  });
+
+  it("rejects a ref containing a space", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--ref", "feat/my branch", "space-proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toMatch(/ref/i);
+    expect(existsSync(join(cwd, "space-proj"))).toBe(false);
+  });
+
+  it("rejects --ref combined with --local, which has no git ref", async () => {
+    const cwd = makeTempDir();
+    const result = await run(
+      ["--local", REPO_ROOT, "--ref", "main", "combo-proj"],
+      { cwd }
+    );
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("--ref");
+    expect(output).toContain("--local");
+    expect(output).toMatch(/cannot|can't|not.*together/i);
+    expect(existsSync(join(cwd, "combo-proj"))).toBe(false);
+  }, 30_000);
+
+  it("--help documents the --ref flag", async () => {
+    const result = await run(["--help"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("--ref");
+  });
+
+  // --- --flag=value form and the unknown-flag class (C1) -------------------
+  // `--ref=x` is a single token: it matches no indexOf() flag check, and because
+  // it starts with "-" the project-name scan skips it too. So it is ignored in
+  // both directions and the run exits 0 having installed the default branch —
+  // a silent wrong answer. --local=path has the same hole, which is why these
+  // pin the behaviour at the unknown-flag level rather than per flag.
+
+  it("--ref=value validates the ref, rather than ignoring it", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--ref=../../etc", "eq-proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("../../etc");
+    expect(output).toMatch(/ref/i);
+    expect(output).not.toMatch(/network/i);
+    expect(existsSync(join(cwd, "eq-proj"))).toBe(false);
+  });
+
+  it("--ref=value reaches the download as the requested ref", async () => {
+    // Equivalence with the space-separated form, proven offline: the download is
+    // pointed at a dead port, so the failure text carries the tarball URL giget
+    // built — and that URL names the ref only if the value was actually parsed.
+    // Today it reads .../tarball/main, which is the whole bug.
+    const cwd = makeTempDir();
+    const result = await run(["--ref=v0.1.0-pre-registers", "eqv-proj"], {
+      cwd,
+    });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("v0.1.0-pre-registers");
+  });
+
+  it("--ref= with an empty value is the same error as --ref with none", async () => {
+    // The = form must not reopen the arity hole the space form closes.
+    const cwd = makeTempDir();
+    const result = await run(["--ref=", "empty-eq-proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("--ref requires");
+    expect(existsSync(join(cwd, "empty-eq-proj"))).toBe(false);
+  });
+
+  it("--local=path copies from that path, rather than ignoring it", async () => {
+    const cwd = makeTempDir();
+    const result = await run([`--local=${REPO_ROOT}`, "eqlocal-proj"], { cwd });
+    expect(result.code).toBe(0);
+    expect(existsSync(join(cwd, "eqlocal-proj", "CLAUDE.md"))).toBe(true);
+  }, 30_000);
+
+  it("rejects a repeated value flag rather than letting the first one win", async () => {
+    // `indexOf` found only the first occurrence, so `--ref a --ref b` left `b`
+    // looking like a positional: a project literally named "b", scaffolded from
+    // "a", with no warning. Same silent-wrong-answer class as `--ref=value`.
+    const cwd = makeTempDir();
+    const result = await run(["--ref", "main", "--ref", "other-proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("--ref");
+    // Specifically must not have scaffolded a project named after the second value
+    expect(existsSync(join(cwd, "other-proj"))).toBe(false);
+  });
+
+  it("rejects an unknown flag instead of silently ignoring it", async () => {
+    const cwd = makeTempDir();
+    const result = await run(["--bogus", "unknown-proj"], { cwd });
+    expect(result.code).not.toBe(0);
+    const output = result.stdout + result.stderr;
+    expect(output).toContain("--bogus");
+    expect(existsSync(join(cwd, "unknown-proj"))).toBe(false);
+  });
+
+  it("still accepts the add-on flags, which main() itself never reads", async () => {
+    // --yes and --non-interactive are consumed downstream by the add-on phase,
+    // not by main(). An allowlist that only knows main()'s own flags would reject
+    // them and break the non-interactive install path — this is that guard.
+    for (const flag of ["--yes", "--non-interactive"]) {
+      const cwd = makeTempDir();
+      const result = await run([flag, "--local", REPO_ROOT, "addon-proj"], {
+        cwd,
+      });
+      expect(result.code).toBe(0);
+      expect(existsSync(join(cwd, "addon-proj", "CLAUDE.md"))).toBe(true);
+    }
+  }, 30_000);
 });
