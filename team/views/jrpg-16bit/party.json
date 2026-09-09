@@ -1,0 +1,71 @@
+{
+  "skin": "jrpg-16bit",
+  "title": "The Review Party",
+  "source": "docs/history/design/team-hero-sprites-16bit.md",
+  "sprites": "site/src/assets/team-16bit/",
+  "members": {
+    "sato": {
+      "class": "The Forge-Knight",
+      "archetype": "Smith",
+      "epithet": "makes the tests pass",
+      "accent": "#22c55e",
+      "sprite": "sato.png",
+      "blurb": "Writes the production code that makes Tara's tests pass. The builder.",
+      "alt": "Sato, the team's engineer, a broad smith resting a green-glowing hammer on his shoulder"
+    },
+    "tara": {
+      "class": "The Sentinel Archer",
+      "archetype": "Ranger",
+      "epithet": "writes the failing test first",
+      "accent": "#ef4444",
+      "sprite": "tara.png",
+      "blurb": "Writes the failing test first. Holds a veto on test coverage.",
+      "alt": "Tara, the test lead, a ranger drawing a bow with a crimson-tipped arrow"
+    },
+    "vik": {
+      "class": "The Grey Warden",
+      "archetype": "Veteran",
+      "epithet": "has seen this abstraction before",
+      "accent": "#64748b",
+      "sprite": "vik.png",
+      "blurb": "Reads for simplicity and maintainability. Names problems; never fixes them.",
+      "alt": "Vik, the veteran reviewer, leaning on a tall sword-staff and holding up a loupe"
+    },
+    "pierrot": {
+      "class": "The Nightblade",
+      "archetype": "Rogue",
+      "epithet": "finds it before the attacker does",
+      "accent": "#7f1d1d",
+      "sprite": "pierrot.png",
+      "blurb": "Reads for what the change stopped doing. Holds a hard veto on security grounds.",
+      "alt": "Pierrot, the security tester, a hooded rogue in a white half-mask holding a dagger"
+    },
+    "archie": {
+      "class": "The Master Builder",
+      "archetype": "Artificer",
+      "epithet": "asks who decided this",
+      "accent": "#22d3ee",
+      "sprite": "archie.png",
+      "blurb": "Designs the system and writes the record before a line of code is written.",
+      "alt": "Archie, the team's architect, holding a rolled cyan blueprint across his body"
+    },
+    "wei": {
+      "class": "The Wildcard",
+      "archetype": "Trickster",
+      "epithet": "takes the other side",
+      "accent": "#ec4899",
+      "sprite": "wei.png",
+      "blurb": "Breaks consensus on purpose and builds the rationale afterwards.",
+      "alt": "Wei, the devil's advocate, leaning back mid-toss of a glowing magenta card"
+    }
+  },
+  "formations": {
+    "review-party": {
+      "class": "The Review Party",
+      "accent": "#4f46e5",
+      "sprite": "code-reviewer.png",
+      "blurb": "Not one hero, a formation. Four lenses on one diff, and they are allowed to disagree.",
+      "alt": "The Review Party: a warden, ranger, nightblade, and architect examining a glowing codex on a shared indigo stage"
+    }
+  }
+}

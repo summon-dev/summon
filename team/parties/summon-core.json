@@ -1,0 +1,25 @@
+{
+  "name": "summon-core",
+  "harness": "claude-code",
+  "view": "jrpg-16bit",
+  "members": [
+    { "role": "coder", "persona": "sato" },
+    { "role": "tester", "persona": "tara" },
+    { "role": "architect", "persona": "archie" },
+    { "role": "challenger", "persona": "wei" },
+    { "role": "reviewer", "lens": "simplicity", "persona": "vik" },
+    { "role": "reviewer", "lens": "security", "persona": "pierrot" }
+  ],
+  "formations": [
+    {
+      "name": "review-party",
+      "role": "reviewer",
+      "members": [
+        { "persona": "vik", "lens": "simplicity" },
+        { "persona": "tara", "lens": "test-quality" },
+        { "persona": "pierrot", "lens": "security" },
+        { "persona": "archie", "lens": "conformance" }
+      ]
+    }
+  ]
+}

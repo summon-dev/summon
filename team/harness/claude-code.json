@@ -1,0 +1,29 @@
+{
+  "harness": "claude-code",
+  "fitted": true,
+  "review": "Reread against the release notes on every Claude model release and every Claude Code release that mentions subagents, tools, or hooks. Nothing outside this file should need to change for a harness release; if something does, the seam is wrong.",
+  "output": {
+    "dir": ".claude/agents",
+    "file": "{name}.md"
+  },
+  "capabilities": {
+    "read": ["Read", "Grep", "Glob"],
+    "run": ["Bash"],
+    "write:src": ["Write", "Edit"],
+    "write:tests": ["Write", "Edit"],
+    "write:docs": ["Write", "Edit"],
+    "web": ["WebSearch", "WebFetch"],
+    "notebook": ["NotebookEdit"]
+  },
+  "frontmatter": {
+    "model": "inherit"
+  },
+  "budget": {
+    "default": 20,
+    "reviewer": 15,
+    "coder": 25,
+    "tester": 20,
+    "architect": 25,
+    "challenger": 15
+  }
+}

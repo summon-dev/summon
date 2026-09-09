@@ -1,0 +1,5 @@
+{
+  "may": ["read", "run", "write:src", "write:docs", "web"],
+  "must-not": ["write:tests"],
+  "lenses": []
+}

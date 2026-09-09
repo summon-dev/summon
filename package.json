@@ -9,6 +9,8 @@
     "check:canon": "node scripts/check-canon.mjs",
     "check:css": "node scripts/check-css-contrast-motion.mjs",
     "check:doctor": "node packages/summon-team/dist/index.js doctor",
-    "harvest:debt": "node scripts/harvest-debt.mjs"
+    "harvest:debt": "node scripts/harvest-debt.mjs",
+    "team:compose": "node scripts/compose-team.mjs --party summon-core --out build/team",
+    "team:skills": "node scripts/compose-team.mjs --party summon-core --harness skills --out build/skills"
   }
 }

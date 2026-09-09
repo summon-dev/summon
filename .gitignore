@@ -1,5 +1,8 @@
 node_modules/
 dist/
+
+# Composed team output (pnpm team:compose) — generated from team/, never hand-edited
+build/
 *.tsbuildinfo
 
 .env
