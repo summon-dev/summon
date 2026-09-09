@@ -172,3 +172,129 @@ test("running the script as a CLI still executes the checks", () => {
   });
   assert.match(out, /canon check:/, "the CLI must produce a verdict, not exit silently");
 });
+
+// --- check #10: the team tree (ADR-0015 sequencing step 4) --------------------
+// Red phase for findTeamProblems. The composer already refuses a malformed layer at
+// compose time; this check makes those refusals, plus three rules the composer does
+// not own (adapters fitted, deps resolve, log validates), CI facts.
+
+import { findTeamProblems } from "./check-canon.mjs";
+
+const ROLE = `---
+name: tester
+description: Writes failing tests first.
+---
+<!-- agent-notes: { ctx: "fixture", deps: [team/roles/tester/role.json], state: draft, last: "t@2026-09-09" } -->
+# Tester
+
+## Charter
+
+FIXTURE-CHARTER You write the failing tests first.
+
+## Standard
+
+Fails for the right reason.
+
+## Questions
+
+Time pinned?
+
+## Boundaries
+
+You do not write production code.
+
+## Output
+
+The tests.
+`;
+const PERSONA = (priors = "FIXTURE-PRIORS A test that cannot fail is worse than none.", dep = "team/roles/tester/SKILL.md") => `---
+name: tara
+role: tester
+display: Tara
+---
+<!-- agent-notes: { ctx: "fixture", deps: [${dep}], state: draft, last: "t@2026-09-09" } -->
+## Priors
+
+${priors}
+
+## Dissent
+
+When the brief's arithmetic is off, she says the real number unprompted.
+
+## Voice
+
+Precise.
+
+"Minus two."
+
+## Tells
+
+Counts.
+`;
+const TEAM = (edit = () => {}) => {
+  const root = mkdtempSync(join(tmpdir(), "summon-canon-team-"));
+  const files = {
+    "team/roles/tester/SKILL.md": ROLE,
+    "team/roles/tester/role.json": JSON.stringify({ may: ["read", "write:tests"], "must-not": ["write:src"], lenses: [] }),
+    "team/personas/tara.md": PERSONA(),
+    "team/views/skin/party.json": JSON.stringify({ skin: "skin", title: "FIXTURE-TITLE", members: { tara: { class: "FIXTURE-CLASS-ARCHER", accent: "#ef4444", blurb: "FIXTURE-BLURB" } } }),
+    "team/harness/claude-code.json": JSON.stringify({ harness: "claude-code", fitted: true, review: "x", output: { dir: ".claude/agents", file: "{name}.md" }, capabilities: { read: ["Read"], "write:src": ["Write"], "write:tests": ["Write"] }, frontmatter: {}, budget: {} }),
+    "team/parties/core.json": JSON.stringify({ name: "core", harness: "claude-code", view: "skin", members: [{ role: "tester", persona: "tara" }], formations: [] }),
+    "team/events.json": JSON.stringify({ common: ["t", "seat", "event"], events: { claim: { required: ["item"] } }, severities: [], verdicts: ["accept"], grades: [] }),
+    "team/checks.json": JSON.stringify({ log: ".summon/team-log.jsonl" }),
+    ".summon/team-log.jsonl": JSON.stringify({ t: "2026-09-09T10:00:00Z", seat: "tara", event: "claim", item: "i1" }) + "\n",
+  };
+  edit(files);
+  for (const [rel, content] of Object.entries(files)) {
+    if (content === null) continue;
+    mkdirSync(join(root, rel, ".."), { recursive: true });
+    writeFileSync(join(root, rel), content);
+  }
+  return root;
+};
+
+test("team: a clean tree has no problems", () => {
+  assert.deepEqual(findTeamProblems(TEAM()), []);
+});
+
+test("team: a tree with no team/ directory is skipped, not failed", () => {
+  const root = mkdtempSync(join(tmpdir(), "summon-canon-noteam-"));
+  assert.deepEqual(findTeamProblems(root), []);
+});
+
+test("team: a party that does not compose fails with the composer's own reason", () => {
+  const root = TEAM((f) => (f["team/parties/core.json"] = JSON.stringify({ name: "core", harness: "claude-code", view: "skin", members: [{ role: "tester", persona: "nobody" }] })));
+  const problems = findTeamProblems(root);
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /party "core".*persona "nobody"/);
+});
+
+test("team: an adapter that is not fitted: true fails, naming the adapter", () => {
+  // team-layers.md: fitted is "Always true. Every adapter is fitted to something."
+  const root = TEAM((f) => (f["team/harness/claude-code.json"] = f["team/harness/claude-code.json"].replace('"fitted":true', '"fitted":false')));
+  assert.ok(findTeamProblems(root).some((p) => /adapter "claude-code".*fitted/.test(p)), findTeamProblems(root).join("; "));
+});
+
+test("team: skin text that reaches a composed agent fails, naming the agent and the string", () => {
+  // A persona whose own prose repeats its skin class is the realistic way a leak happens.
+  const root = TEAM((f) => (f["team/personas/tara.md"] = PERSONA("I am FIXTURE-CLASS-ARCHER, and proud of it.")));
+  const problems = findTeamProblems(root);
+  assert.ok(problems.some((p) => /\.claude\/agents\/tara\.md.*FIXTURE-CLASS-ARCHER/.test(p)), problems.join("; "));
+});
+
+test("team: an agent-notes dep under team/ that does not resolve fails, naming the file and the dep", () => {
+  const root = TEAM((f) => (f["team/personas/tara.md"] = PERSONA(undefined, "team/roles/nope/SKILL.md")));
+  const problems = findTeamProblems(root);
+  assert.ok(problems.some((p) => /team\/personas\/tara\.md.*"team\/roles\/nope\/SKILL\.md"/.test(p)), problems.join("; "));
+});
+
+test("team: an invalid event in the configured log fails by line number; a missing log file does not", () => {
+  const bad = TEAM((f) => (f[".summon/team-log.jsonl"] += JSON.stringify({ t: "2026-09-09T10:01:00Z", seat: "tara", event: "dance" }) + "\n"));
+  assert.ok(findTeamProblems(bad).some((p) => /team-log\.jsonl line 2.*event "dance"/.test(p)), findTeamProblems(bad).join("; "));
+  const none = TEAM((f) => (f[".summon/team-log.jsonl"] = null));
+  assert.deepEqual(findTeamProblems(none), []);
+});
+
+test("team: the checked-in tree passes", () => {
+  assert.deepEqual(findTeamProblems(resolve(import.meta.dirname, "..")), []);
+});

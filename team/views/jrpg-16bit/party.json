@@ -7,7 +7,7 @@
     "sato": {
       "class": "The Forge-Knight",
       "archetype": "Smith",
-      "epithet": "makes the tests pass",
+      "epithet": "green, then clean",
       "accent": "#22c55e",
       "sprite": "sato.png",
       "blurb": "Writes the production code that makes Tara's tests pass. The builder.",
@@ -115,7 +115,7 @@
     "diego": {
       "class": "The Lorekeeper",
       "archetype": "Scribe",
-      "epithet": "ran the quick start on a clean machine",
+      "epithet": "writes for the reader, not the author",
       "accent": "#0e7490",
       "sprite": "diego.png",
       "blurb": "Docs, changelogs, onboarding. If it isn't documented, it doesn't exist.",

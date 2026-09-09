@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "claude@2026-08-06", key: ["9 checks: agent files, persona roster, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering, review-sentinel integrity", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8/#9 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes", "check #9 catches the Placeholder-Sentinel anti-pattern; its marker regex is anchored to a Status: line because matching prose false-positived on two real reviews", "exports findSentinelProblems + runAllChecks behind an entry-point guard, so the module is importable by its tests"] }
+// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "claude@2026-09-09", key: ["10 checks: agent files, persona roster, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering, review-sentinel integrity, team tree (parties compose, adapters fitted, no skin text in prompts, team deps resolve, log validates)", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8/#9 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes", "check #9 catches the Placeholder-Sentinel anti-pattern; its marker regex is anchored to a Status: line because matching prose false-positived on two real reviews", "exports findSentinelProblems + runAllChecks behind an entry-point guard, so the module is importable by its tests"] }
 //
 // Fitness function for Summon's canon. Our agent/persona/process docs duplicate
 // facts across many files; the agent-notes protocol keeps them in sync by hand.
@@ -13,6 +13,11 @@
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
+
+// The team tree's own tools. Both ship with the tree; an install without them has no
+// team/ to check, so a failed import degrades to "skip" rather than "fail".
+const composeTeam = await import("./compose-team.mjs").catch(() => null);
+const teamLog = await import("./team-log.mjs").catch(() => null);
 
 const ROOT = process.cwd();
 const AGENTS_DIR = join(ROOT, ".claude", "agents");
@@ -337,8 +342,80 @@ function checkReviewSentinels() {
   for (const p of findSentinelProblems(join(ROOT, "docs", "history"))) fail(p);
 }
 
+// 10. The team tree (ADR-0015 sequencing step 4). Every party must compose through
+//     the real composer, which refuses an unresolved binding, a missing section, a
+//     tool name where a work verb belongs, a Dissent that restates its lens, and a
+//     line whose station names a seat the party lacks. On top of that, three rules
+//     the composer does not own: every adapter is fitted: true (the spec's word is
+//     "always"), no skin text reaches a composed agent (the layer's one invariant),
+//     every agent-notes dep under team/ resolves to a file or directory, and the
+//     configured log validates line by line. Exported so it is unit-testable.
+export function findTeamProblems(root) {
+  const problems = [];
+  const base = join(root, "team");
+  if (!existsSync(base) || !composeTeam) return problems;
+  let team;
+  try {
+    team = composeTeam.loadTeam(root);
+  } catch (err) {
+    return [`team: ${err.message}`];
+  }
+  for (const [name, h] of Object.entries(team.harnesses)) {
+    if (h.fitted !== true) problems.push(`team: adapter "${name}" declares fitted: ${JSON.stringify(h.fitted)}; every adapter is fitted to something and must say true (team-layers.md)`);
+  }
+  for (const party of Object.keys(team.parties)) {
+    let out;
+    try {
+      out = composeTeam.compose(root, { party });
+    } catch (err) {
+      problems.push(`team: party "${party}" does not compose: ${err.message}`);
+      continue;
+    }
+    const view = team.views[team.parties[party].view];
+    const leaks = [];
+    const collect = (entry) => {
+      for (const k of ["class", "epithet", "blurb", "sprite", "alt"]) if (typeof entry?.[k] === "string" && entry[k].length > 3) leaks.push(entry[k]);
+    };
+    if (view) {
+      if (view.title) leaks.push(view.title);
+      for (const group of ["members", "formations", "roles"]) for (const entry of Object.values(view[group] ?? {})) collect(entry);
+    }
+    for (const f of out.files) {
+      if (!/\/agents\//.test(f.path)) continue;
+      for (const leak of leaks) {
+        if (f.content.includes(leak)) problems.push(`team: skin text reaches a prompt: ${f.path} contains "${leak}" (the view never enters model context)`);
+      }
+    }
+  }
+  const depFiles = [...walkMarkdown(base), ...["scripts/compose-team.mjs", "scripts/team-log.mjs", "docs/methodology/team-layers.md"].map((r) => join(root, r)).filter(existsSync)];
+  for (const abs of depFiles) {
+    const rel = relative(root, abs).split("\\").join("/");
+    const block = read(abs).match(/agent-notes:\s*\{[\s\S]*?deps:\s*\[([^\]]*)\]/);
+    if (!block) continue;
+    for (const dep of block[1].split(",").map((d) => d.trim().replace(/^["']|["']$/g, "")).filter(Boolean)) {
+      if (!existsSync(join(root, dep))) problems.push(`team: ${rel} deps on "${dep}", which does not exist`);
+    }
+  }
+  const logPath = team.checks?.log;
+  if (logPath && teamLog && existsSync(join(root, logPath))) {
+    try {
+      const schema = teamLog.loadSchema(root);
+      teamLog.readLog(join(root, logPath)).forEach((e, i) => {
+        for (const p of teamLog.validateEvent(e, schema)) problems.push(`team: ${logPath} line ${i + 1}: ${p}`);
+      });
+    } catch (err) {
+      problems.push(`team: ${err.message}`);
+    }
+  }
+  return problems;
+}
+
+function checkTeamTree() {
+  for (const p of findTeamProblems(ROOT)) fail(p);
+}
+
 export function runAllChecks() {
-  for (const check of [checkAgentFiles, checkPersonaRoster, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels]) {
+  for (const check of [checkAgentFiles, checkPersonaRoster, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels, checkTeamTree]) {
     try {
       check();
     } catch (err) {
