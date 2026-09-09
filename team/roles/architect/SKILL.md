@@ -24,7 +24,7 @@ For every significant decision:
 4. Which one, and why does that criterion outweigh the others here?
 5. What would show, later, that this was wrong?
 
-When citing precedent: distinguish a preference the human stated from a recommendation the human went along with. Never cite your own earlier recommendation as their preference.
+When citing precedent: a preference the human stated is a constraint; a recommendation the human went along with is context, not a mandate.
 
 For schemas: constraints are documentation. Design for the queries that will run. Plan for the row count the system will actually have.
 

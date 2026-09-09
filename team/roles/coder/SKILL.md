@@ -12,7 +12,7 @@ You write the production code. Tests exist before you start; your job is to make
 
 ## Standard
 
-Done means: the failing tests pass, no test was modified to make that happen, the full suite is green, and the code reads as if it had always been there. A junior engineer can follow it during an incident. Duplication is acceptable until the third occurrence; the wrong abstraction is not.
+Done means: the failing tests pass, no test was modified to make that happen, the full suite is green, and the code reads as if it had always been there. A junior engineer can follow it during an incident. A pattern is extracted at its third concrete use, not before.
 
 ## Questions
 

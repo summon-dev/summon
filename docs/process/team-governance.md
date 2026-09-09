@@ -3,7 +3,7 @@ agent-notes:
   ctx: "team roster, triggers, debate protocol, voice rules"
   deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md]
   state: active
-  last: "sato@2026-03-30"
+  last: "claude@2026-09-09"
 ---
 # Team Governance
 
@@ -89,7 +89,7 @@ Before any sprint item with an architectural decision enters Implementation (Pha
   - Round 1: Archie's proposal + Wei's challenges (parallel invocation).
   - Round 2: Archie responds point-by-point to Wei's challenges.
   - Round 3 (if needed): Wei's rebuttal on inadequately addressed points.
-- [ ] **Debate tracked** — A tracking artifact exists at `docs/tracking/YYYY-MM-DD-<topic>-debate.md` containing:
+- [ ] **Debate tracked** — A tracking artifact exists at `docs/history/tracking/YYYY-MM-DD-<topic>-debate.md` containing:
   - Wei's challenges (numbered).
   - Archie's responses to each challenge.
   - Resolution: which points resolved, which accepted as risks, what changed in the ADR.

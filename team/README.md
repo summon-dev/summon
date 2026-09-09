@@ -12,7 +12,8 @@ team/
 ├── personas/<name>.md    the point of view: priors, dissent, voice, tells
 ├── views/<skin>/         the skin: party.json, keyed by persona; never reaches a prompt
 ├── harness/<name>.json   the fitted part: tool names, budgets, output paths; marked fitted
-└── parties/<name>.json   bindings: which persona holds which role, on which harness, in which skin
+├── parties/<name>.json   bindings: which persona holds which role, on which harness, in which skin
+└── checks.json           this project's commands for each role's declared checks; unbound checks are judged
 ```
 
 Compose:

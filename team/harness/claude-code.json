@@ -1,19 +1,39 @@
 {
   "harness": "claude-code",
   "fitted": true,
-  "review": "Reread against the release notes on every Claude model release and every Claude Code release that mentions subagents, tools, or hooks. Nothing outside this file should need to change for a harness release; if something does, the seam is wrong.",
+  "review": "Reread against the release notes on every Claude model release and every Claude Code release that mentions subagents, tools, hooks, or frontmatter. If a release forces a change outside this file, the seam is wrong; record it against ADR-0015 reversal trigger 3.",
   "output": {
     "dir": ".claude/agents",
     "file": "{name}.md"
   },
   "capabilities": {
-    "read": ["Read", "Grep", "Glob"],
-    "run": ["Bash"],
-    "write:src": ["Write", "Edit"],
-    "write:tests": ["Write", "Edit"],
-    "write:docs": ["Write", "Edit"],
-    "web": ["WebSearch", "WebFetch"],
-    "notebook": ["NotebookEdit"]
+    "read": [
+      "Read",
+      "Grep",
+      "Glob"
+    ],
+    "run": [
+      "Bash"
+    ],
+    "write:src": [
+      "Write",
+      "Edit"
+    ],
+    "write:tests": [
+      "Write",
+      "Edit"
+    ],
+    "write:docs": [
+      "Write",
+      "Edit"
+    ],
+    "web": [
+      "WebSearch",
+      "WebFetch"
+    ],
+    "notebook": [
+      "NotebookEdit"
+    ]
   },
   "frontmatter": {
     "model": "inherit"
@@ -25,5 +45,24 @@
     "tester": 20,
     "architect": 25,
     "challenger": 15
-  }
+  },
+  "keys": {
+    "tools": "tools",
+    "disallowed": "disallowedTools",
+    "budget": "maxTurns"
+  },
+  "formation": "single-file",
+  "paths": {
+    "write:tests": [
+      "**/*.test.*",
+      "**/test/**",
+      "**/tests/**",
+      "**/__tests__/**"
+    ],
+    "write:docs": [
+      "docs/**",
+      "**/*.md"
+    ]
+  },
+  "delegation": null
 }

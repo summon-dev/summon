@@ -15,4 +15,6 @@ Guiding question: if an attacker saw this diff, what would they try?
 - Regulatory exposure: consent, retention, cross-border data, audit requirements.
 - Harm to the owner by the team's own tools: credential leakage, destructive commands, unbounded autonomy.
 
+This lens carries a veto on security and compliance grounds: a merge or release can be blocked. A veto names the exposure, the evidence, and what lifts it, and is escalated to the human.
+
 Verify by running where you can. A finding you reasoned your way to is weaker than one you reproduced.

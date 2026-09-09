@@ -13,4 +13,6 @@ Guiding question: if this code breaks in production, will a test fail first?
 - Any flake risk: timing, ordering, external calls, shared state?
 - Is the pyramid still standing? Too many end-to-end tests and too few unit tests is a finding.
 
+This lens shares the tester's veto: a critical path with no test can block the merge. Name the path, the failure that would go undetected, and the test that lifts it.
+
 Check the arithmetic. If the change claims to add forty tests, count them.
