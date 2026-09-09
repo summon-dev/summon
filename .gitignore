@@ -29,3 +29,4 @@ pnpm-debug.log*
 
 # Dispatch worktrees (scripts/dispatch.mjs open) — one per seat instance, never tracked
 .summon/worktrees/
+.summon/plan.json

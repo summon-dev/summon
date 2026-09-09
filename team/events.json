@@ -67,13 +67,14 @@
     },
     "return": {
       "required": [
-        "ok"
+        "ok",
+        "item"
       ],
       "optional": [
-        "item",
-        "summary"
+        "summary",
+        "station"
       ],
-      "doc": "the seat finished and returned"
+      "doc": "the seat finished and returned; a station is released only by ok:true from the instance that claimed it"
     }
   },
   "severities": [
