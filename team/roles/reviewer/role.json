@@ -13,7 +13,8 @@
     "test-quality",
     "security",
     "conformance",
-    "operational"
+    "operational",
+    "accessibility"
   ],
   "checks": [
     {
@@ -52,6 +53,11 @@
     {
       "id": "line-respected",
       "claim": "The instance reviewing an item is not the instance that coded it."
+    },
+    {
+      "id": "contrast-motion",
+      "claim": "Stylesheets in the change meet the contrast floor and respect reduced motion.",
+      "lens": "accessibility"
     }
   ]
 }

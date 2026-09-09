@@ -33,6 +33,10 @@
     ],
     "notebook": [
       "NotebookEdit"
+    ],
+    "write:infra": [
+      "Write",
+      "Edit"
     ]
   },
   "frontmatter": {
@@ -44,7 +48,16 @@
     "coder": 25,
     "tester": 20,
     "architect": 25,
-    "challenger": 15
+    "challenger": 15,
+    "elicitor": 20,
+    "tracker": 20,
+    "product": 20,
+    "operator": 25,
+    "designer": 20,
+    "data-scientist": 20,
+    "writer": 20,
+    "teacher": 20,
+    "cloud": 25
   },
   "keys": {
     "tools": "tools",
@@ -62,6 +75,15 @@
     "write:docs": [
       "docs/**",
       "**/*.md"
+    ],
+    "write:infra": [
+      ".github/**",
+      "Dockerfile*",
+      "**/*.tf",
+      "**/*.bicep",
+      "**/*.cfn.*",
+      "infra/**",
+      "deploy/**"
     ]
   },
   "delegation": null

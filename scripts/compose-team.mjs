@@ -14,7 +14,7 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 // Capabilities are verbs about the work. Tool names live only in harness adapters.
-export const CAPABILITIES = ["read", "run", "write:src", "write:tests", "write:docs", "web", "notebook"];
+export const CAPABILITIES = ["read", "run", "write:src", "write:tests", "write:docs", "write:infra", "web", "notebook"];
 
 export const ROLE_SECTIONS = ["Charter", "Standard", "Questions", "Boundaries", "Output"];
 export const PERSONA_SECTIONS = ["Priors", "Dissent", "Voice", "Tells"];

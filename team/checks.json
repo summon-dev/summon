@@ -40,5 +40,17 @@
   "line-respected": {
     "run": "node scripts/team-log.mjs check --log .summon/team-log.jsonl --line tdd",
     "receipt": "the summary line; a violation names the item, stations, and instance"
+  },
+  "contrast-motion": {
+    "run": "pnpm check:css",
+    "receipt": "the checker's summary line"
+  },
+  "quick-start-runs": {
+    "run": "pnpm install --frozen-lockfile && pnpm build",
+    "receipt": "the last line of each command"
+  },
+  "ci-green": {
+    "run": "pnpm check:canon && pnpm test",
+    "receipt": "'canon check: OK' and the test summary lines"
   }
 }

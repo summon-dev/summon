@@ -1,0 +1,10 @@
+{
+  "may": ["read", "run", "write:docs"],
+  "must-not": ["write:src", "write:tests", "write:infra"],
+  "lenses": [],
+  "checks": [
+    { "id": "debt-markers", "claim": "Every summon: marker in the tree is in the debt register, and no register entry points at a marker that is gone." },
+    { "id": "status-flow", "claim": "Every item in Done passed through In Progress and In Review, in that order." },
+    { "id": "board-statuses", "claim": "The board carries all five statuses." }
+  ]
+}

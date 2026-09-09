@@ -697,7 +697,8 @@ test("refuses a tool name in may or in must-not; capabilities are work verbs", (
 test("the checked-in summon-core party composes on the claude-code adapter", () => {
   const out = compose(REPO, { party: "summon-core" });
   const names = agentsIn(out).map((f) => f.path);
-  for (const n of ["sato", "tara", "archie", "wei", "vik", "pierrot", "review-party"]) assert.ok(names.includes(`.claude/agents/${n}.md`), `summon-core lacks ${n}`);
+  for (const n of ["cam", "pat", "archie", "tara", "sato", "vik", "pierrot", "wei", "grace", "ines", "dani", "debra", "diego", "prof", "cloud", "review-party"]) assert.ok(names.includes(`.claude/agents/${n}.md`), `summon-core lacks ${n}`);
+  assert.equal(agentsIn(out).length, 16, "fifteen seats and one formation");
   const vik = fileNamed(out, "vik.md").content;
   assert.match(vik, /^## Lens: Simplicity$/m);
   assert.match(vik, /^## Tells$/m);
@@ -705,6 +706,8 @@ test("the checked-in summon-core party composes on the claude-code adapter", () 
   const formation = fileNamed(out, "review-party.md").content;
   assert.match(formation, /^# Conditional lenses$/m);
   assert.match(formation, /^### Lens: Operational$/m);
+  assert.match(formation, /^### Lens: Accessibility$/m);
+  assert.match(formation, /^### Dissent$/m, "a conditional lens with a persona carries that persona's dissent");
   assert.ok(out.checks.some((c) => c.grade === "deterministic") && out.checks.some((c) => c.grade === "inferential"), "the real tree has both bound and judged checks");
   assert.equal(out.checks.find((c) => c.member === "review-party" && c.id === "disagreement-rate")?.grade, "deterministic", "the disagreement rate is bound to team-log.mjs");
   assert.match(fileNamed(out, "roster.md").content, /\| tdd \| red: tara → green: sato → review: review-party \|/);
@@ -718,8 +721,10 @@ test("loadTeam reads every layer of the checked-in tree, and the party uses role
   const personasUsed = new Set([...p.members.map((m) => m.persona), ...p.formations.flatMap((f) => f.members.map((m) => m.persona))]);
   for (const r of rolesUsed) assert.ok(team.roles[r], `party uses role ${r}`);
   for (const q of personasUsed) assert.ok(team.personas[q], `party uses persona ${q}`);
-  assert.deepEqual(Object.keys(team.roles).sort(), ["architect", "challenger", "coder", "reviewer", "tester"]);
-  assert.deepEqual(Object.keys(team.personas).sort(), ["archie", "pierrot", "sato", "tara", "vik", "wei"]);
+  assert.deepEqual(Object.keys(team.roles).sort(), ["architect", "challenger", "cloud", "coder", "data-scientist", "designer", "elicitor", "operator", "product", "reviewer", "teacher", "tester", "tracker", "writer"]);
+  assert.deepEqual(Object.keys(team.personas).sort(), ["archie", "cam", "cloud", "dani", "debra", "diego", "grace", "ines", "pat", "pierrot", "prof", "sato", "tara", "vik", "wei"]);
+  for (const q of Object.keys(team.personas)) assert.ok(team.views["jrpg-16bit"].members[q]?.class, `skin lacks ${q}`);
+  for (const r of Object.keys(team.roles)) assert.ok(team.views["jrpg-16bit"].roles[r]?.class, `skin lacks a role entry for ${r}`);
   assert.equal(team.harnesses["claude-code"].fitted, true);
   assert.equal(team.harnesses.skills.fitted, true);
   assert.ok(team.views["jrpg-16bit"] && team.views.plain);

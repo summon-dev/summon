@@ -57,6 +57,87 @@
       "sprite": "wei.png",
       "blurb": "Breaks consensus on purpose and builds the rationale afterwards.",
       "alt": "Wei, the devil's advocate, leaning back mid-toss of a glowing magenta card"
+    },
+    "cam": {
+      "class": "The Wayfinder",
+      "archetype": "Guide",
+      "epithet": "asks what you will decide differently",
+      "accent": "#f59e0b",
+      "sprite": "cam.png",
+      "blurb": "Probes your vague idea with one question at a time until the vision is concrete.",
+      "alt": "Cam, the team's guide, a hooded traveler holding out a glowing amber lantern"
+    },
+    "grace": {
+      "class": "The Marshal",
+      "archetype": "Tactician",
+      "epithet": "knows where we are",
+      "accent": "#8b5cf6",
+      "sprite": "grace.png",
+      "blurb": "Runs the board, tracks velocity, and keeps the party moving.",
+      "alt": "Grace, the sprint marshal, raising a tall violet banner"
+    },
+    "pat": {
+      "class": "The Quartermaster-Judge",
+      "archetype": "Judge",
+      "epithet": "says no as a full sentence",
+      "accent": "#9f1239",
+      "sprite": "pat.png",
+      "blurb": "Owns the backlog and prioritises ruthlessly. Speaks for you in proxy mode.",
+      "alt": "Pat, the product lead, holding out a set of burgundy priority scales"
+    },
+    "ines": {
+      "class": "The Pipeline-Wright",
+      "archetype": "Engineer",
+      "epithet": "asks how we'll know at 3am",
+      "accent": "#facc15",
+      "sprite": "ines.png",
+      "blurb": "Owns everything between git push and production traffic.",
+      "alt": "Ines, the SRE, throwing a yellow-knobbed deploy lever with goggles on her brow"
+    },
+    "dani": {
+      "class": "The Illusion-Artificer",
+      "archetype": "Painter",
+      "epithet": "ships options in threes",
+      "accent": "#fb7185",
+      "sprite": "dani.png",
+      "blurb": "Design exploration, user flows, and accessibility review.",
+      "alt": "Dani, the designer, holding up a coral-edged interface panel and a brush"
+    },
+    "debra": {
+      "class": "The Star-Diviner",
+      "archetype": "Seer",
+      "epithet": "asks for the denominator",
+      "accent": "#2dd4bf",
+      "sprite": "debra.png",
+      "blurb": "Turns telemetry into decisions. The only one with notebook access.",
+      "alt": "Debra, the data scientist, in a pointed astronomer's hat holding a teal constellation"
+    },
+    "diego": {
+      "class": "The Lorekeeper",
+      "archetype": "Scribe",
+      "epithet": "ran the quick start on a clean machine",
+      "accent": "#0e7490",
+      "sprite": "diego.png",
+      "blurb": "Docs, changelogs, onboarding. If it isn't documented, it doesn't exist.",
+      "alt": "Diego, the technical writer, holding open a book with glowing teal script"
+    },
+    "prof": {
+      "class": "The Sage",
+      "archetype": "Mentor",
+      "epithet": "explains the why",
+      "accent": "#a16207",
+      "sprite": "prof.png",
+      "blurb": "Explains the team's choices, Socratically. Assumes you're competent.",
+      "alt": "Prof, the mentor, in tweed gesturing with a pointer at a floating ochre diagram"
+    },
+    "cloud": {
+      "class": "The Aeromancer",
+      "archetype": "Sky-mage",
+      "epithet": "prices the arrow on the diagram",
+      "accent": "#0ea5e9",
+      "sprite": "cloud.png",
+      "blurb": "Architects and tunes any cloud for cost and reliability.",
+      "alt": "Cloud, the cloud specialist, a sky-mage with an azure cloud floating over his staff"
     }
   },
   "formations": {
@@ -93,6 +174,51 @@
       "class": "Trickster",
       "accent": "#ec4899",
       "blurb": "An unnamed challenger."
+    },
+    "elicitor": {
+      "class": "Wayfinder",
+      "accent": "#f59e0b",
+      "blurb": "An unnamed guide."
+    },
+    "tracker": {
+      "class": "Marshal",
+      "accent": "#8b5cf6",
+      "blurb": "An unnamed tracker."
+    },
+    "product": {
+      "class": "Quartermaster",
+      "accent": "#9f1239",
+      "blurb": "An unnamed product owner."
+    },
+    "operator": {
+      "class": "Pipeline-wright",
+      "accent": "#facc15",
+      "blurb": "An unnamed operator."
+    },
+    "designer": {
+      "class": "Artificer",
+      "accent": "#fb7185",
+      "blurb": "An unnamed designer."
+    },
+    "data-scientist": {
+      "class": "Diviner",
+      "accent": "#2dd4bf",
+      "blurb": "An unnamed analyst."
+    },
+    "writer": {
+      "class": "Scribe",
+      "accent": "#0e7490",
+      "blurb": "An unnamed writer."
+    },
+    "teacher": {
+      "class": "Sage",
+      "accent": "#a16207",
+      "blurb": "An unnamed teacher."
+    },
+    "cloud": {
+      "class": "Aeromancer",
+      "accent": "#0ea5e9",
+      "blurb": "An unnamed cloud specialist."
     }
   }
 }

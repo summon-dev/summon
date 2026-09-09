@@ -38,7 +38,7 @@ A role describes a job and the standard the job must meet. `team/roles/<role>/SK
 }
 ```
 
-Capabilities are verbs about the work: `read`, `run`, `write:src`, `write:tests`, `write:docs`, `web`, `notebook`. They are never tool names. `must-not` is the separation-of-duties list; it is what keeps a tester from making a failing test easier to pass, and it is the part of the role the adapter tries to enforce and reports on when it cannot.
+Capabilities are verbs about the work: `read`, `run`, `write:src`, `write:tests`, `write:docs`, `write:infra`, `web`, `notebook`. They are never tool names. `must-not` is the separation-of-duties list; it is what keeps a tester from making a failing test easier to pass, and it is the part of the role the adapter tries to enforce and reports on when it cannot.
 
 A **check** is a claim a command can decide. The role declares the claim; the project binds the command (see Checks below). A check may carry a `lens`, in which case only members holding that lens receive it.
 

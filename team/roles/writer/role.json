@@ -1,0 +1,9 @@
+{
+  "may": ["read", "run", "write:docs", "web"],
+  "must-not": ["write:src", "write:tests", "write:infra"],
+  "lenses": [],
+  "checks": [
+    { "id": "quick-start-runs", "claim": "The documented quick-start commands run on the current tree." },
+    { "id": "changelog-current", "claim": "The changelog has an entry for every user-facing change since the last release." }
+  ]
+}

@@ -4,20 +4,24 @@
   "view": "jrpg-16bit",
   "members": [
     {
-      "role": "coder",
-      "persona": "sato"
+      "role": "elicitor",
+      "persona": "cam"
     },
     {
-      "role": "tester",
-      "persona": "tara"
+      "role": "product",
+      "persona": "pat"
     },
     {
       "role": "architect",
       "persona": "archie"
     },
     {
-      "role": "challenger",
-      "persona": "wei"
+      "role": "tester",
+      "persona": "tara"
+    },
+    {
+      "role": "coder",
+      "persona": "sato"
     },
     {
       "role": "reviewer",
@@ -28,6 +32,38 @@
       "role": "reviewer",
       "lens": "security",
       "persona": "pierrot"
+    },
+    {
+      "role": "challenger",
+      "persona": "wei"
+    },
+    {
+      "role": "tracker",
+      "persona": "grace"
+    },
+    {
+      "role": "operator",
+      "persona": "ines"
+    },
+    {
+      "role": "designer",
+      "persona": "dani"
+    },
+    {
+      "role": "data-scientist",
+      "persona": "debra"
+    },
+    {
+      "role": "writer",
+      "persona": "diego"
+    },
+    {
+      "role": "teacher",
+      "persona": "prof"
+    },
+    {
+      "role": "cloud",
+      "persona": "cloud"
     }
   ],
   "formations": [
@@ -54,8 +90,14 @@
       ],
       "conditional": [
         {
+          "persona": "ines",
           "lens": "operational",
           "when": "the change alters application behaviour (not docs-only, not CI-only)"
+        },
+        {
+          "persona": "dani",
+          "lens": "accessibility",
+          "when": "the change touches UI files: components, templates, stylesheets, layouts"
         }
       ]
     }
