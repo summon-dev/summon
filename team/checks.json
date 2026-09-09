@@ -31,5 +31,14 @@
   "citation-resolves": {
     "run": "node scripts/check-canon.mjs",
     "receipt": "no canon->meta boundary failure; unresolved paths are still judged by hand"
+  },
+  "log": ".summon/team-log.jsonl",
+  "disagreement-rate": {
+    "run": "node scripts/team-log.mjs dissent --log .summon/team-log.jsonl --last 10",
+    "receipt": "the rate line: N items, M non-unanimous"
+  },
+  "line-respected": {
+    "run": "node scripts/team-log.mjs check --log .summon/team-log.jsonl --line tdd",
+    "receipt": "the summary line; a violation names the item, stations, and instance"
   }
 }

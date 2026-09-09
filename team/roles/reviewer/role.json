@@ -48,6 +48,10 @@
     {
       "id": "negative-control",
       "claim": "On the planted-defect fixture, every lens returns at least one finding and the verdicts are not unanimous."
+    },
+    {
+      "id": "line-respected",
+      "claim": "The instance reviewing an item is not the instance that coded it."
     }
   ]
 }

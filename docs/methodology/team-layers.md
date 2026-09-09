@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "spec for the four team layers, checks, and how a party composes them", deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/process/done-gate.md, team/README.md, scripts/compose-team.mjs], state: draft, last: "claude@2026-09-09", key: ["role = the work, persona = the point of view, view = the skin, adapter = the fitted part", "capabilities are verbs about the work, never tool names", "checks split each role into what a command decides and what the model judges", "view content never enters model context; Dissent must add to the lens"] }
+agent-notes: { ctx: "spec for the four team layers, checks, and how a party composes them", deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/process/done-gate.md, team/README.md, team/events.json, scripts/compose-team.mjs, scripts/team-log.mjs], state: draft, last: "claude@2026-09-09", key: ["role = the work, persona = the point of view, view = skin + renderer, adapter = the fitted part", "the event log is the runtime record every renderer and runtime check reads; the line is the per-item separation constraint over it", "capabilities are verbs about the work, never tool names", "checks split each role into what a command decides and what the model judges", "view content never enters model context; Dissent must add to the lens"] }
 ---
 
 # Team Layers
@@ -61,9 +61,9 @@ Dissent is the section that matters, and it is governed by one rule: **it holds 
 
 A persona contains no capabilities, no tool names, and no process steps; those are the role's.
 
-### View — the skin
+### View — skin and renderer
 
-A view is how the human sees the party: an archetype, an epithet, an accent colour, a sprite. `team/views/<skin>/party.json` is keyed by persona. Views feed the site, the roster printout, and any header a human reads. They **never** enter an agent's context; a composer test pins that. The layer exists so the site and the roster read one data file instead of a hand-copied table, and so a skin can be swapped without touching the work. More than one skin can exist for the same party.
+A view has two halves. A **skin** is static presentation data: `team/views/<skin>/party.json`, keyed by persona, by formation, and by role (so a persona-less instance on a line has a class and an accent). A **renderer** reads the event log and a skin and draws the team in motion: a table, a tmux wall, an assembly line, a battlefield. Skins feed the site, the roster printout, and any header a human reads. Neither half **ever** enters an agent's context; a composer test pins that. The layer exists so every renderer reads one data file and one log instead of a vendor's transcript, and so a skin can be swapped without touching the work. `scripts/team-log.mjs render --skin <skin>` is the first renderer.
 
 ### Harness adapter — the fitted part
 
@@ -126,6 +126,46 @@ The composer joins each role's declared checks to these bindings. A bound check 
 
 The composer wires checks; it does not run them. A runner that executes them and binds receipts to a tree state is sequenced after the receipt schema.
 
+## The event log
+
+`.summon/team-log.jsonl` is the team's runtime record: one JSON object per line, schema in `team/events.json`. Every event carries `t` (ISO 8601), `seat`, and `event`; most carry `instance` (`sato#3`) and `item`. The event types:
+
+| Event | Required | Means |
+|---|---|---|
+| `spawn` | `harness`, `tree` | a seat instance started, against a tree state |
+| `claim` | `item` (+ `station`) | the seat took a work item, at a station of a line |
+| `check` | `id`, `grade`, `exit` | a declared check ran, or was judged |
+| `finding` | `severity`, `summary` | one review finding |
+| `verdict` | `lens`, `verdict`, `item` | one lens's verdict on one item: `accept`, `revise`, or `veto` |
+| `return` | `ok` | the seat finished |
+
+The log is what every renderer draws from and what the runtime checks read. `team-log.mjs append` validates before it writes; `dissent` computes the disagreement rate (items whose lens verdicts were not unanimous, over items with two or more lens verdicts, most recent first); `check --line` enforces a line's constraints; `render` draws the table. When a project sets `log` in `team/checks.json`, the composer adds a `Log` section to every agent telling it which events to write and how. A seat that does not write its events is work nobody can see; until the check runner and the dispatch workflow write events from outside the model, the log is self-reported.
+
+## The line
+
+Maker-checker only means something per work item. `team/lines/<line>.json` names stations bound to seats, the artefact each hands on, and constraints:
+
+```json
+{
+  "name": "tdd",
+  "stations": [
+    { "name": "red", "seat": "tara", "emits": "tests" },
+    { "name": "green", "seat": "sato", "needs": ["tests"], "emits": "change" },
+    { "name": "review", "seat": "review-party", "needs": ["change"], "emits": "verdicts" }
+  ],
+  "constraints": [
+    { "rule": "order", "stations": ["red", "green", "review"] },
+    { "rule": "distinct-instance", "stations": ["green", "review"] }
+  ]
+}
+```
+
+A party opts into lines with `"lines": ["tdd"]`; the composer refuses a station that names a seat the party does not compose. `team-log.mjs check --line tdd` reads `claim` events per item and reports an item whose stations ran out of order or whose coding and reviewing stations were held by the same instance. That is separation of duties enforced at the log layer, per item, after the fact: detected, not prevented, until the line runs as a dispatch workflow.
+
+## The work order
+
+Scale is dispatch, not party. The party says who may hold a seat; a work order says how many instances of a seat run against which items. Its schema is deferred to the wave that builds the dispatch workflow; the log already carries `instance`, so a renderer can show fifty coders today if fifty were spawned. Parallelism limits belong in the harness adapter's `dispatch` field and are expected to expire with the harness.
+
 ## The enforcement report
 
 For every `must-not` in every member, `enforcement.md` says whether the harness enforces it at the **tool** layer (every tool the boundary maps to is withheld) or by **prose** only (the role needs a tool the boundary shares, or the adapter maps it to nothing). A third level, **hook**, is reserved for a boundary enforced by a hook composed from the adapter's `paths`; the composer cannot probe whether one is installed, so that column belongs to `doctor`. On Claude Code, writing source and writing tests share the same tools, so a tester's boundary against source is prose. It was prose in the v2 roster as well; the report only makes it visible.
@@ -144,5 +184,7 @@ Reviewers and challengers cannot write files; that is their boundary. Gate recor
 | Vik's sprite or class name | the view |
 | Which tools Claude Code gives a reviewer | the adapter |
 | Who reviews what, and which lenses are conditional | the party |
+| Which seat works which station, and who may not review what they coded | the line |
+| How the team looks while it runs | a renderer over the log, plus a skin |
 
 If an edit seems to need two layers, the seam is probably in the wrong place. Say so in the ADR rather than smearing the change across both.

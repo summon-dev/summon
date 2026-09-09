@@ -1,0 +1,6 @@
+{"t": "2026-09-09T15:29:24+00:00", "seat": "vik", "event": "claim", "item": "138-compose-team", "station": "review", "instance": "vik#1"}
+{"t": "2026-09-09T15:29:24+00:00", "seat": "vik", "event": "verdict", "item": "138-compose-team", "lens": "simplicity", "verdict": "revise", "findings": 18, "instance": "vik#1"}
+{"t": "2026-09-09T15:29:24+00:00", "seat": "vik", "event": "return", "item": "138-compose-team", "ok": true, "summary": "docs/history/code-reviews/2026-09-09-compose-team-vik.md", "instance": "vik#1"}
+{"t": "2026-09-09T15:29:24+00:00", "seat": "tara", "event": "claim", "item": "138-compose-team", "station": "review", "instance": "tara#1"}
+{"t": "2026-09-09T15:29:24+00:00", "seat": "tara", "event": "verdict", "item": "138-compose-team", "lens": "test-quality", "verdict": "revise", "findings": 20, "instance": "tara#1"}
+{"t": "2026-09-09T15:29:24+00:00", "seat": "tara", "event": "return", "item": "138-compose-team", "ok": true, "summary": "docs/history/code-reviews/2026-09-09-compose-team-tara.md", "instance": "tara#1"}

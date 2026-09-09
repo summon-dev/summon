@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "source tree for the composed team; read team-layers.md first", deps: [docs/methodology/team-layers.md, scripts/compose-team.mjs], state: draft, last: "claude@2026-09-09" }
+agent-notes: { ctx: "source tree for the composed team; read team-layers.md first", deps: [docs/methodology/team-layers.md, scripts/compose-team.mjs, scripts/team-log.mjs], state: draft, last: "claude@2026-09-09" }
 ---
 
 # team/
@@ -12,8 +12,18 @@ team/
 ├── personas/<name>.md    the point of view: priors, dissent, voice, tells
 ├── views/<skin>/         the skin: party.json, keyed by persona; never reaches a prompt
 ├── harness/<name>.json   the fitted part: tool names, budgets, output paths; marked fitted
-├── parties/<name>.json   bindings: which persona holds which role, on which harness, in which skin
-└── checks.json           this project's commands for each role's declared checks; unbound checks are judged
+├── parties/<name>.json   bindings: which persona holds which role, on which harness, in which skin, on which lines
+├── lines/<name>.json     stations bound to seats, handoffs, and per-item constraints (order, distinct-instance)
+├── events.json           schema for the runtime event log (.summon/team-log.jsonl)
+└── checks.json           this project's commands for each role's declared checks, and the log path
+```
+
+Watch and measure:
+
+```
+node scripts/team-log.mjs render  --log .summon/team-log.jsonl --skin jrpg-16bit   # the table view
+node scripts/team-log.mjs dissent --log .summon/team-log.jsonl --last 10           # the decay metric
+node scripts/team-log.mjs check   --log .summon/team-log.jsonl --line tdd          # separation of duties, per item
 ```
 
 Compose:

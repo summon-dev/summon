@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "composes team/ layers (role, persona, view, harness) into harness output per a party", deps: [docs/methodology/team-layers.md, team/README.md, team/checks.json, team/parties/summon-core.json, team/harness/claude-code.json], state: draft, last: "sato@2026-09-09", key: ["zero dependencies; flat-scalar frontmatter parser only", "view content is never written into an agent file", "enforcement level per must-not: tool when every mapped tool is withheld, else prose; unmapped is prose", "checks: role claims joined to team/checks.json commands; unbound checks fall back to judgment", "Dissent must be additive: a bullet mostly contained in a lens or role sentence is refused"] }
+// agent-notes: { ctx: "composes team/ layers (role, persona, view, harness) into harness output per a party", deps: [docs/methodology/team-layers.md, team/README.md, team/checks.json, team/lines/tdd.json, team/parties/summon-core.json, team/harness/claude-code.json], state: draft, last: "sato@2026-09-09", key: ["zero dependencies; flat-scalar frontmatter parser only", "view content is never written into an agent file", "enforcement level per must-not: tool when every mapped tool is withheld, else prose; unmapped is prose", "checks: role claims joined to team/checks.json commands; unbound checks fall back to judgment", "Dissent must be additive: a bullet mostly contained in a lens or role sentence is refused", "lines named by the party are validated against its seats; a configured log adds a Log section to every agent"] }
 //
 // Reads a party under team/parties/, resolves each member's role, lens, and
 // persona, and emits the harness adapter's artefacts plus roster.md (from the
@@ -202,7 +202,9 @@ export function loadTeam(root) {
   const checksPath = join(base, "checks.json");
   const checks = existsSync(checksPath) ? readJson(checksPath) : {};
   delete checks.$comment;
-  return { roles, personas, views, harnesses, parties, checks };
+  const lines = {};
+  for (const f of listFiles(join(base, "lines"), ".json")) lines[f.replace(/\.json$/, "")] = readJson(join(base, "lines", f));
+  return { roles, personas, views, harnesses, parties, checks, lines };
 }
 
 // --- composition -------------------------------------------------------------
@@ -281,18 +283,24 @@ function checksSection(rows) {
   return out + "\n";
 }
 
+function logSection(log, seat) {
+  if (!log) return "";
+  return `## Log\n\nThis project keeps a team event log at \`${log}\`. Append events as you work, with \`node scripts/team-log.mjs append --log ${log} --event '<json>'\`: a \`claim\` (item, and station when working a line) when you take an item; a \`verdict\` per lens (accept, revise, or veto) when you finish a review; a \`return\` (ok true or false) when you finish. Your seat is \`${seat}\`; carry an \`instance\` id such as \`${seat}#1\`. The log is what the disagreement rate and the line checks read; an event you do not write is work nobody can see.\n\n`;
+}
+
 function personaSections(persona) {
   let out = "";
   for (const h of PERSONA_ORDER) out += section(h, persona.sections.get(h));
   return out;
 }
 
-function agentBody(seat, checks) {
+function agentBody(seat, checks, log) {
   const { role, lens, lensText, persona } = seat;
   let out = `You are ${persona.display}, holding the ${role.name} role${lens ? ` on the ${lens} lens` : ""}.\n\n`;
   out += section("Voice", persona.sections.get("Voice"));
   for (const h of ROLE_HEAD) out += section(h, role.sections.get(h));
   out += checksSection(checks);
+  out += logSection(log, seat.as);
   for (const h of ROLE_MID) out += section(h, role.sections.get(h));
   if (lensText) out += `${lensText}\n\n`;
   out += personaSections(persona);
@@ -300,10 +308,11 @@ function agentBody(seat, checks) {
   return out.trimEnd() + "\n";
 }
 
-function formationBody(name, role, floor, conditional, checks) {
+function formationBody(name, role, floor, conditional, checks, log) {
   let out = `You are ${name}, a formation of ${floor.length} lenses on the ${role.name} role${conditional.length ? `, plus ${conditional.length} conditional` : ""}. Each lens reads the same change independently and is allowed to disagree with the others; report where they do.\n\n`;
   for (const h of ROLE_HEAD) out += section(h, role.sections.get(h));
   out += checksSection(checks);
+  out += logSection(log, name);
   for (const h of ROLE_MID) out += section(h, role.sections.get(h));
   for (const seat of floor) {
     out += `# ${seat.persona ? seat.persona.display : `Lens: ${seat.lens}`}\n\n`;
@@ -322,7 +331,7 @@ function formationBody(name, role, floor, conditional, checks) {
   return out.trimEnd() + "\n";
 }
 
-function renderRoster(view, party, seats, formations) {
+function renderRoster(view, party, seats, formations, lines = []) {
   const v = view ?? { title: party.name, members: {}, formations: {} };
   let out = `# ${v.title ?? party.name}\n\n`;
   out += `Party \`${party.name}\`, skin \`${v.skin ?? "none"}\`. Rendered from the view; nothing here reaches a prompt.\n\n`;
@@ -337,6 +346,14 @@ function renderRoster(view, party, seats, formations) {
       const m = v.formations?.[f.name] ?? {};
       const names = (list) => list.map((s) => (s.persona ? s.persona.display : s.lens)).join(", ");
       out += `| ${f.name} | ${m.class ?? ""} | ${names(f.floor)} | ${names(f.conditional) || "none"} | ${m.blurb ?? ""} |\n`;
+    }
+  }
+  if (lines.length) {
+    out += "\n## Lines\n\n| Line | Stations | Constraints |\n|---|---|---|\n";
+    for (const l of lines) {
+      const stations = (l.stations ?? []).map((s) => `${s.name}: ${s.seat}`).join(" → ");
+      const constraints = (l.constraints ?? []).map((c) => `${c.rule}(${c.stations.join(", ")})`).join("; ");
+      out += `| ${l.name} | ${stations} | ${constraints} |\n`;
     }
   }
   return out;
@@ -394,6 +411,19 @@ export function compose(root, { party: partyName, harness: harnessName, view: vi
     return { name: f.name, role, floor, conditional };
   });
 
+  const seatNames = new Set([...seats.map((s) => s.as), ...formations.map((f) => f.name)]);
+  const lines = (party.lines ?? []).map((name) => {
+    const line = team.lines[name];
+    if (!line) throw new Error(`party "${partyName}": line "${name}" has no file under team/lines/`);
+    for (const st of line.stations ?? []) {
+      if (!seatNames.has(st.seat)) throw new Error(`party "${partyName}": line "${name}" station "${st.name}" names seat "${st.seat}", which the party does not compose (have: ${[...seatNames].join(", ")})`);
+    }
+    for (const c of line.constraints ?? []) {
+      for (const st of c.stations ?? []) if (!(line.stations ?? []).some((x) => x.name === st)) throw new Error(`line "${name}": constraint "${c.rule}" names station "${st}", which the line does not define`);
+    }
+    return line;
+  });
+
   const files = [];
   const rows = [];
   const checks = [];
@@ -420,7 +450,7 @@ export function compose(root, { party: partyName, harness: harnessName, view: vi
       const disallowed = toolsFor(harness, role.mustNot).filter((t) => !tools.includes(t));
       const description = `${persona.display}: ${role.description}${lens ? ` Holds the ${lens} lens.` : ""}`;
       const seatChecks = checkRows(team, seat.as, role, lens);
-      emit(outPath({ name: seat.as, role: role.name }), frontmatter(harness, role, seat.as, description, tools, disallowed) + agentBody(seat, seatChecks));
+      emit(outPath({ name: seat.as, role: role.name }), frontmatter(harness, role, seat.as, description, tools, disallowed) + agentBody(seat, seatChecks, team.checks.log ?? null));
       rows.push(...enforcementRows(harness, seat.as, role, tools));
       checks.push(...seatChecks);
     }
@@ -430,11 +460,11 @@ export function compose(root, { party: partyName, harness: harnessName, view: vi
       const lensNames = f.floor.map((s) => s.lens).filter(Boolean);
       const description = `${f.name}: ${f.role.description} A formation of ${lensNames.join(", ")}${f.conditional.length ? `, plus conditional ${f.conditional.map((s) => s.lens).join(", ")}` : ""}.`;
       const fChecks = uniq([null, ...lensNames, ...f.conditional.map((s) => s.lens)]).flatMap((l) => checkRows(team, f.name, f.role, l).filter((c) => c.lens === l));
-      emit(outPath({ name: f.name, role: f.role.name }), frontmatter(harness, f.role, f.name, description, tools, disallowed) + formationBody(f.name, f.role, f.floor, f.conditional, fChecks));
+      emit(outPath({ name: f.name, role: f.role.name }), frontmatter(harness, f.role, f.name, description, tools, disallowed) + formationBody(f.name, f.role, f.floor, f.conditional, fChecks, team.checks.log ?? null));
       rows.push(...enforcementRows(harness, f.name, f.role, tools));
       checks.push(...fChecks);
     }
-    emit("roster.md", renderRoster(view, party, seats, formations));
+    emit("roster.md", renderRoster(view, party, seats, formations, lines));
   }
 
   emit("enforcement.md", renderEnforcement(harness, rows, checks));

@@ -1,0 +1,86 @@
+{
+  "$comment": "Team event log schema. One JSON object per line in the log; every event carries t, seat, event. Fields listed under required must be present; verdict values are closed.",
+  "common": [
+    "t",
+    "seat",
+    "event"
+  ],
+  "events": {
+    "spawn": {
+      "required": [
+        "harness",
+        "tree"
+      ],
+      "doc": "a seat instance started; tree = {head, dirty}"
+    },
+    "claim": {
+      "required": [
+        "item"
+      ],
+      "optional": [
+        "station"
+      ],
+      "doc": "the seat took a work item, optionally at a named station of a line"
+    },
+    "check": {
+      "required": [
+        "id",
+        "grade",
+        "exit"
+      ],
+      "optional": [
+        "receipt",
+        "item"
+      ],
+      "doc": "a declared check ran (deterministic) or was judged (inferential)"
+    },
+    "finding": {
+      "required": [
+        "severity",
+        "summary"
+      ],
+      "optional": [
+        "file",
+        "line",
+        "item",
+        "lens"
+      ],
+      "doc": "one review finding"
+    },
+    "verdict": {
+      "required": [
+        "lens",
+        "verdict",
+        "item"
+      ],
+      "optional": [
+        "findings"
+      ],
+      "doc": "one lens's verdict on one item; the disagreement rate is computed over these"
+    },
+    "return": {
+      "required": [
+        "ok"
+      ],
+      "optional": [
+        "item",
+        "summary"
+      ],
+      "doc": "the seat finished and returned"
+    }
+  },
+  "severities": [
+    "critical",
+    "important",
+    "suggestion"
+  ],
+  "verdicts": [
+    "accept",
+    "revise",
+    "veto"
+  ],
+  "grades": [
+    "deterministic",
+    "inferential"
+  ]
+}

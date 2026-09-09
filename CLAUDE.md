@@ -132,7 +132,7 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 | `docs/glossary.md` | Project domain vocabulary (ubiquitous language) — one opinionated word per concept |
 | `docs/methodology/phases.md` | 7-phase team methodology |
 | `docs/methodology/personas.md` | 16-agent persona catalog (v2; being replaced by `team/`) |
-| `docs/methodology/team-layers.md` | v3 team layers: role, persona, view, harness adapter; composed by `pnpm team:compose` |
+| `docs/methodology/team-layers.md` | v3 team layers: role, persona, view, harness adapter, checks, the event log and lines; composed by `pnpm team:compose` |
 | `docs/methodology/agent-notes.md` | Agent-notes protocol spec |
 | `docs/methodology/debt-markers.md` | `summon:` debt-marker convention (`pnpm harvest:debt`) |
 | `docs/process/team-governance.md` | Triggers, debate protocol, architecture gate, voice rules |
@@ -160,7 +160,7 @@ Run `/sprint-boundary` when all sprint items are Done or deferred. Full workflow
 │   ├── integrations/         # Tracking adapters (GitHub Projects, Jira)
 │   ├── scaffolds/            # Project stubs (moved to docs/ during scaffold/kickoff)
 │   └── adrs/                 # Architecture Decision Records
-├── team/                     # v3 team source: roles/, personas/, views/, harness/, parties/ (see docs/methodology/team-layers.md)
+├── team/                     # v3 team source: roles/, personas/, views/, harness/, parties/, lines/ (see docs/methodology/team-layers.md)
 ├── .claude/
 │   ├── agents/               # Subagent persona definitions (16 agent files; v3 composes these from team/)
 │   └── commands/             # Custom slash commands (24, auto-discovered)

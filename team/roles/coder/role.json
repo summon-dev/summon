@@ -22,6 +22,10 @@
     {
       "id": "debt-markers",
       "claim": "Every deliberate shortcut carries a summon: marker."
+    },
+    {
+      "id": "line-respected",
+      "claim": "The instance that coded an item did not also review it, and tests preceded code on the line."
     }
   ]
 }

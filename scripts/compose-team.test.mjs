@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "tests for compose-team: layer composition, checks, enforcement, view isolation, refusals", deps: [scripts/compose-team.mjs, docs/methodology/team-layers.md, team/parties/summon-core.json], state: draft, last: "tara@2026-09-09", key: ["fixture tree in a tmpdir for invariants; the real team/ tree for the smoke test", "every load-bearing spec sentence has a test whose wrong implementation is named in a comment", "pre-flight: no clock reads; expected directions derived from team-layers.md, not from the composer"] }
+// agent-notes: { ctx: "tests for compose-team: layer composition, checks, enforcement, view isolation, refusals", deps: [scripts/compose-team.mjs, docs/methodology/team-layers.md, team/parties/summon-core.json, team/lines/tdd.json], state: draft, last: "tara@2026-09-09", key: ["fixture tree in a tmpdir for invariants; the real team/ tree for the smoke test", "every load-bearing spec sentence has a test whose wrong implementation is named in a comment", "pre-flight: no clock reads; expected directions derived from team-layers.md, not from the composer"] }
 //
 //   node --test scripts/compose-team.test.mjs
 //
@@ -256,6 +256,15 @@ const CHECKS = {
   "tests-green": { run: "pnpm test", receipt: "FIXTURE-RECEIPT the summary line" },
 };
 
+const LINE = {
+  name: "fixture-line",
+  stations: [
+    { name: "red", seat: "tara", emits: "tests" },
+    { name: "review", seat: "review-party", needs: ["tests"], emits: "verdicts" },
+  ],
+  constraints: [{ rule: "order", stations: ["red", "review"] }, { rule: "distinct-instance", stations: ["red", "review"] }],
+};
+
 const roots = [];
 after(() => {
   for (const r of roots) rmSync(r, { recursive: true, force: true });
@@ -284,6 +293,7 @@ function fixture(edit = () => {}) {
     "team/harness/skills.json": JSON.stringify(HARNESS_SKILLS),
     "team/parties/fixture.json": JSON.stringify(PARTY),
     "team/checks.json": JSON.stringify(CHECKS),
+    "team/lines/fixture-line.json": JSON.stringify(LINE),
   };
   edit(files);
   for (const [rel, content] of Object.entries(files)) {
@@ -527,6 +537,37 @@ test("checks: refuses a check that names a lens the role does not declare, or la
   );
 });
 
+// --- lines and the log -------------------------------------------------------
+// team-layers.md § The line: a party opts into lines; every station seat must be a seat the
+// party composes. § The event log: a configured log adds a Log section to every agent.
+
+test("a party's lines are validated against its seats and listed in the roster", () => {
+  const out = compose(fixture((f) => (f["team/parties/fixture.json"] = party({ lines: ["fixture-line"] }))), { party: "fixture" });
+  assert.match(fileNamed(out, "roster.md").content, /\| fixture-line \| red: tara → review: review-party \| order\(red, review\); distinct-instance\(red, review\) \|/);
+  assert.throws(() => compose(fixture((f) => (f["team/parties/fixture.json"] = party({ lines: ["nope"] }))), { party: "fixture" }), /line "nope" has no file/);
+  const bad = fixture((f) => {
+    f["team/lines/fixture-line.json"] = JSON.stringify({ ...LINE, stations: [{ name: "red", seat: "nobody" }] });
+    f["team/parties/fixture.json"] = party({ lines: ["fixture-line"] });
+  });
+  assert.throws(() => compose(bad, { party: "fixture" }), /station "red" names seat "nobody", which the party does not compose/);
+  const badConstraint = fixture((f) => {
+    f["team/lines/fixture-line.json"] = JSON.stringify({ ...LINE, constraints: [{ rule: "order", stations: ["red", "ship"] }] });
+    f["team/parties/fixture.json"] = party({ lines: ["fixture-line"] });
+  });
+  assert.throws(() => compose(badConstraint, { party: "fixture" }), /constraint "order" names station "ship"/);
+});
+
+test("a configured log adds a Log section naming the seat, the path, and the events to write; no log, no section", () => {
+  const out = compose(fixture((f) => (f["team/checks.json"] = JSON.stringify({ ...CHECKS, log: ".summon/FIXTURE-LOG.jsonl" }))), { party: "fixture" });
+  const tara = fileNamed(out, "tara.md").content;
+  const logSec = tara.slice(tara.indexOf("## Log"), tara.indexOf("FIXTURE-TESTER-QUESTIONS"));
+  assert.ok(logSec.startsWith("## Log"), "tara.md has a Log section");
+  for (const m of [".summon/FIXTURE-LOG.jsonl", "Your seat is `tara`", "`claim`", "`verdict`", "`return`", "team-log.mjs append"]) assert.ok(logSec.includes(m), `Log section lacks ${m}`);
+  assert.ok(tara.indexOf("## Log") > tara.indexOf("## Checks") && tara.indexOf("## Log") < tara.indexOf("FIXTURE-TESTER-QUESTIONS"), "Log follows Checks and precedes Questions");
+  assert.match(fileNamed(out, "review-party.md").content, /Your seat is `review-party`/);
+  assert.doesNotMatch(fileNamed(compose(fixture(), { party: "fixture" }), "tara.md").content, /## Log/);
+});
+
 // --- formations --------------------------------------------------------------
 
 test("a formation is one agent carrying every floor member's lens and dissent, plus conditional lenses with their triggers, with the role's tools", () => {
@@ -665,6 +706,9 @@ test("the checked-in summon-core party composes on the claude-code adapter", () 
   assert.match(formation, /^# Conditional lenses$/m);
   assert.match(formation, /^### Lens: Operational$/m);
   assert.ok(out.checks.some((c) => c.grade === "deterministic") && out.checks.some((c) => c.grade === "inferential"), "the real tree has both bound and judged checks");
+  assert.equal(out.checks.find((c) => c.member === "review-party" && c.id === "disagreement-rate")?.grade, "deterministic", "the disagreement rate is bound to team-log.mjs");
+  assert.match(fileNamed(out, "roster.md").content, /\| tdd \| red: tara → green: sato → review: review-party \|/);
+  assert.match(vik, /## Log[\s\S]*\.summon\/team-log\.jsonl/);
 });
 
 test("loadTeam reads every layer of the checked-in tree, and the party uses roles and personas that exist", () => {

@@ -67,5 +67,32 @@
       "blurb": "Not one hero, a formation. Four lenses on one diff, and they are allowed to disagree.",
       "alt": "The Review Party: a warden, ranger, nightblade, and architect examining a glowing codex on a shared indigo stage"
     }
+  },
+  "roles": {
+    "coder": {
+      "class": "Forge-hand",
+      "accent": "#22c55e",
+      "blurb": "An unnamed smith on the line."
+    },
+    "tester": {
+      "class": "Sentinel",
+      "accent": "#ef4444",
+      "blurb": "An unnamed archer on the line."
+    },
+    "reviewer": {
+      "class": "Warden",
+      "accent": "#64748b",
+      "blurb": "An unnamed reviewer holding one lens."
+    },
+    "architect": {
+      "class": "Builder",
+      "accent": "#22d3ee",
+      "blurb": "An unnamed architect."
+    },
+    "challenger": {
+      "class": "Trickster",
+      "accent": "#ec4899",
+      "blurb": "An unnamed challenger."
+    }
   }
 }
