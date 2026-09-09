@@ -9,5 +9,6 @@
   "personas": false,
   "capabilities": {},
   "frontmatter": {},
-  "budget": {}
+  "budget": {},
+  "dispatch": null
 }

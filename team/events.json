@@ -11,14 +11,20 @@
         "harness",
         "tree"
       ],
-      "doc": "a seat instance started; tree = {head, dirty}"
+      "doc": "a seat instance started; tree = {head, dirty}",
+      "optional": [
+        "instance",
+        "order",
+        "worktree"
+      ]
     },
     "claim": {
       "required": [
         "item"
       ],
       "optional": [
-        "station"
+        "station",
+        "order"
       ],
       "doc": "the seat took a work item, optionally at a named station of a line"
     },
@@ -83,5 +89,24 @@
   "grades": [
     "deterministic",
     "inferential"
-  ]
+  ],
+  "workOrder": {
+    "required": [
+      "id",
+      "party",
+      "line",
+      "items",
+      "instances"
+    ],
+    "item": {
+      "required": [
+        "id"
+      ],
+      "optional": [
+        "spec",
+        "diff"
+      ]
+    },
+    "doc": "a dispatch order: which party, on which line, how many instances of each seat, against which items; scripts/dispatch.mjs plan validates it"
+  }
 }

@@ -170,7 +170,27 @@ The review station is the first station to run as a script. `scripts/review-wave
 
 ## The work order
 
-Scale is dispatch, not party. The party says who may hold a seat; a work order says how many instances of a seat run against which items. Its schema is deferred to the wave that builds the dispatch workflow; the log already carries `instance`, so a renderer can show fifty coders today if fifty were spawned. Parallelism limits belong in the harness adapter's `dispatch` field and are expected to expire with the harness.
+Scale is dispatch, not party. The party says who may hold a seat; a work order says how many instances of a seat run against which items, on which line. A work order is a JSON file, anywhere, with this shape:
+
+```json
+{
+  "id": "wo-138-a",
+  "party": "summon-core",
+  "line": "tdd",
+  "items": [{ "id": "138-a", "spec": "docs/sprints/138-a.md" }],
+  "instances": { "tara": 1, "sato": 2, "review-party": 1 }
+}
+```
+
+`items[].id` is the `item` every event carries; `spec` is a path or text the first station reads; an item may also carry `diff` for a line that starts at review. `instances` counts per seat, and a seat the order does not name gets one instance if a station needs it. The schema lives in `team/events.json` under `workOrder`, next to the events it produces.
+
+`scripts/dispatch.mjs` turns an order into a plan and writes the events a harness would otherwise leave to the model:
+
+- `plan --order <file> --out <plan.json>` loads the party, the line, and the adapter; refuses an order whose line the party does not opt into, whose seat the party does not compose, whose instance count exceeds the adapter's `dispatch.concurrency`, or whose `distinct-instance` constraint cannot be met (two constrained stations on the same seat with fewer than two instances). It names every instance (`sato#1`, `sato#2`) with a worktree path under `.summon/worktrees/<instance>` when the adapter's `dispatch.isolation` is `worktree`, and assigns one instance per station per item, round-robin, so that for every `distinct-instance` constraint the instances on an item differ. The plan is the assignment; a station is never left to choose its own instance.
+- `open --plan <file>` writes one `spawn` event per instance, carrying `harness`, `instance`, `order`, `tree`, and `worktree`, and creates the worktrees when isolation asks for it.
+- `claim --plan <file> --item <id> --station <name>` writes the `claim` event for the instance the plan assigned, and refuses before writing when the log shows the item's earlier stations have not returned (the `order` constraint) or when the assigned instance already holds a station the constraint separates it from (`distinct-instance`). This is the separation-of-duties boundary enforced at dispatch, before the seat runs, rather than detected by `team-log.mjs check --line` after.
+
+Parallelism limits (`concurrency`, `depth`, `isolation`) belong in the harness adapter's `dispatch` field and are expected to expire with the harness; a `skills` adapter has `dispatch: null` because a skill has no spawner. The workflow that runs a plan (`team/workflows/line.workflow.mjs`: one pipeline per item, one agent per station, the review station delegating to `review-wave`) is earn-gated with the review station; `plan`, `open`, and `claim` run without it, so a human dispatching by hand still gets the events and the refusals.
 
 ## The enforcement report
 

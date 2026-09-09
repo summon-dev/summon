@@ -86,5 +86,11 @@
       "deploy/**"
     ]
   },
-  "delegation": null
+  "delegation": null,
+  "dispatch": {
+    "concurrency": 10,
+    "depth": 1,
+    "isolation": "worktree",
+    "$comment": "expected to expire: the subagent concurrency and nesting limits moved twice in 2026; reread with the review note above"
+  }
 }

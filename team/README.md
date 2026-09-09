@@ -17,7 +17,7 @@ team/
 ├── events.json           schema for the runtime event log (.summon/team-log.jsonl)
 ├── checks.json           this project's commands for each role's declared checks, and the log path
 ├── fixtures/             the negative-control diff the review formation must not wave through
-└── workflows/            the stations that run as Workflow scripts; review-wave.mjs prepares their args and ingests their returns
+└── workflows/            the stations that run as Workflow scripts: review-wave (one station) and line (a whole dispatch plan); review-wave.mjs and dispatch.mjs prepare their args and write their events
 ```
 
 Watch and measure:

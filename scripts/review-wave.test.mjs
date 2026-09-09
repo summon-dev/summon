@@ -8,7 +8,7 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -225,21 +225,26 @@ test("ingest refuses when no log is configured", () => {
 // The script runs only inside the harness, so the tests pin what can be pinned from outside:
 // it parses, its meta is a pure literal with the phases it uses, and it names no clock.
 
-test("the checked-in workflow script parses and its meta is a pure literal naming its phases", () => {
-  const src = readFileSync(WORKFLOW, "utf8");
-  // The Workflow tool runs the body in an async context, so a top-level return and await are legal
-  // there; wrap it the same way before asking node to parse it.
-  const wrapped = `async function __workflow(args) {\n${src.replace(/^export const meta/m, "const meta")}\n}`;
-  execFileSync(process.execPath, ["--check", "-"], { input: wrapped, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"], timeout: 10_000 });
-  const meta = src.match(/^export const meta = (\{[\s\S]*?\n\})\n/m);
-  assert.ok(meta, "meta is the first statement");
-  assert.doesNotMatch(meta[1], /\$\{|\.\.\.|\(\)/, "meta is a pure literal: no interpolation, spreads, or calls");
-  const phasesInMeta = [...meta[1].matchAll(/title:\s*'([^']+)'/g)].map((m) => m[1]);
-  const phasesUsed = [...src.matchAll(/phase:\s*'([^']+)'/g)].map((m) => m[1]);
-  for (const p of new Set(phasesUsed)) assert.ok(phasesInMeta.includes(p), `phase '${p}' is used but not declared in meta`);
-  assert.doesNotMatch(src, /Date\.now|new Date\(\)|Math\.random/, "no clock or randomness inside a workflow script");
-  assert.match(src, /schema:/, "agent returns are schema-constrained");
-  assert.match(src, /refut/i, "findings are adversarially verified before they reach the human");
+test("every checked-in workflow script parses and its meta is a pure literal naming its phases", () => {
+  const dir = resolve(import.meta.dirname, "..", "team", "workflows");
+  const files = readdirSync(dir).filter((f) => f.endsWith(".workflow.mjs")).map((f) => join(dir, f));
+  assert.ok(files.includes(WORKFLOW), "review-wave is among them");
+  for (const file of files) {
+    const src = readFileSync(file, "utf8");
+    // The Workflow tool runs the body in an async context, so a top-level return and await are legal
+    // there; wrap it the same way before asking node to parse it.
+    const wrapped = `async function __workflow(args) {\n${src.replace(/^export const meta/m, "const meta")}\n}`;
+    execFileSync(process.execPath, ["--check", "-"], { input: wrapped, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"], timeout: 10_000 });
+    const meta = src.match(/^export const meta = (\{[\s\S]*?\n\})\n/m);
+    assert.ok(meta, `${file}: meta is the first statement`);
+    assert.doesNotMatch(meta[1], /\$\{|\.\.\.|\(\)/, `${file}: meta is a pure literal: no interpolation, spreads, or calls`);
+    const phasesInMeta = [...meta[1].matchAll(/title:\s*'([^']+)'/g)].map((m) => m[1]);
+    const phasesUsed = [...src.matchAll(/phase:\s*'([^']+)'/g)].map((m) => m[1]);
+    for (const p of new Set(phasesUsed)) assert.ok(phasesInMeta.includes(p), `${file}: phase '${p}' is used but not declared in meta`);
+    assert.doesNotMatch(src, /Date\.now|new Date\(\)|Math\.random/, `${file}: no clock or randomness inside a workflow script`);
+    assert.match(src, /schema:/, `${file}: agent returns are schema-constrained`);
+  }
+  assert.match(readFileSync(WORKFLOW, "utf8"), /refut/i, "review findings are adversarially verified before they reach the human");
 });
 
 // --- the CLI ------------------------------------------------------------------
