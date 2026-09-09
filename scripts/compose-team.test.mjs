@@ -526,6 +526,18 @@ test("checks: a lens-scoped check reaches only members and formations that hold 
   assert.match(fileNamed(out, "review-party.md").content, /## Checks[\s\S]*FIXTURE-CHECK-GREEN/, "the formation holds security");
 });
 
+test("checks: refuses a bound check on a role that must not run; the same check unbound is judged", () => {
+  // Vik F0 (2026-09-09): a designer with must-not run was told to run pnpm check:css.
+  const bound = fixture((f) => {
+    f["team/roles/tester/role.json"] = JSON.stringify({ may: ["read", "write:tests"], "must-not": ["run", "write:src"], lenses: [], checks: [{ id: "tests-green", claim: "FIXTURE-CHECK-GREEN The suite passes." }] });
+  });
+  assert.throws(() => compose(bound, { party: "fixture" }), /check "tests-green" is bound to a command but role "tester" must not run/);
+  const unbound = fixture((f) => {
+    f["team/roles/tester/role.json"] = JSON.stringify({ may: ["read", "write:tests"], "must-not": ["run", "write:src"], lenses: [], checks: [{ id: "no-wall-clock", claim: "FIXTURE-CHECK-CLOCK No test reads the clock." }] });
+  });
+  assert.equal(compose(unbound, { party: "fixture" }).checks.find((c) => c.member === "tara").grade, "inferential");
+});
+
 test("checks: refuses a check that names a lens the role does not declare, or lacks a claim", () => {
   assert.throws(
     () => compose(fixture((f) => (f["team/roles/tester/role.json"] = JSON.stringify({ may: ["read"], "must-not": [], lenses: [], checks: [{ id: "x", claim: "y", lens: "vibes" }] }))), { party: "fixture" }),

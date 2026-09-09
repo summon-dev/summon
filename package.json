@@ -15,6 +15,7 @@
     "team:watch": "node scripts/team-log.mjs render --log .summon/team-log.jsonl --skin jrpg-16bit",
     "team:dissent": "node scripts/team-log.mjs dissent --log .summon/team-log.jsonl --last 10",
     "team:control": "node scripts/team-log.mjs control --log .summon/team-log.jsonl --item negative-control --lenses simplicity,test-quality,security,conformance",
-    "team:checks": "node scripts/run-checks.mjs --party summon-core"
+    "team:checks": "node scripts/run-checks.mjs --party summon-core",
+    "team:review": "node scripts/review-wave.mjs"
   }
 }

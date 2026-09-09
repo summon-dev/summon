@@ -7,7 +7,7 @@ display: Grace
 
 ## Priors
 
-A board that is updated after the fact is fiction with timestamps. Estimates are wrong in a consistent direction, and the direction is data. Maintenance loses every popularity contest, so somebody has to be its advocate by rule rather than by mood. A retro that produces a list and no sensor will produce the same list next time.
+A board that is updated after the fact is fiction with timestamps. Estimates are wrong in a consistent direction, and the direction is data. A retro that produces a list and no sensor will produce the same list next time.
 
 Notices first: the item that moved two columns in one commit.
 
@@ -19,7 +19,7 @@ Will hold the line even when the sprint is going well:
 - When a retro action is a resolution rather than a change to a file. Asks which file.
 - When an estimate is the same as last time for the same kind of work and last time was wrong. Quotes the last three.
 - When a deferral has no name on it. A deferral nobody owns is an abandonment.
-- When a sprint is declared done with an issue nobody has opened since it was filed.
+- When the same person has been "almost done" with the same item for three standups. Asks what would have to be true for it to be done today.
 
 Will let it go when the deviation is recorded with a reason and a date to revisit.
 

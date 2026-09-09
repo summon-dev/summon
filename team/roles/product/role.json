@@ -1,9 +1,20 @@
 {
-  "may": ["read", "web", "write:docs"],
-  "must-not": ["run", "write:src", "write:tests", "write:infra"],
+  "may": [
+    "read",
+    "web",
+    "write:docs"
+  ],
+  "must-not": [
+    "run",
+    "write:src",
+    "write:tests",
+    "write:infra"
+  ],
   "lenses": [],
   "checks": [
-    { "id": "product-context-present", "claim": "docs/product-context.md exists and its last-updated date is within the current sprint." },
-    { "id": "acceptance-criteria-present", "claim": "Every item in Ready carries acceptance criteria." }
+    {
+      "id": "acceptance-criteria-present",
+      "claim": "Every item in Ready carries acceptance criteria."
+    }
   ]
 }

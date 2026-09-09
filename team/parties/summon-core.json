@@ -92,12 +92,29 @@
         {
           "persona": "ines",
           "lens": "operational",
-          "when": "the change alters application behaviour (not docs-only, not CI-only)"
+          "when": "the change alters application behaviour (not docs-only, not CI-only)",
+          "paths": [
+            "src/**",
+            "packages/**/src/**",
+            "scripts/**",
+            "!**/*.md",
+            "!.github/**"
+          ]
         },
         {
           "persona": "dani",
           "lens": "accessibility",
-          "when": "the change touches UI files: components, templates, stylesheets, layouts"
+          "when": "the change touches UI files",
+          "paths": [
+            "**/*.svelte",
+            "**/*.tsx",
+            "**/*.jsx",
+            "**/*.vue",
+            "**/*.css",
+            "**/*.scss",
+            "**/*.astro",
+            "site/**"
+          ]
         }
       ]
     }

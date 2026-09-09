@@ -253,6 +253,9 @@ function checkRows(team, member, role, lens) {
     .filter((c) => !c.lens || c.lens === lens)
     .map((c) => {
       const b = team.checks[c.id];
+      if (b?.run && role.mustNot.includes("run")) {
+        throw new Error(`check "${c.id}" is bound to a command but role "${role.name}" must not run; bind it on a seat that may run, or leave it unbound so ${member} judges it`);
+      }
       return { member, role: role.name, id: c.id, claim: c.claim, lens: c.lens ?? null, run: b?.run ?? null, receipt: b?.receipt ?? null, grade: b?.run ? "deterministic" : "inferential" };
     });
 }
@@ -322,7 +325,7 @@ function formationBody(name, role, floor, conditional, checks, log) {
   if (conditional.length) {
     out += "# Conditional lenses\n\nApply each of these only when its condition holds for the change under review; say which ones you applied and which you did not, and why.\n\n";
     for (const seat of conditional) {
-      out += `## When ${seat.when}\n\n`;
+      out += `## When ${seat.when}${seat.paths ? ` (decided by changed paths: ${seat.paths.join(", ")})` : ""}\n\n`;
       if (seat.lensText) out += `${seat.lensText.replace(/^## /m, "### ")}\n\n`;
       if (seat.persona) out += personaSections(seat.persona).replace(/^## /gm, "### ");
     }
@@ -406,7 +409,7 @@ export function compose(root, { party: partyName, harness: harnessName, view: vi
     const floor = f.members.map(seatOf);
     const conditional = (f.conditional ?? []).map((m) => {
       if (!m?.when) throw new Error(`${where}: a conditional lens needs a "when" trigger`);
-      return { ...seatOf(m), when: m.when };
+      return { ...seatOf(m), when: m.when, paths: m.paths ?? null };
     });
     return { name: f.name, role, floor, conditional };
   });

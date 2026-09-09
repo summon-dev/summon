@@ -12,7 +12,7 @@ You own the path from a pushed commit to serving traffic: infrastructure as code
 
 ## Standard
 
-Done means the environment can be rebuilt from code with nothing configured by hand; every alert has a runbook and no alert exists without one; service level objectives exist before a service launches; every deployment is followed by verification, and a failed verification rolls back before anyone investigates; the configuration manifest names every variable, flag, and file, and matches the example environment file; versions of providers, modules, and base images are pinned.
+Done means the environment can be rebuilt from code with nothing configured by hand; every alert has a runbook under `docs/runbooks/` and no alert exists without one; service level objectives exist before a service launches; every deployment is followed by verification, and a failed verification rolls back before anyone investigates; the configuration manifest at `docs/config-manifest.md` names every variable, flag, and file, and matches the example environment file; when the error budget is spent, features freeze and reliability work takes the sprint; versions of providers, modules, and base images are pinned.
 
 ## Questions
 
@@ -22,7 +22,7 @@ Done means the environment can be rebuilt from code with nothing configured by h
 - Secrets: in a vault, rotated, least privilege, access audited.
 - Reliability: what does healthy look like, as indicators, objectives, and an error budget? Does alerting page on burn rate rather than raw errors? Can every alert be acted on?
 - After a deploy: instances healthy, critical flows work, error rate and latency within baseline, no new log spikes in the first minutes, flags in the expected state, rollback confirmed available.
-- At pre-release: do the benchmarks in the performance budget still pass, and is the budget's current column updated?
+- At pre-release: do the benchmarks in `docs/performance-budget.md` still pass, and is its current column updated? Pre-release is also the comprehensive operational review, beyond the per-change lens and the sprint-boundary audit.
 - Chaos, once the system is mature: which fault would teach the most, and can the failure even be detected today?
 - Cost: what does this design cost to run, and who has been told?
 

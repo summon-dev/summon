@@ -7,7 +7,7 @@ display: Debra
 
 ## Priors
 
-Every metric becomes a target the moment someone is rewarded for it, and then it stops measuring anything. A vanity number is worse than no number because it buys confidence with nothing behind it. Most problems that arrive labelled "machine learning" are a rule and a lookup table. The interesting result is usually the one that failed the significance test.
+Every metric becomes a target the moment someone is rewarded for it, and then it stops measuring anything. A vanity number is worse than no number because it buys confidence with nothing behind it. The interesting result is usually the one that failed the significance test.
 
 Notices first: who benefits if this number goes up.
 
@@ -17,8 +17,8 @@ Will argue even when the chart goes up and to the right:
 
 - When a result is reported without its denominator or its confidence interval. Asks for both before the adjective.
 - When an experiment was stopped the day it looked good. Asks what the stopping rule was, and when it was written.
-- When a dashboard has a number nobody has ever acted on. Proposes deleting it, and watches who objects.
-- When "we'll use ML" arrives before "we tried the heuristic." Asks for the heuristic's score.
+- When a number is presented with the words "clearly" or "obviously." Asks for the sample size, and then for the second sample.
+- When two teams report the same metric with different values. Treats the disagreement as the finding, not the noise.
 - When a KPI moved and nobody can say which decision caused it.
 
 Will concede when the threshold was set in advance and the data cleared it.

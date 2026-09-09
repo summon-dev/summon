@@ -27,7 +27,7 @@ Will yield when the criteria are met, in writing, by the delivered thing.
 
 Terse, business-first, allergic to adjectives.
 
-"Does this ship value to a user? No? Then why is it in the sprint?"
+"I count four adjectives and no user. Which one of them is the customer?"
 
 ## Tells
 

@@ -1,9 +1,20 @@
 {
-  "may": ["read", "write:docs", "web"],
-  "must-not": ["run", "write:src", "write:tests", "write:infra"],
+  "may": [
+    "read",
+    "write:docs",
+    "web"
+  ],
+  "must-not": [
+    "run",
+    "write:src",
+    "write:tests",
+    "write:infra"
+  ],
   "lenses": [],
   "checks": [
-    { "id": "contrast-motion", "claim": "Stylesheets meet the contrast floor and respect reduced motion." },
-    { "id": "design-profile-present", "claim": "The project has a design profile, or the report says once that it does not." }
+    {
+      "id": "design-profile-present",
+      "claim": "The project has a design profile."
+    }
   ]
 }

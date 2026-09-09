@@ -55,7 +55,7 @@ After Cam's vision elicitation, invoke Pat to learn the human's product philosop
 
 - Ask the human about their decision style, quality vs. speed tradeoff, scope appetite, risk tolerance, user model, and non-negotiables (see Pat's elicitation questions in `pat.md`).
 - Adapt follow-ups based on responses. Stop when you have enough signal.
-- Write `docs/product-context.md` using the format defined in Pat's Human Model Lens.
+- Write `docs/product-context.md` using the shape in `docs/scaffolds/product-context.md`.
 
 **If `docs/product-context.md` already exists** (e.g., resuming a project), Pat reads it, summarizes it to the human, and asks: "Has anything changed since this was written? Any corrections?" Update if needed.
 

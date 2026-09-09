@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "source tree for the composed team; read team-layers.md first", deps: [docs/methodology/team-layers.md, scripts/compose-team.mjs, scripts/team-log.mjs, scripts/run-checks.mjs], state: draft, last: "claude@2026-09-09" }
+agent-notes: { ctx: "source tree for the composed team; read team-layers.md first", deps: [docs/methodology/team-layers.md, scripts/compose-team.mjs, scripts/team-log.mjs, scripts/run-checks.mjs, scripts/review-wave.mjs], state: draft, last: "claude@2026-09-09" }
 ---
 
 # team/
@@ -16,7 +16,8 @@ team/
 ├── lines/<name>.json     stations bound to seats, handoffs, and per-item constraints (order, distinct-instance)
 ├── events.json           schema for the runtime event log (.summon/team-log.jsonl)
 ├── checks.json           this project's commands for each role's declared checks, and the log path
-└── fixtures/             the negative-control diff the review formation must not wave through
+├── fixtures/             the negative-control diff the review formation must not wave through
+└── workflows/            the stations that run as Workflow scripts; review-wave.mjs prepares their args and ingests their returns
 ```
 
 Watch and measure:
