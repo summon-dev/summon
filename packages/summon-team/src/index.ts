@@ -38,6 +38,7 @@ const EXCLUDE_DIRS = new Set([
   ".git",
   ".github",
   ".playwright-mcp",
+  ".summon", // Summon's own runtime state (the team event log); a user's project starts its own
 ]);
 // Files that are Summon's own project metadata, not the user's. The governance
 // files describe the Summon project/community (CONTRIBUTING "to Summon", Summon's

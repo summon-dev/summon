@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "spec for the four team layers, checks, and how a party composes them", deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/process/done-gate.md, team/README.md, team/events.json, scripts/compose-team.mjs, scripts/team-log.mjs], state: draft, last: "claude@2026-09-09", key: ["role = the work, persona = the point of view, view = skin + renderer, adapter = the fitted part", "the event log is the runtime record every renderer and runtime check reads; the line is the per-item separation constraint over it", "capabilities are verbs about the work, never tool names", "checks split each role into what a command decides and what the model judges", "view content never enters model context; Dissent must add to the lens"] }
+agent-notes: { ctx: "spec for the four team layers, checks, and how a party composes them", deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md, docs/process/done-gate.md, team/README.md, team/events.json, team/fixtures/negative-control/README.md, scripts/compose-team.mjs, scripts/team-log.mjs, scripts/run-checks.mjs], state: draft, last: "claude@2026-09-09", key: ["role = the work, persona = the point of view, view = skin + renderer, adapter = the fitted part", "the event log is the runtime record every renderer and runtime check reads; the line is the per-item separation constraint over it", "capabilities are verbs about the work, never tool names", "checks split each role into what a command decides and what the model judges", "view content never enters model context; Dissent must add to the lens"] }
 ---
 
 # Team Layers
@@ -124,7 +124,11 @@ A member is a role, an optional lens, and a persona that holds that seat. `as` n
 
 The composer joins each role's declared checks to these bindings. A bound check is emitted into the agent with its command and the receipt to paste, and is graded **deterministic**. An unbound check is emitted as a claim to judge and is graded **inferential**, using the proof grades from the done gate. The enforcement report counts both, per member, so the answer to "how much of this role is a script and how much is a model?" is a number per project. Claims are portable; commands are not, which is why they live apart.
 
-The composer wires checks; it does not run them. A runner that executes them and binds receipts to a tree state is sequenced after the receipt schema.
+The composer wires checks. `scripts/run-checks.mjs --party <party> --seat <seat> [--item <id>]` runs them: every bound check for that seat executes through the shell, and its exit code plus the last forty lines of output become a `check` event in the log, bound to the tree it ran against (`tree: { head, dirty }`). A receipt is evidence about that head and that cleanliness only; when the head moves or the tree is dirty, the receipt is stale and the check runs again. Unbound checks are listed as judged and never run; the seat judges them and writes its own `check` event with the grade `inferential`. The runner exits non-zero when any bound check fails, so it doubles as a gate.
+
+### The negative control
+
+`team/fixtures/negative-control/` holds a diff with one planted defect per floor lens of the review formation. The formation reviews it as item `negative-control`; then `team-log.mjs control --item negative-control --lenses <floor>` passes only if every named lens filed at least one finding in its latest round and the latest verdicts are not unanimous. It is bound as the reviewer's `negative-control` check and is the instrument behind the ADR's first reversal trigger: a formation that waves the fixture through has stopped arguing, whatever it says about real work.
 
 ## The event log
 
@@ -134,7 +138,7 @@ The composer wires checks; it does not run them. A runner that executes them and
 |---|---|---|
 | `spawn` | `harness`, `tree` | a seat instance started, against a tree state |
 | `claim` | `item` (+ `station`) | the seat took a work item, at a station of a line |
-| `check` | `id`, `grade`, `exit` | a declared check ran, or was judged |
+| `check` | `id`, `grade`, `exit` (+ `receipt`, `tree`) | a declared check ran, or was judged; `tree` binds a receipt to a head and a dirty flag |
 | `finding` | `severity`, `summary` | one review finding |
 | `verdict` | `lens`, `verdict`, `item` | one lens's verdict on one item: `accept`, `revise`, or `veto` |
 | `return` | `ok` | the seat finished |

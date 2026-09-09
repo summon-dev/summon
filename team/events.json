@@ -30,9 +30,10 @@
       ],
       "optional": [
         "receipt",
-        "item"
+        "item",
+        "tree"
       ],
-      "doc": "a declared check ran (deterministic) or was judged (inferential)"
+      "doc": "a declared check ran (deterministic) or was judged (inferential); tree = {head, dirty} binds a receipt to the state it ran against"
     },
     "finding": {
       "required": [

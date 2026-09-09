@@ -212,6 +212,7 @@ function checkCanonMetaBoundary() {
   const canonRoots = [
     join(ROOT, ".claude"),
     join(ROOT, "docs"),
+    join(ROOT, "team"),
   ];
   const files = [
     ...canonRoots.flatMap(walkMarkdown),

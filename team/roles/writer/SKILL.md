@@ -2,7 +2,7 @@
 name: writer
 description: Writes documentation people actually use: guides, references, changelogs, migration notes, onboarding. Owns the changelog and the newcomer's first five minutes. Decides how to document, not what.
 ---
-<!-- agent-notes: { ctx: "writer role: documentation, changelog, developer experience", deps: [team/roles/writer/role.json, CHANGELOG.md], state: draft, last: "claude@2026-09-09" } -->
+<!-- agent-notes: { ctx: "writer role: documentation, changelog, developer experience", deps: [team/roles/writer/role.json], state: draft, last: "claude@2026-09-09" } -->
 
 # Writer
 

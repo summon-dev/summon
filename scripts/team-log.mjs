@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "team event log: validate and append events, check a line's constraints over the log, compute the disagreement rate, render a table", deps: [team/events.json, team/lines/tdd.json, team/checks.json, docs/methodology/team-layers.md], state: draft, last: "sato@2026-09-09", key: ["zero dependencies; schema is data in team/events.json", "disagreement rate = items with split lens verdicts / items with 2+ lens verdicts, most recent first", "line constraints (order, distinct-instance) are checked over claim events per item", "exports behind an entry-point guard for the tests"] }
+// agent-notes: { ctx: "team event log: validate and append events, check a line's constraints over the log, compute the disagreement rate, render a table", deps: [team/events.json, team/lines/tdd.json, team/checks.json, docs/methodology/team-layers.md], state: draft, last: "sato@2026-09-09", key: ["zero dependencies; schema is data in team/events.json", "negative control: latest round per lens must carry a finding, and latest verdicts must not be unanimous", "disagreement rate = items with split lens verdicts / items with 2+ lens verdicts, most recent first", "line constraints (order, distinct-instance) are checked over claim events per item", "exports behind an entry-point guard for the tests"] }
 //
 // The event log is the runtime record every view renders from and every runtime
 // check reads. One JSON object per line; see docs/methodology/team-layers.md § The event log.
@@ -8,6 +8,7 @@
 //   node scripts/team-log.mjs check   --log FILE --line NAME        exit 1 on any violation
 //   node scripts/team-log.mjs dissent --log FILE [--last N]         the disagreement rate
 //   node scripts/team-log.mjs render  --log FILE [--skin NAME] [--as table|tmux]
+//   node scripts/team-log.mjs control --log FILE --item ID --lenses a,b,c   exit 1 unless every lens found something and verdicts split
 //
 // Schema, lines, and skins resolve from the repo this script lives in (or --root DIR).
 
@@ -137,6 +138,33 @@ export function disagreementRate(log, { last = 10 } = {}) {
   return { items: judged.length, split, rate: judged.length ? split / judged.length : null, window: last };
 }
 
+// --- the negative control -----------------------------------------------------
+// ADR-0015 reversal trigger 1's instrument. On the planted-defect item, every named lens
+// must have returned at least one finding in its latest review round, and the latest
+// verdicts must not be unanimous. A pass says the formation still argues.
+
+export function negativeControl(log, { item, lenses }) {
+  const events = [...log].filter((e) => e.item === item).sort(byTime);
+  const verdicts = {};
+  const silent = [];
+  const missing = [];
+  for (const lens of lenses) {
+    const vs = events.filter((e) => e.event === "verdict" && e.lens === lens);
+    if (!vs.length) {
+      missing.push(lens);
+      continue;
+    }
+    const last = vs[vs.length - 1];
+    const prev = vs.length > 1 ? vs[vs.length - 2].t : "";
+    verdicts[lens] = last.verdict;
+    const found = events.filter((e) => e.event === "finding" && e.lens === lens && e.t > prev && e.t <= last.t).length;
+    if (found === 0) silent.push(lens);
+  }
+  const present = Object.values(verdicts);
+  const unanimous = missing.length === 0 && new Set(present).size <= 1;
+  return { ok: missing.length === 0 && silent.length === 0 && !unanimous, missing, silent, unanimous, verdicts };
+}
+
 // --- the renderer ------------------------------------------------------------
 // The dullest view: one row per seat instance. A skin supplies class names; a persona-less
 // role instance takes the role's class. Anything fancier reads the same rows.
@@ -179,7 +207,7 @@ function parseArgs(argv) {
     opts[a.slice(2)] = v;
     i++;
   }
-  if (!["append", "check", "dissent", "render"].includes(cmd)) throw new Error(`usage: team-log.mjs append|check|dissent|render --log FILE [...]`);
+  if (!["append", "check", "dissent", "render", "control"].includes(cmd)) throw new Error(`usage: team-log.mjs append|check|dissent|render|control --log FILE [...]`);
   if (!opts.log) throw new Error("--log is required");
   return opts;
 }
@@ -213,6 +241,20 @@ function main() {
     console.log(`disagreement: ${r.items} items, ${r.split} non-unanimous, rate ${r.rate === null ? "n/a" : r.rate.toFixed(2)} (window ${r.window})`);
     if (r.items > 0 && r.rate === 0) console.log("every judged item was unanimous; a reviewer that always agrees carries no information");
     return;
+  }
+  if (o.cmd === "control") {
+    if (!o.item || !o.lenses) throw new Error("--item and --lenses (comma-separated) are required");
+    const lenses = o.lenses.split(",").map((x) => x.trim()).filter(Boolean);
+    const r = negativeControl(log, { item: o.item, lenses });
+    if (r.ok) {
+      console.log(`negative control ${o.item}: ok (${lenses.length} lenses found something; verdicts split)`);
+      for (const [lens, v] of Object.entries(r.verdicts)) console.log(`  ${lens}: ${v}`);
+      return;
+    }
+    const why = [r.missing.length ? `no verdict from ${r.missing.join(", ")}` : "", r.silent.length ? `no finding from ${r.silent.join(", ")}` : "", r.unanimous ? "verdicts unanimous" : ""].filter(Boolean).join("; ");
+    console.log(`negative control ${o.item}: FAILED (${why})`);
+    for (const [lens, v] of Object.entries(r.verdicts)) console.log(`  ${lens}: ${v}`);
+    process.exit(1);
   }
   if (o.cmd === "render") {
     process.stdout.write(render(log, { skin: o.skin ? loadSkin(o.skin, o.root) : null, as: o.as }));

@@ -9,8 +9,8 @@
     "receipt": "the failing test names and their assertion messages, pasted"
   },
   "tests-untouched": {
-    "run": "git diff --name-only -- '*.test.*' 'test/' 'tests/'",
-    "receipt": "empty output"
+    "run": "test -z \"$(git diff --name-only HEAD -- '*.test.*' '*_test.*' test tests)\"",
+    "receipt": "exit 0 means no test file differs from HEAD; on a non-zero exit, run the diff to see which files"
   },
   "debt-markers": {
     "run": "pnpm harvest:debt",
@@ -52,5 +52,9 @@
   "ci-green": {
     "run": "pnpm check:canon && pnpm test",
     "receipt": "'canon check: OK' and the test summary lines"
+  },
+  "negative-control": {
+    "run": "node scripts/team-log.mjs control --log .summon/team-log.jsonl --item negative-control --lenses simplicity,test-quality,security,conformance",
+    "receipt": "the control line and the verdict per lens"
   }
 }

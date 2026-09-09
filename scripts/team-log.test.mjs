@@ -204,3 +204,62 @@ test("the checked-in bindings point disagreement-rate and line-respected at this
   assert.match(checks["line-respected"].run, /team-log\.mjs check .* --line tdd/);
   assert.equal(checks.log, ".summon/team-log.jsonl");
 });
+
+// --- the negative control -----------------------------------------------------
+// ADR-0015 reversal trigger 1: on a planted-defect item, every named lens must return at
+// least one finding and the verdicts must not be unanimous. Direction from the ADR, not
+// from the tool: "at least one finding per lens" and "not unanimous" are both required.
+
+import { negativeControl } from "./team-log.mjs";
+
+const LENSES = ["simplicity", "security"];
+const control = (n0, { findings = { simplicity: 1, security: 1 }, verdicts = { simplicity: "revise", security: "accept" } } = {}) => {
+  const out = [];
+  let n = n0;
+  for (const lens of LENSES) {
+    for (let i = 0; i < findings[lens]; i++) out.push(ev(n++, "review-party", "finding", { item: "negative-control", lens, severity: "important", summary: `planted ${lens} defect` }));
+    out.push(ev(n++, "review-party", "verdict", { item: "negative-control", lens, verdict: verdicts[lens], findings: findings[lens] }));
+  }
+  return out;
+};
+
+test("negativeControl passes when every lens found something and the verdicts split", () => {
+  const { file } = logDir(control(0));
+  const r = negativeControl(readLog(file), { item: "negative-control", lenses: LENSES });
+  assert.deepEqual(r, { ok: true, missing: [], silent: [], unanimous: false, verdicts: { simplicity: "revise", security: "accept" } });
+});
+
+test("negativeControl fails when a lens returned no finding, naming the lens", () => {
+  const { file } = logDir(control(0, { findings: { simplicity: 1, security: 0 } }));
+  const r = negativeControl(readLog(file), { item: "negative-control", lenses: LENSES });
+  assert.equal(r.ok, false);
+  assert.deepEqual(r.silent, ["security"]);
+});
+
+test("negativeControl fails when the verdicts are unanimous, even with findings everywhere", () => {
+  const { file } = logDir(control(0, { verdicts: { simplicity: "accept", security: "accept" } }));
+  const r = negativeControl(readLog(file), { item: "negative-control", lenses: LENSES });
+  assert.equal(r.ok, false);
+  assert.equal(r.unanimous, true);
+});
+
+test("negativeControl fails when a lens never returned a verdict, naming it as missing", () => {
+  const { file } = logDir(control(0).filter((e) => !(e.event === "verdict" && e.lens === "security")));
+  const r = negativeControl(readLog(file), { item: "negative-control", lenses: LENSES });
+  assert.equal(r.ok, false);
+  assert.deepEqual(r.missing, ["security"]);
+});
+
+test("negativeControl reads only the most recent review of the item", () => {
+  // An earlier failed run, then a later passing one: the later one counts.
+  const events = [...control(0, { verdicts: { simplicity: "accept", security: "accept" } }), ...control(20)];
+  const { file } = logDir(events);
+  assert.equal(negativeControl(readLog(file), { item: "negative-control", lenses: LENSES }).ok, true);
+});
+
+test("CLI control prints the verdict per lens and exits 1 on a failed control", () => {
+  const { root, file } = logDir(control(0));
+  assert.match(run(root, ["control", "--log", file, "--item", "negative-control", "--lenses", LENSES.join(",")]), /^negative control negative-control: ok \(2 lenses found something; verdicts split\)/m);
+  const { root: r2, file: f2 } = logDir(control(0, { verdicts: { simplicity: "accept", security: "accept" } }));
+  assert.throws(() => run(r2, ["control", "--log", f2, "--item", "negative-control", "--lenses", LENSES.join(",")]), (err) => err.status === 1 && /unanimous/.test(String(err.stdout)));
+});
