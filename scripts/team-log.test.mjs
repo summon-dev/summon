@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "tests for team-log: event validation, line constraints over a log, disagreement rate, the table renderer", deps: [scripts/team-log.mjs, team/events.json, team/lines/tdd.json, docs/methodology/team-layers.md], state: draft, last: "tara@2026-09-09", key: ["no wall-clock reads: every event carries an explicit t", "disagreement rate direction derived from the spec: non-unanimous items over items with 2+ lens verdicts", "the separation constraint is checked over the log, not asserted by the seat"] }
+// agent-notes: { ctx: "tests for team-log: event validation, line constraints over a log, disagreement rate, the table renderer", deps: [scripts/team-log.mjs, team/events.json, team/lines/tdd.json, docs/methodology/team-layers.md], state: draft, last: "tara@2026-09-10", key: ["no wall-clock reads: every event carries an explicit t", "disagreement rate direction derived from the spec: non-unanimous items over items with 2+ lens verdicts", "the separation constraint is checked over the log, not asserted by the seat", "--version resolves package.json from --root, so fixtures pin the version; the repo package.json has no version field"] }
 //
 //   node --test scripts/team-log.test.mjs
 //
@@ -262,4 +262,52 @@ test("CLI control prints the verdict per lens and exits 1 on a failed control", 
   assert.match(run(root, ["control", "--log", file, "--item", "negative-control", "--lenses", LENSES.join(",")]), /^negative control negative-control: ok \(2 lenses found something; verdicts split\)/m);
   const { root: r2, file: f2 } = logDir(control(0, { verdicts: { simplicity: "accept", security: "accept" } }));
   assert.throws(() => run(r2, ["control", "--log", f2, "--item", "negative-control", "--lenses", LENSES.join(",")]), (err) => err.status === 1 && /unanimous/.test(String(err.stdout)));
+});
+
+// --- the version flag --------------------------------------------------------
+// Spec (work order first-run): `node scripts/team-log.mjs --version` prints the version from
+// package.json and exits 0. The version is resolved from the same root every other repo file
+// resolves from (--root, defaulting to the repo this script lives in). Pinned fixture roots
+// below, because the checked-in package.json carries no "version" field at time of writing.
+
+/** A fresh root holding only a package.json; `pkg` is written verbatim when a string. */
+function pkgRoot(pkg) {
+  const root = mkdtempSync(join(tmpdir(), "summon-pkg-"));
+  roots.push(root);
+  if (pkg !== undefined) writeFileSync(join(root, "package.json"), typeof pkg === "string" ? pkg : JSON.stringify(pkg));
+  return root;
+}
+
+const fails = (root, args, re) =>
+  assert.throws(() => run(root, args), (err) => err.status === 1 && re.test(String(err.stderr) + String(err.stdout)), `${args.join(" ")} should exit 1 matching ${re}`);
+
+test("CLI --version prints the package.json version as the only line of stdout and exits 0", () => {
+  const root = pkgRoot({ name: "fixture", version: "1.2.3" });
+  const out = run(root, ["--version", "--root", root]);
+  assert.equal(out, "1.2.3\n");
+});
+
+test("CLI --version does not require --log or an event schema", () => {
+  // The fixture root has a package.json and nothing else: no team/events.json, no log.
+  const root = pkgRoot({ version: "0.0.1" });
+  assert.equal(run(root, ["--version", "--root", root]).trim(), "0.0.1");
+});
+
+test("CLI --version exits 1 naming package.json when the version field is absent", () => {
+  const root = pkgRoot({ name: "no-version" });
+  fails(root, ["--version", "--root", root], /package\.json[\s\S]*version/);
+});
+
+test("CLI --version exits 1 naming package.json when the version field is empty or not a string", () => {
+  fails(pkgRoot({ version: "" }), ["--version", "--root", roots.at(-1)], /package\.json[\s\S]*version/);
+  fails(pkgRoot({ version: 3 }), ["--version", "--root", roots.at(-1)], /package\.json[\s\S]*version/);
+});
+
+test("CLI --version exits 1 naming package.json when the file is missing or malformed", () => {
+  fails(pkgRoot(undefined), ["--version", "--root", roots.at(-1)], /package\.json/);
+  fails(pkgRoot("{not json"), ["--version", "--root", roots.at(-1)], /package\.json/);
+});
+
+test("CLI still rejects an unknown leading flag with the usage line after --version is added", () => {
+  fails(pkgRoot({ version: "1.2.3" }), ["--versionx"], /usage/);
 });

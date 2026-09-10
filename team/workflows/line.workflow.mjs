@@ -47,8 +47,10 @@ async function runStation(plan, item, st, previous) {
 }
 
 const plan = { ...args.plan, planPath: args.planPath }
-const stages = (plan.items[0] ? plan.items[0].stations : []).map((_, i) => async (prev, item) => {
+// pipeline() hands the first stage the item itself as its "previous result"; only later stages get a stage record.
+const stages = (plan.items[0] ? plan.items[0].stations : []).map((_, i) => async (prevResult, item) => {
   const st = item.stations[i]
+  const prev = i === 0 ? null : prevResult
   if (prev && prev.halted) return prev
   const previous = prev ? prev.emitted : null
   const r = await runStation(plan, item, st, previous)

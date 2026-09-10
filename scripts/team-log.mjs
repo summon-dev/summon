@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "team event log: validate and append events, check a line's constraints over the log, compute the disagreement rate, render a table", deps: [team/events.json, team/lines/tdd.json, team/checks.json, docs/methodology/team-layers.md], state: draft, last: "sato@2026-09-10", key: ["zero dependencies; schema is data in team/events.json", "readJson and instanceOf are exported for dispatch.mjs, the third caller of each", "negative control: latest round per lens must carry a finding, and latest verdicts must not be unanimous", "disagreement rate = items with split lens verdicts / items with 2+ lens verdicts, most recent first", "line constraints (order, distinct-instance) are checked over claim events per item", "exports behind an entry-point guard for the tests"] }
+// agent-notes: { ctx: "team event log: validate and append events, check a line's constraints over the log, compute the disagreement rate, render a table", deps: [team/events.json, team/lines/tdd.json, team/checks.json, docs/methodology/team-layers.md], state: draft, last: "sato@2026-09-10", key: ["zero dependencies; schema is data in team/events.json", "readJson and instanceOf are exported for dispatch.mjs, the third caller of each", "negative control: latest round per lens must carry a finding, and latest verdicts must not be unanimous", "disagreement rate = items with split lens verdicts / items with 2+ lens verdicts, most recent first", "line constraints (order, distinct-instance) are checked over claim events per item", "exports behind an entry-point guard for the tests", "--version reads package.json from the same root as the schema and needs no log"] }
 //
 // The event log is the runtime record every view renders from and every runtime
 // check reads. One JSON object per line; see docs/methodology/team-layers.md § The event log.
@@ -9,8 +9,9 @@
 //   node scripts/team-log.mjs dissent --log FILE [--last N]         the disagreement rate
 //   node scripts/team-log.mjs render  --log FILE [--skin NAME] [--as table|tmux]
 //   node scripts/team-log.mjs control --log FILE --item ID --lenses a,b,c   exit 1 unless every lens found something and verdicts split
+//   node scripts/team-log.mjs --version [--root DIR]                        print the version from package.json
 //
-// Schema, lines, and skins resolve from the repo this script lives in (or --root DIR).
+// Schema, lines, skins, and package.json resolve from the repo this script lives in (or --root DIR).
 
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -36,6 +37,12 @@ export function loadSkin(name, root = DEFAULT_ROOT) {
   const p = join(root, "team", "views", name, "party.json");
   if (!existsSync(p)) throw new Error(`skin "${name}" has no party.json at ${p}`);
   return readJson(p);
+}
+export function loadVersion(root = DEFAULT_ROOT) {
+  const p = join(root, "package.json");
+  const { version } = readJson(p);
+  if (typeof version !== "string" || version === "") throw new Error(`${p}: "version" must be a non-empty string`);
+  return version;
 }
 
 // --- events ------------------------------------------------------------------
@@ -207,6 +214,7 @@ function parseArgs(argv) {
     opts[a.slice(2)] = v;
     i++;
   }
+  if (cmd === "--version") return opts;
   if (!["append", "check", "dissent", "render", "control"].includes(cmd)) throw new Error(`usage: team-log.mjs append|check|dissent|render|control --log FILE [...]`);
   if (!opts.log) throw new Error("--log is required");
   return opts;
@@ -214,6 +222,10 @@ function parseArgs(argv) {
 
 function main() {
   const o = parseArgs(process.argv.slice(2));
+  if (o.cmd === "--version") {
+    console.log(loadVersion(o.root));
+    return;
+  }
   const schema = loadSchema(o.root);
   if (o.cmd === "append") {
     if (!o.event) throw new Error("--event is required");
