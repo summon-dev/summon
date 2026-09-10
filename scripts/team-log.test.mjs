@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "tests for team-log: event validation, line constraints over a log, disagreement rate, the table renderer", deps: [scripts/team-log.mjs, team/events.json, team/lines/tdd.json, docs/methodology/team-layers.md], state: draft, last: "claude@2026-09-10", key: ["no wall-clock reads: every event carries an explicit t", "disagreement rate direction derived from the spec: non-unanimous items over items with 2+ lens verdicts; the control measures presence only, spread needs a full window of real items", "the separation constraint is checked over the log, not asserted by the seat", "--version resolves package.json from --root, so fixtures pin the version; the repo package.json has no version field"] }
+// agent-notes: { ctx: "tests for team-log: event validation, line constraints over a log, disagreement rate, the table renderer", deps: [scripts/team-log.mjs, team/events.json, team/lines/tdd.json, packages/summon-team/package.json, docs/methodology/team-layers.md], state: draft, last: "tara@2026-09-10", key: ["no wall-clock reads: every event carries an explicit t", "disagreement rate direction derived from the spec: non-unanimous items over items with 2+ lens verdicts; the control measures presence only, spread needs a full window of real items", "the separation constraint is checked over the log, not asserted by the seat", "--version is the summon-team package version (packages/summon-team/package.json): the default root is exercised from a foreign cwd against the checked-in value, and every --root run uses a decoy cwd so a process.cwd() implementation fails"] }
 //
 //   node --test scripts/team-log.test.mjs
 //
@@ -296,49 +296,89 @@ test("CLI control prints the verdict per lens and exits 1 on a silent lens, neve
 });
 
 // --- the version flag --------------------------------------------------------
-// Spec (work order first-run): `node scripts/team-log.mjs --version` prints the version from
-// package.json and exits 0. The version is resolved from the same root every other repo file
-// resolves from (--root, defaulting to the repo this script lives in). Pinned fixture roots
-// below, because the checked-in package.json carries no "version" field at time of writing.
+// Spec (work order first-run, revised after the first review): `node scripts/team-log.mjs --version`
+// prints the version of the summon-team package, packages/summon-team/package.json, the package a
+// user installs, and exits 0. It resolves from the same root every other repo file resolves from:
+// --root DIR reads DIR/packages/summon-team/package.json; no --root means the repo this script lives
+// in. The root package.json is a private workspace with no version and is not read.
+// Every run below sets cwd to a directory other than the root under test, so an implementation
+// that resolves from process.cwd() fails at least one of them.
 
-/** A fresh root holding only a package.json; `pkg` is written verbatim when a string. */
+const TEAM_PKG = join("packages", "summon-team", "package.json");
+const REPO_VERSION = JSON.parse(readFileSync(join(REPO, TEAM_PKG), "utf8")).version;
+
+/** A fresh root holding only packages/summon-team/package.json; `pkg` is written verbatim when a string. */
 function pkgRoot(pkg) {
   const root = mkdtempSync(join(tmpdir(), "summon-pkg-"));
   roots.push(root);
-  if (pkg !== undefined) writeFileSync(join(root, "package.json"), typeof pkg === "string" ? pkg : JSON.stringify(pkg));
+  mkdirSync(join(root, "packages", "summon-team"), { recursive: true });
+  if (pkg !== undefined) writeFileSync(join(root, TEAM_PKG), typeof pkg === "string" ? pkg : JSON.stringify(pkg));
   return root;
 }
 
-const fails = (root, args, re) =>
-  assert.throws(() => run(root, args), (err) => err.status === 1 && re.test(String(err.stderr) + String(err.stdout)), `${args.join(" ")} should exit 1 matching ${re}`);
+/** A working directory that is not the root under test: a decoy package.json at both places, with a version no test expects. */
+function decoyCwd() {
+  const cwd = pkgRoot({ name: "decoy", version: "9.9.9-decoy" });
+  writeFileSync(join(cwd, "package.json"), JSON.stringify({ name: "decoy-root", version: "9.9.9-decoy" }));
+  return cwd;
+}
 
-test("CLI --version prints the package.json version as the only line of stdout and exits 0", () => {
+// The message must name the summon-team package's file, not just "package.json": a user with three
+// package.json files in the workspace needs to know which one is wrong.
+const NAMES_TEAM_PKG = /summon-team[\s\S]*package\.json/;
+const fails = (cwd, args, re) =>
+  assert.throws(() => run(cwd, args), (err) => err.status === 1 && re.test(String(err.stderr) + String(err.stdout)), `${args.join(" ")} should exit 1 matching ${re}`);
+
+test("CLI --version with no --root prints the summon-team package version from the repo this script lives in, from a foreign cwd", () => {
+  assert.equal(REPO_VERSION && typeof REPO_VERSION, "string", "the checked-in packages/summon-team/package.json carries a version");
+  const out = run(decoyCwd(), ["--version"]);
+  assert.equal(out, `${REPO_VERSION}\n`);
+});
+
+test("CLI --version --root DIR prints DIR/packages/summon-team/package.json's version as the only line of stdout and exits 0, not the cwd's", () => {
   const root = pkgRoot({ name: "fixture", version: "1.2.3" });
-  const out = run(root, ["--version", "--root", root]);
+  const out = run(decoyCwd(), ["--version", "--root", root]);
   assert.equal(out, "1.2.3\n");
 });
 
+test("CLI --version reads the summon-team package, not a root package.json carrying a different version", () => {
+  const root = pkgRoot({ name: "summon-team", version: "1.2.3" });
+  writeFileSync(join(root, "package.json"), JSON.stringify({ name: "workspace-root", version: "7.7.7" }));
+  assert.equal(run(decoyCwd(), ["--version", "--root", root]), "1.2.3\n");
+});
+
 test("CLI --version does not require --log or an event schema", () => {
-  // The fixture root has a package.json and nothing else: no team/events.json, no log.
+  // The fixture root has packages/summon-team/package.json and nothing else: no team/events.json, no log.
   const root = pkgRoot({ version: "0.0.1" });
-  assert.equal(run(root, ["--version", "--root", root]).trim(), "0.0.1");
+  assert.equal(run(decoyCwd(), ["--version", "--root", root]).trim(), "0.0.1");
 });
 
-test("CLI --version exits 1 naming package.json when the version field is absent", () => {
+test("CLI --version exits 1 naming the summon-team package.json when the version field is absent", () => {
   const root = pkgRoot({ name: "no-version" });
-  fails(root, ["--version", "--root", root], /package\.json[\s\S]*version/);
+  fails(decoyCwd(), ["--version", "--root", root], NAMES_TEAM_PKG);
+  fails(decoyCwd(), ["--version", "--root", root], /version/);
 });
 
-test("CLI --version exits 1 naming package.json when the version field is empty or not a string", () => {
-  fails(pkgRoot({ version: "" }), ["--version", "--root", roots.at(-1)], /package\.json[\s\S]*version/);
-  fails(pkgRoot({ version: 3 }), ["--version", "--root", roots.at(-1)], /package\.json[\s\S]*version/);
+test("CLI --version exits 1 naming the summon-team package.json when the version field is empty or not a string", () => {
+  const empty = pkgRoot({ version: "" });
+  fails(decoyCwd(), ["--version", "--root", empty], NAMES_TEAM_PKG);
+  fails(decoyCwd(), ["--version", "--root", empty], /version/);
+  const numeric = pkgRoot({ version: 3 });
+  fails(decoyCwd(), ["--version", "--root", numeric], NAMES_TEAM_PKG);
+  fails(decoyCwd(), ["--version", "--root", numeric], /version/);
 });
 
-test("CLI --version exits 1 naming package.json when the file is missing or malformed", () => {
-  fails(pkgRoot(undefined), ["--version", "--root", roots.at(-1)], /package\.json/);
-  fails(pkgRoot("{not json"), ["--version", "--root", roots.at(-1)], /package\.json/);
+test("CLI --version exits 1 naming the summon-team package.json when the file is missing or malformed", () => {
+  const missing = pkgRoot(undefined);
+  fails(decoyCwd(), ["--version", "--root", missing], NAMES_TEAM_PKG);
+  const malformed = pkgRoot("{not json");
+  fails(decoyCwd(), ["--version", "--root", malformed], NAMES_TEAM_PKG);
+});
+
+test("CLI usage line for an unknown command mentions --version", () => {
+  fails(decoyCwd(), ["bogus"], /usage[^\n]*--version/);
 });
 
 test("CLI still rejects an unknown leading flag with the usage line after --version is added", () => {
-  fails(pkgRoot({ version: "1.2.3" }), ["--versionx"], /usage/);
+  fails(decoyCwd(), ["--versionx"], /usage/);
 });

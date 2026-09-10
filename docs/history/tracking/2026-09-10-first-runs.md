@@ -52,9 +52,25 @@ Every planted defect was found by the lens it was planted for, and each lens als
 
 **Review outcome.** 22 agents (five lenses, seventeen skeptics), 17 findings, 12 survived refutation, 5 refuted. Every lens returned `revise`. All five converged on one defect from five directions: the spec's own acceptance command, `node scripts/team-log.mjs --version`, exits 1 in this repo because the root `package.json` carries no `version` field, and every test routes around it through `--root` fixtures, so the suite is green while the one real invocation is red. The test-quality and operational lenses graded it critical; simplicity, security, and conformance graded it important. The rest: the tests never distinguish `--root` from the working directory (a `process.cwd()` implementation would pass), the usage line still omits the flag, `--version` is parsed as a command rather than a flag, the fixtures lean on argument evaluation order, and which `package.json` is the source of truth in a workspace with three sub-package versions is undecided. The refuted five included a "one caller, one export" finding knocked down by the file's own convention (`loadSkin` has the same shape).
 
-**The item's state.** `first-run` sits at `revise`, not done. The change the line produced is committed on the branch as the run's evidence, with the verdicts beside it on the log; the coder's next pass waits on the human's decision about the root `package.json` (finding 6 below).
+**The item's state after the first pass.** `first-run` sat at `revise`; the human chose option 2 and the item went back through the line (second pass, below).
 
 **What the line check says.** `team-log.mjs check --line tdd`: 3 items, 0 violations. On `first-run` the claims ran red, green, review in order; green and review were held by different instances; every claim was written by `dispatch.mjs claim`, every return by the seat with `ok: true` and the item. `pnpm team:dissent`: 3 judged items, 0 non-unanimous, rate 0.00; the third data point for finding 1, since five `revise` verdicts on a change with one real defect is again agreement on the scale over 12 findings that differ in content.
+
+## Run 2, second pass: the item back through the line (2026-09-10)
+
+The human chose option 2: the flag reports the version of the `summon-team` package, the one a user installs. The spec on the order and the plan was rewritten, and the item went back through the line's own stations with the dispatcher's claim in front of each. Red: `tara#1` rewrote the section to the new spec, 33 tests, 8 red, each red for the intended reason, the fallback and cwd cases pinned by decoy fixtures, the default root exercised from a foreign directory, the usage line asserted, no `roots.at(-1)`. Green: `sato#1` changed one path segment and one usage string; 33 pass; `node scripts/team-log.mjs --version` prints `0.1.0` from the repo and from `/tmp`. Review: the review station ran through review-wave with the dispatcher's claim accepted first. The first attempt lost the operational lens and every skeptic to a session rate limit; the run was resumed from its id with the four finished reviewers replayed from cache, and completed with 18 agents and no errors. 13 findings, 10 survived refutation, 3 refuted.
+
+| Lens | Verdict | Kept |
+|---|---|---|
+| simplicity | accept | 4 suggestions (a per-call decoy fixture, doubled spawns per error case, a clever precondition, two version emitters with two output shapes) |
+| test-quality | accept | 3 suggestions (a fallback implementation would pass the missing-file fixture, `REPO_VERSION` read at module load, doubled spawns) |
+| security | accept | none; its one finding was refuted |
+| conformance | revise | 1 suggestion (the two emitters) |
+| operational | revise | 1 important, 1 suggestion |
+
+**The one important finding** (operational): the scaffolder ships `scripts/team-log.mjs` into host projects, and a host project has no `packages/summon-team/`, so the flag exits 1 with an ENOENT there. The tester named this as not covered in the first pass; the spec scoped the item to this repo. It is a spec question again: either the flag is for this repo only and says so, or the scaffolded copy needs another source (a version baked at scaffold time, or the installed package's own manifest). The coordinator leaves it to the human; the item stays at `revise` on that finding alone.
+
+**What the line check says.** 3 items, 0 violations; every claim on `first-run` across both passes was written by `dispatch.mjs claim`. `pnpm team:dissent` now reads 2 real items, 1 non-unanimous, rate 0.50, short of its window; `pnpm team:control` passes on presence.
 
 ## Findings against step 6, in one place
 
@@ -63,7 +79,7 @@ Every planted defect was found by the lens it was planted for, and each lens als
 3. **The line's review station needs a registered agent type** (run 2). Owed: the line workflow's review station should take the review-wave path (prepared lens prompts carried in the line's args, conditional lenses matched by the same globs in the script) so the line runs whole before cutover; after cutover the agent-type path also works.
 4. **`ingest` writes its own `claim`** even when the dispatcher already claimed the station, so the review station carries two claim events from the same instance. Harmless to the line check; untidy on the log. Owed: `ingest --claimed` or a check for an existing claim.
 5. **The pipeline's first-stage argument** cost one halt and a resume. Fixed in the script; a test that runs the stage functions against a stub `pipeline` would have caught it.
-6. **The repo's `package.json` has no `version`.** The tester found it, the coder confirmed it, both kept to scope. The coordinator leaves the decision to the human: add one, or change the spec.
+6. **The repo's `package.json` has no `version`.** Decided (option 2: the summon-team package's version) and the item run back through the line; see the second pass above. What remains is the scaffolded-copy case the operational lens raised.
 
 ## Verification
 
