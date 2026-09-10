@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "runs a seat's bound checks, binds each receipt to the tree state, writes check events to the log", deps: [scripts/compose-team.mjs, scripts/team-log.mjs, team/checks.json, team/events.json, docs/methodology/team-layers.md], state: draft, last: "sato@2026-09-09", key: ["deterministic checks only: an unbound check is reported as judged and never run", "receipt = last 40 lines of combined output, bound to {head, dirty} (ADR-0012 D8)", "exports runChecks + treeState behind an entry-point guard"] }
+// agent-notes: { ctx: "runs a seat's bound checks, binds each receipt to the tree state, writes check events to the log", deps: [scripts/compose-team.mjs, scripts/team-log.mjs, team/checks.json, team/events.json, docs/methodology/team-layers.md], state: draft, last: "sato@2026-09-10", key: ["treeState ignores .summon/: the record must not invalidate the receipts it stores", "deterministic checks only: an unbound check is reported as judged and never run", "receipt = last 40 lines of combined output, bound to {head, dirty} (ADR-0012 D8)", "exports runChecks + treeState behind an entry-point guard"] }
 //
 // The deterministic half of a seat's work, executed from outside the model. Each
 // bound check in team/checks.json runs through the shell; its exit code and the tail
@@ -21,16 +21,23 @@ import { appendEvent, loadSchema } from "./team-log.mjs";
 const TAIL_LINES = 40;
 const TIMEOUT_MS = 10 * 60 * 1000;
 
+// Raw stdout: porcelain status lines start with a space for an unstaged change, and a trim would eat it.
 const git = (root, args) => {
   const r = spawnSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
-  return r.status === 0 ? r.stdout.trim() : null;
+  return r.status === 0 ? r.stdout : null;
 };
 
-/** The tree a receipt binds to: the commit it ran against, and whether anything was uncommitted. */
+// The log's own footprint. The log is the team's own record, tracked under .summon/, and every
+// event appended to it would otherwise dirty the tree and invalidate the receipts it stores; so
+// a path under .summon/ (the log, the plan, the worktrees) never counts toward dirty.
+const RECORD = ".summon/";
+const outsideRecord = (line) => line.slice(3).split(" -> ").some((path) => !path.startsWith(RECORD));
+
+/** The tree a receipt binds to: the commit it ran against, and whether anything outside .summon/ was uncommitted. */
 export function treeState(root) {
-  const head = git(root, ["rev-parse", "HEAD"]);
+  const head = git(root, ["rev-parse", "HEAD"])?.trim() ?? null;
   const status = git(root, ["status", "--porcelain"]);
-  return { head, dirty: status === null ? null : status.length > 0 };
+  return { head, dirty: status === null ? null : status.split("\n").filter(Boolean).some(outsideRecord) };
 }
 
 function runCommand(root, cmd) {

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "team event log: validate and append events, check a line's constraints over the log, compute the disagreement rate, render a table", deps: [team/events.json, team/lines/tdd.json, team/checks.json, docs/methodology/team-layers.md], state: draft, last: "sato@2026-09-09", key: ["zero dependencies; schema is data in team/events.json", "negative control: latest round per lens must carry a finding, and latest verdicts must not be unanimous", "disagreement rate = items with split lens verdicts / items with 2+ lens verdicts, most recent first", "line constraints (order, distinct-instance) are checked over claim events per item", "exports behind an entry-point guard for the tests"] }
+// agent-notes: { ctx: "team event log: validate and append events, check a line's constraints over the log, compute the disagreement rate, render a table", deps: [team/events.json, team/lines/tdd.json, team/checks.json, docs/methodology/team-layers.md], state: draft, last: "sato@2026-09-10", key: ["zero dependencies; schema is data in team/events.json", "readJson and instanceOf are exported for dispatch.mjs, the third caller of each", "negative control: latest round per lens must carry a finding, and latest verdicts must not be unanimous", "disagreement rate = items with split lens verdicts / items with 2+ lens verdicts, most recent first", "line constraints (order, distinct-instance) are checked over claim events per item", "exports behind an entry-point guard for the tests"] }
 //
 // The event log is the runtime record every view renders from and every runtime
 // check reads. One JSON object per line; see docs/methodology/team-layers.md § The event log.
@@ -19,7 +19,7 @@ import { pathToFileURL } from "node:url";
 const DEFAULT_ROOT = resolve(import.meta.dirname, "..");
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
 
-const readJson = (p) => {
+export const readJson = (p) => {
   try {
     return JSON.parse(readFileSync(p, "utf8"));
   } catch (err) {
@@ -80,7 +80,7 @@ export function appendEvent(file, e, schema) {
   appendFileSync(file, JSON.stringify(e) + "\n");
 }
 
-const instanceOf = (e) => e.instance ?? e.seat;
+export const instanceOf = (e) => e.instance ?? e.seat;
 const byTime = (a, b) => String(a.t).localeCompare(String(b.t));
 
 // --- the line ----------------------------------------------------------------

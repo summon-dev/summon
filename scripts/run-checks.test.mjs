@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "tests for run-checks: executes a seat's bound checks, binds receipts to the tree, writes check events", deps: [scripts/run-checks.mjs, scripts/compose-team.mjs, scripts/team-log.mjs, team/events.json, docs/methodology/team-layers.md], state: draft, last: "tara@2026-09-09", key: ["no wall-clock reads: t is injected", "receipts bind to a tree state (head, dirty) and are stale when the head moves", "commands run through the real shell against a fixture repo"] }
+// agent-notes: { ctx: "tests for run-checks: executes a seat's bound checks, binds receipts to the tree, writes check events", deps: [scripts/run-checks.mjs, scripts/compose-team.mjs, scripts/team-log.mjs, team/events.json, docs/methodology/team-layers.md], state: draft, last: "tara@2026-09-10", key: ["no wall-clock reads: t is injected", "receipts bind to a tree state (head, dirty) and are stale when the head moves", "treeState ignores .summon/, so the log the tree binding is written to never dirties it", "commands run through the real shell against a fixture repo"] }
 //
 //   node --test scripts/run-checks.test.mjs
 //
@@ -123,6 +123,21 @@ test("treeState reports the head and whether the tree is dirty", () => {
   assert.equal(clean.dirty, false);
   writeFileSync(join(root, "scratch.txt"), "x");
   assert.equal(treeState(root).dirty, true, "an untracked file makes the tree dirty");
+});
+
+// Pierrot 3, Tara Critical 2; § The work order: the tree state a spawn binds to ignores .summon/, the
+// log's own footprint, so a receipt reads dirty for the code and not for the record. The repo tracks
+// .summon/team-log.jsonl, so without this every open after the first would bind to a dirty tree.
+test("treeState ignores changes under .summon/ so the log's own writes do not dirty the tree", () => {
+  const { root } = fixture((f) => (f[".summon/team-log.jsonl"] = ""));
+  const { head, dirty } = treeState(root);
+  assert.equal(dirty, false, "clean at the fixture commit");
+  writeFileSync(join(root, ".summon/team-log.jsonl"), `{"t":"${T}","seat":"tara","event":"spawn","harness":"claude-code","tree":{}}\n`);
+  assert.deepEqual(treeState(root), { head, dirty: false }, "a tracked file under .summon/ modified does not dirty the tree");
+  writeFileSync(join(root, ".summon/plan.json"), "{}");
+  assert.equal(treeState(root).dirty, false, "an untracked file under .summon/ does not dirty the tree either");
+  writeFileSync(join(root, "team/checks.json"), "{}");
+  assert.equal(treeState(root).dirty, true, "a tracked file outside .summon/ modified still dirties the tree");
 });
 
 // --- running ----------------------------------------------------------------
