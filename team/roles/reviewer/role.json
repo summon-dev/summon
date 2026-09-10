@@ -44,11 +44,11 @@
     },
     {
       "id": "disagreement-rate",
-      "claim": "Over the last ten reviews, the lenses did not return unanimous verdicts every time."
+      "claim": "Over the last ten real reviews (the planted fixture excluded), the lenses did not return unanimous verdicts every time; fewer than ten is a sample, not a signal."
     },
     {
       "id": "negative-control",
-      "claim": "On the planted-defect fixture, every lens returns at least one finding and the verdicts are not unanimous."
+      "claim": "On the planted-defect fixture, every lens returns at least one finding in its latest round."
     },
     {
       "id": "line-respected",

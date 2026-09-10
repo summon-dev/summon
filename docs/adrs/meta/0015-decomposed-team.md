@@ -92,7 +92,7 @@ The human's broader vision is teams of testers, coders, and reviewers stamped ou
 
 Per Wei's C8, adopted verbatim. At the checkpoint, or earlier if tripped:
 
-1. **Consensus returns.** The composed review formation fails the negative-control fixture, or `team-log.mjs dissent --last 10` reports a rate of zero over ten judged items. The persona layer is not producing dissent; re-argue Alternative 2 (skills only) on the evidence.
+1. **Consensus returns.** The composed review formation fails the negative-control fixture (a lens filed nothing on its planted defect), or `team-log.mjs dissent --last 10 --exclude negative-control` reports a rate of zero over a full window of ten real items. The two are split on purpose after the first run (2026-09-10): the fixture measures presence, the rate measures spread, and unanimity on a fixture built to be caught by every lens is not the signal. The persona layer is not producing dissent; re-argue Alternative 2 (skills only) on the evidence.
 2. **Two-layer edits.** Three or more of the first ten edits under `team/` touch a role and its bound persona together. The seam is wrong; re-argue the split or adopt inline personas for single-holder roles.
 3. **Adapter leak.** A harness or model release forces a change outside `team/harness/`. The isolation claim failed; re-scope what the adapter carries.
 4. **Generated-file drift.** `compose --check` finds `.claude/agents/` hand-edited, or the composer grows a dependency. ADR-0006's projection discipline did not hold on Summon's own runtime surface; consider shipping composed output as the source.

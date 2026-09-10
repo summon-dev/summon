@@ -30,8 +30,8 @@
   },
   "log": ".summon/team-log.jsonl",
   "disagreement-rate": {
-    "run": "node scripts/team-log.mjs dissent --log .summon/team-log.jsonl --last 10",
-    "receipt": "the rate line: N items, M non-unanimous"
+    "run": "node scripts/team-log.mjs dissent --log .summon/team-log.jsonl --last 10 --exclude negative-control",
+    "receipt": "the rate line: N items, M non-unanimous; exit 1 only on a full window with rate 0"
   },
   "line-respected": {
     "run": "node scripts/team-log.mjs check --log .summon/team-log.jsonl --line tdd",
@@ -47,7 +47,7 @@
   },
   "negative-control": {
     "run": "node scripts/team-log.mjs control --log .summon/team-log.jsonl --item negative-control --lenses simplicity,test-quality,security,conformance",
-    "receipt": "the control line and the verdict per lens"
+    "receipt": "the control line and the verdict per lens (verdicts are information; presence is the claim)"
   },
   "installs-and-builds": {
     "run": "pnpm install --frozen-lockfile && pnpm build",

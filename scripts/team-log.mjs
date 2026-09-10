@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "team event log: validate and append events, check a line's constraints over the log, compute the disagreement rate, render a table", deps: [team/events.json, team/lines/tdd.json, team/checks.json, docs/methodology/team-layers.md], state: draft, last: "sato@2026-09-10", key: ["zero dependencies; schema is data in team/events.json", "readJson and instanceOf are exported for dispatch.mjs, the third caller of each", "negative control: latest round per lens must carry a finding, and latest verdicts must not be unanimous", "disagreement rate = items with split lens verdicts / items with 2+ lens verdicts, most recent first", "line constraints (order, distinct-instance) are checked over claim events per item", "exports behind an entry-point guard for the tests", "--version reads package.json from the same root as the schema and needs no log"] }
+// agent-notes: { ctx: "team event log: validate and append events, check a line's constraints over the log, compute the disagreement rate, render a table", deps: [team/events.json, team/lines/tdd.json, team/checks.json, docs/methodology/team-layers.md], state: draft, last: "claude@2026-09-10", key: ["zero dependencies; schema is data in team/events.json", "readJson and instanceOf are exported for dispatch.mjs, the third caller of each", "negative control: latest round per lens must carry a finding; verdict spread is the dissent rate's claim over a full window of real items", "disagreement rate = items with split lens verdicts / items with 2+ lens verdicts, most recent first", "line constraints (order, distinct-instance) are checked over claim events per item", "exports behind an entry-point guard for the tests", "--version reads package.json from the same root as the schema and needs no log"] }
 //
 // The event log is the runtime record every view renders from and every runtime
 // check reads. One JSON object per line; see docs/methodology/team-layers.md § The event log.
 //
 //   node scripts/team-log.mjs append  --log FILE --event '{"t":...,"seat":...,"event":...}'
 //   node scripts/team-log.mjs check   --log FILE --line NAME        exit 1 on any violation
-//   node scripts/team-log.mjs dissent --log FILE [--last N]         the disagreement rate
+//   node scripts/team-log.mjs dissent --log FILE [--last N] [--exclude a,b]   the disagreement rate; exit 1 on a full window with none split
 //   node scripts/team-log.mjs render  --log FILE [--skin NAME] [--as table|tmux]
-//   node scripts/team-log.mjs control --log FILE --item ID --lenses a,b,c   exit 1 unless every lens found something and verdicts split
+//   node scripts/team-log.mjs control --log FILE --item ID --lenses a,b,c   exit 1 unless every lens found something
 //   node scripts/team-log.mjs --version [--root DIR]                        print the version from package.json
 //
 // Schema, lines, skins, and package.json resolve from the repo this script lives in (or --root DIR).
@@ -131,10 +131,10 @@ export function checkLog(log, line, schema) {
 // The post's decay metric. rate = items whose lens verdicts were not unanimous, over items
 // that received two or more lens verdicts, taking the `last` most recently judged items.
 
-export function disagreementRate(log, { last = 10 } = {}) {
+export function disagreementRate(log, { last = 10, exclude = [] } = {}) {
   const byItem = new Map(); // item -> { lenses: Map(lens -> verdict), t }
   for (const e of [...log].sort(byTime)) {
-    if (e.event !== "verdict") continue;
+    if (e.event !== "verdict" || exclude.includes(e.item)) continue;
     if (!byItem.has(e.item)) byItem.set(e.item, { lenses: new Map(), t: e.t });
     const it = byItem.get(e.item);
     it.lenses.set(e.lens, e.verdict);
@@ -142,7 +142,8 @@ export function disagreementRate(log, { last = 10 } = {}) {
   }
   const judged = [...byItem.values()].filter((it) => it.lenses.size >= 2).sort((a, b) => b.t.localeCompare(a.t)).slice(0, last);
   const split = judged.filter((it) => new Set(it.lenses.values()).size > 1).length;
-  return { items: judged.length, split, rate: judged.length ? split / judged.length : null, window: last };
+  // A rate over fewer items than the window is a sample, not a signal; the caller decides on `enough`.
+  return { items: judged.length, split, rate: judged.length ? split / judged.length : null, window: last, enough: judged.length >= last };
 }
 
 // --- the negative control -----------------------------------------------------
@@ -167,9 +168,9 @@ export function negativeControl(log, { item, lenses }) {
     const found = events.filter((e) => e.event === "finding" && e.lens === lens && e.t > prev && e.t <= last.t).length;
     if (found === 0) silent.push(lens);
   }
-  const present = Object.values(verdicts);
-  const unanimous = missing.length === 0 && new Set(present).size <= 1;
-  return { ok: missing.length === 0 && silent.length === 0 && !unanimous, missing, silent, unanimous, verdicts };
+  // Presence only: every lens filed something on its planted defect. Verdicts are reported, not judged;
+  // a fixture built to be caught by every lens cannot also measure whether verdicts split (that is the dissent rate's claim).
+  return { ok: missing.length === 0 && silent.length === 0, missing, silent, verdicts };
 }
 
 // --- the renderer ------------------------------------------------------------
@@ -249,9 +250,17 @@ function main() {
     return;
   }
   if (o.cmd === "dissent") {
-    const r = disagreementRate(log, { last: Number(o.last) });
-    console.log(`disagreement: ${r.items} items, ${r.split} non-unanimous, rate ${r.rate === null ? "n/a" : r.rate.toFixed(2)} (window ${r.window})`);
-    if (r.items > 0 && r.rate === 0) console.log("every judged item was unanimous; a reviewer that always agrees carries no information");
+    const exclude = (o.exclude ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+    const r = disagreementRate(log, { last: Number(o.last), exclude });
+    console.log(`disagreement: ${r.items} items, ${r.split} non-unanimous, rate ${r.rate === null ? "n/a" : r.rate.toFixed(2)} (window ${r.window}${exclude.length ? `, excluding ${exclude.join(", ")}` : ""})`);
+    if (!r.enough) {
+      console.log(`${r.items} items judged; the rate needs ${r.window} to mean anything`);
+      return;
+    }
+    if (r.rate === 0) {
+      console.log("every judged item in a full window was unanimous; a reviewer that always agrees carries no information");
+      process.exit(1);
+    }
     return;
   }
   if (o.cmd === "control") {
@@ -259,11 +268,11 @@ function main() {
     const lenses = o.lenses.split(",").map((x) => x.trim()).filter(Boolean);
     const r = negativeControl(log, { item: o.item, lenses });
     if (r.ok) {
-      console.log(`negative control ${o.item}: ok (${lenses.length} lenses found something; verdicts split)`);
+      console.log(`negative control ${o.item}: ok (${lenses.length} lenses found something)`);
       for (const [lens, v] of Object.entries(r.verdicts)) console.log(`  ${lens}: ${v}`);
       return;
     }
-    const why = [r.missing.length ? `no verdict from ${r.missing.join(", ")}` : "", r.silent.length ? `no finding from ${r.silent.join(", ")}` : "", r.unanimous ? "verdicts unanimous" : ""].filter(Boolean).join("; ");
+    const why = [r.missing.length ? `no verdict from ${r.missing.join(", ")}` : "", r.silent.length ? `no finding from ${r.silent.join(", ")}` : ""].filter(Boolean).join("; ");
     console.log(`negative control ${o.item}: FAILED (${why})`);
     for (const [lens, v] of Object.entries(r.verdicts)) console.log(`  ${lens}: ${v}`);
     process.exit(1);

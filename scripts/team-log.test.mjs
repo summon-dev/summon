@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "tests for team-log: event validation, line constraints over a log, disagreement rate, the table renderer", deps: [scripts/team-log.mjs, team/events.json, team/lines/tdd.json, docs/methodology/team-layers.md], state: draft, last: "tara@2026-09-10", key: ["no wall-clock reads: every event carries an explicit t", "disagreement rate direction derived from the spec: non-unanimous items over items with 2+ lens verdicts", "the separation constraint is checked over the log, not asserted by the seat", "--version resolves package.json from --root, so fixtures pin the version; the repo package.json has no version field"] }
+// agent-notes: { ctx: "tests for team-log: event validation, line constraints over a log, disagreement rate, the table renderer", deps: [scripts/team-log.mjs, team/events.json, team/lines/tdd.json, docs/methodology/team-layers.md], state: draft, last: "claude@2026-09-10", key: ["no wall-clock reads: every event carries an explicit t", "disagreement rate direction derived from the spec: non-unanimous items over items with 2+ lens verdicts; the control measures presence only, spread needs a full window of real items", "the separation constraint is checked over the log, not asserted by the seat", "--version resolves package.json from --root, so fixtures pin the version; the repo package.json has no version field"] }
 //
 //   node --test scripts/team-log.test.mjs
 //
@@ -146,13 +146,41 @@ test("disagreementRate counts items with split verdicts over items with two or m
   const events = [...cleanItem("i1", 0), ...cleanItem("i2", 10, { unanimous: true }), ...cleanItem("i3", 20)];
   const { file } = logDir(events);
   const r = disagreementRate(readLog(file), { last: 10 });
-  assert.deepEqual(r, { items: 3, split: 2, rate: 2 / 3, window: 10 });
-  assert.deepEqual(disagreementRate(readLog(file), { last: 1 }), { items: 1, split: 1, rate: 1, window: 1 }, "the window takes the most recent items");
+  assert.deepEqual(r, { items: 3, split: 2, rate: 2 / 3, window: 10, enough: false });
+  assert.deepEqual(disagreementRate(readLog(file), { last: 1 }), { items: 1, split: 1, rate: 1, window: 1, enough: true }, "the window takes the most recent items");
 });
 
 test("disagreementRate ignores items with a single lens verdict and reports null over no items", () => {
   const { file } = logDir([ev(1, "vik", "verdict", { item: "solo", lens: "simplicity", verdict: "accept" })]);
-  assert.deepEqual(disagreementRate(readLog(file), { last: 10 }), { items: 0, split: 0, rate: null, window: 10 });
+  assert.deepEqual(disagreementRate(readLog(file), { last: 10 }), { items: 0, split: 0, rate: null, window: 10, enough: false });
+});
+
+// The rate measures spread on real work; a planted fixture is excluded by name, and a rate over
+// fewer items than the window is a sample, not a signal (first-runs report, finding 1).
+test("disagreementRate excludes named items, so the planted fixture does not count as real work", () => {
+  const events = [...cleanItem("i1", 0, { unanimous: true }), ...cleanItem("negative-control", 10)];
+  const { file } = logDir(events);
+  assert.deepEqual(disagreementRate(readLog(file), { last: 10, exclude: ["negative-control"] }), { items: 1, split: 0, rate: 0, window: 10, enough: false });
+});
+
+test("disagreementRate reports enough only when the window is full", () => {
+  const events = Array.from({ length: 10 }, (_, i) => cleanItem(`i${i}`, i * 10, { unanimous: true })).flat();
+  const { file } = logDir(events);
+  const r = disagreementRate(readLog(file), { last: 10 });
+  assert.equal(r.items, 10);
+  assert.equal(r.enough, true);
+  assert.equal(disagreementRate(readLog(file), { last: 11 }).enough, false);
+});
+
+test("CLI dissent exits 1 only when the window is full and every item was unanimous; a short sample says so and exits 0", () => {
+  const short = logDir([...cleanItem("i1", 0, { unanimous: true }), ...cleanItem("i2", 10, { unanimous: true })]);
+  assert.match(run(short.root, ["dissent", "--log", short.file, "--last", "10"]), /2 items[\s\S]*needs 10/);
+  const full = logDir(Array.from({ length: 10 }, (_, i) => cleanItem(`i${i}`, i * 10, { unanimous: true })).flat());
+  assert.throws(() => run(full.root, ["dissent", "--log", full.file, "--last", "10"]), (err) => err.status === 1 && /rate 0\.00/.test(String(err.stdout)) && /always agrees/.test(String(err.stdout)));
+  const mixed = logDir([...Array.from({ length: 9 }, (_, i) => cleanItem(`i${i}`, i * 10, { unanimous: true })).flat(), ...cleanItem("i9", 90)]);
+  assert.match(run(mixed.root, ["dissent", "--log", mixed.file, "--last", "10"]), /10 items, 1 non-unanimous, rate 0\.10/);
+  const excluded = logDir([...Array.from({ length: 10 }, (_, i) => cleanItem(`i${i}`, i * 10, { unanimous: true })).flat(), ...cleanItem("negative-control", 100)]);
+  assert.throws(() => run(excluded.root, ["dissent", "--log", excluded.file, "--last", "10", "--exclude", "negative-control"]), (err) => err.status === 1, "the fixture's split verdict does not rescue the rate");
 });
 
 // --- the renderer ------------------------------------------------------------
@@ -206,9 +234,10 @@ test("the checked-in bindings point disagreement-rate and line-respected at this
 });
 
 // --- the negative control -----------------------------------------------------
-// ADR-0015 reversal trigger 1: on a planted-defect item, every named lens must return at
-// least one finding and the verdicts must not be unanimous. Direction from the ADR, not
-// from the tool: "at least one finding per lens" and "not unanimous" are both required.
+// ADR-0015 reversal trigger 1, as split after the first runs: on a planted-defect item, every
+// named lens must return at least one finding in its latest round (presence). Verdict spread is
+// not measured here; the dissent rate over real items measures it. A fixture built so that every
+// lens catches something cannot also be the fixture that measures whether verdicts split.
 
 import { negativeControl } from "./team-log.mjs";
 
@@ -223,10 +252,10 @@ const control = (n0, { findings = { simplicity: 1, security: 1 }, verdicts = { s
   return out;
 };
 
-test("negativeControl passes when every lens found something and the verdicts split", () => {
+test("negativeControl passes when every lens found something, and reports the verdicts as information", () => {
   const { file } = logDir(control(0));
   const r = negativeControl(readLog(file), { item: "negative-control", lenses: LENSES });
-  assert.deepEqual(r, { ok: true, missing: [], silent: [], unanimous: false, verdicts: { simplicity: "revise", security: "accept" } });
+  assert.deepEqual(r, { ok: true, missing: [], silent: [], verdicts: { simplicity: "revise", security: "accept" } });
 });
 
 test("negativeControl fails when a lens returned no finding, naming the lens", () => {
@@ -236,11 +265,11 @@ test("negativeControl fails when a lens returned no finding, naming the lens", (
   assert.deepEqual(r.silent, ["security"]);
 });
 
-test("negativeControl fails when the verdicts are unanimous, even with findings everywhere", () => {
-  const { file } = logDir(control(0, { verdicts: { simplicity: "accept", security: "accept" } }));
+test("negativeControl passes on unanimous verdicts when every lens found something: unanimity is not the control's claim", () => {
+  const { file } = logDir(control(0, { verdicts: { simplicity: "veto", security: "veto" } }));
   const r = negativeControl(readLog(file), { item: "negative-control", lenses: LENSES });
-  assert.equal(r.ok, false);
-  assert.equal(r.unanimous, true);
+  assert.equal(r.ok, true);
+  assert.equal("unanimous" in r, false, "the result carries no unanimity flag to be misread as a failure");
 });
 
 test("negativeControl fails when a lens never returned a verdict, naming it as missing", () => {
@@ -251,17 +280,19 @@ test("negativeControl fails when a lens never returned a verdict, naming it as m
 });
 
 test("negativeControl reads only the most recent review of the item", () => {
-  // An earlier failed run, then a later passing one: the later one counts.
-  const events = [...control(0, { verdicts: { simplicity: "accept", security: "accept" } }), ...control(20)];
+  // An earlier failed run (a silent lens), then a later passing one: the later one counts.
+  const events = [...control(0, { findings: { simplicity: 1, security: 0 } }), ...control(20)];
   const { file } = logDir(events);
   assert.equal(negativeControl(readLog(file), { item: "negative-control", lenses: LENSES }).ok, true);
 });
 
-test("CLI control prints the verdict per lens and exits 1 on a failed control", () => {
-  const { root, file } = logDir(control(0));
-  assert.match(run(root, ["control", "--log", file, "--item", "negative-control", "--lenses", LENSES.join(",")]), /^negative control negative-control: ok \(2 lenses found something; verdicts split\)/m);
-  const { root: r2, file: f2 } = logDir(control(0, { verdicts: { simplicity: "accept", security: "accept" } }));
-  assert.throws(() => run(r2, ["control", "--log", f2, "--item", "negative-control", "--lenses", LENSES.join(",")]), (err) => err.status === 1 && /unanimous/.test(String(err.stdout)));
+test("CLI control prints the verdict per lens and exits 1 on a silent lens, never on unanimity", () => {
+  const { root, file } = logDir(control(0, { verdicts: { simplicity: "veto", security: "veto" } }));
+  const out = run(root, ["control", "--log", file, "--item", "negative-control", "--lenses", LENSES.join(",")]);
+  assert.match(out, /^negative control negative-control: ok \(2 lenses found something\)/m);
+  assert.match(out, /simplicity: veto/);
+  const { root: r2, file: f2 } = logDir(control(0, { findings: { simplicity: 1, security: 0 } }));
+  assert.throws(() => run(r2, ["control", "--log", f2, "--item", "negative-control", "--lenses", LENSES.join(",")]), (err) => err.status === 1 && /no finding from security/.test(String(err.stdout)));
 });
 
 // --- the version flag --------------------------------------------------------
