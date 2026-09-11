@@ -15,6 +15,7 @@ team/
 ├── parties/<name>.json   bindings: which persona holds which role, on which harness, in which skin, on which lines
 ├── lines/<name>.json     stations bound to seats, handoffs, and per-item constraints (order, distinct-instance)
 ├── events.json           schema for the runtime event log (.summon/team-log.jsonl)
+├── version.json          which summon-team version this project's team came from, when, and from where; the scaffolder writes it
 ├── checks.json           this project's commands for each role's declared checks, and the log path
 ├── fixtures/             the negative-control diff the review formation must not wave through
 └── workflows/            the stations that run as Workflow scripts: review-wave (one station) and line (a whole dispatch plan); review-wave.mjs and dispatch.mjs prepare their args and write their events

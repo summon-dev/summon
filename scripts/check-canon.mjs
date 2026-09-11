@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md], state: active, last: "claude@2026-09-09", key: ["10 checks: agent files, persona roster, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering, review-sentinel integrity, team tree (parties compose, adapters fitted, no skin text in prompts, team deps resolve, log validates)", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8/#9 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes", "check #9 catches the Placeholder-Sentinel anti-pattern; its marker regex is anchored to a Status: line because matching prose false-positived on two real reviews", "exports findSentinelProblems + runAllChecks behind an entry-point guard, so the module is importable by its tests"] }
+// agent-notes: { ctx: "CI drift-guard for cross-file canon consistency", deps: [docs/methodology/personas.md, docs/process/done-gate.md, team/version.json, packages/summon-team/package.json, docs/methodology/team-layers.md], state: active, last: "sato@2026-09-11", key: ["11 checks: agent files, persona roster, command agent-notes, Done-Gate count, board status-flow, command count, canon->meta boundary, ADR numbering, review-sentinel integrity, team tree (parties compose, adapters fitted, no skin text in prompts, team deps resolve, log validates), version manifest (team/version.json well-formed; equals packages/summon-team/package.json when packages/ exists)", "Done-Gate-count scan covers README + site/, excludes ADRs/CHANGELOG history", "status-flow validates the stage SEQUENCE (separator-agnostic), identified structurally not by stage names", "canon->meta boundary (ADR-0007 §9) fails on any canon agent-notes dep into docs/history/, docs/adrs/meta/, .claude/handoff.md, or README.md", "ships into scaffolds: checks #7/#8/#9 self-skip when docs/adrs/meta absent (IS_SUMMON_REPO) so a canon-only tree passes", "check #9 catches the Placeholder-Sentinel anti-pattern; its marker regex is anchored to a Status: line because matching prose false-positived on two real reviews", "exports findSentinelProblems, findTeamProblems, findVersionProblems + runAllChecks behind an entry-point guard, so the module is importable by its tests"] }
 //
 // Fitness function for Summon's canon. Our agent/persona/process docs duplicate
 // facts across many files; the agent-notes protocol keeps them in sync by hand.
@@ -415,8 +415,49 @@ function checkTeamTree() {
   for (const p of findTeamProblems(ROOT)) fail(p);
 }
 
+// 11. The version manifest (team-layers.md § The version). Every project carries
+//     team/version.json with a non-empty string `summon-team`; in this repo that
+//     value must equal packages/summon-team/package.json's version, since the
+//     scaffolder stamps its own build-baked version and a template copy that
+//     disagrees with it would misreport where a scaffolded team came from. A
+//     scaffolded project has no packages/, so there the comparison self-skips and
+//     the rule passes on a well-formed manifest at any version. One problem per
+//     root: the first thing wrong is the thing to fix. Exported so it is unit-testable.
+export function findVersionProblems(root) {
+  const manifestRel = "team/version.json";
+  const pkgRel = "packages/summon-team/package.json";
+  const manifestPath = join(root, "team", "version.json");
+  if (!existsSync(manifestPath)) return [`version: ${manifestRel} is missing; every project carries it (team-layers.md § The version)`];
+  let manifest;
+  try {
+    manifest = JSON.parse(read(manifestPath));
+  } catch (err) {
+    return [`version: ${manifestRel} is not valid JSON: ${err.message}`];
+  }
+  const version = manifest !== null && typeof manifest === "object" ? manifest["summon-team"] : undefined;
+  if (typeof version !== "string" || version === "") {
+    return [`version: ${manifestRel} must carry "summon-team" as a non-empty string, got ${JSON.stringify(version)}`];
+  }
+  const pkgPath = join(root, "packages", "summon-team", "package.json");
+  if (!existsSync(pkgPath)) return []; // a scaffolded project: nothing to compare against
+  let pkgVersion;
+  try {
+    pkgVersion = JSON.parse(read(pkgPath)).version;
+  } catch (err) {
+    return [`version: ${pkgRel} is not valid JSON: ${err.message}`];
+  }
+  if (version !== pkgVersion) {
+    return [`version: ${manifestRel} says "summon-team": "${version}" but ${pkgRel} says "version": "${pkgVersion}"; the two must match`];
+  }
+  return [];
+}
+
+function checkVersionManifest() {
+  for (const p of findVersionProblems(ROOT)) fail(p);
+}
+
 export function runAllChecks() {
-  for (const check of [checkAgentFiles, checkPersonaRoster, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels, checkTeamTree]) {
+  for (const check of [checkAgentFiles, checkPersonaRoster, checkCommandNotes, checkDoneGateCount, checkStatusFlow, checkCommandCount, checkCanonMetaBoundary, checkAdrNumbering, checkReviewSentinels, checkTeamTree, checkVersionManifest]) {
     try {
       check();
     } catch (err) {

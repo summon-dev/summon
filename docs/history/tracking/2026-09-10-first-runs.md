@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "the first real runs of the two step-6 workflows, with the human's opt-in", deps: [team/workflows/review-wave.workflow.mjs, team/workflows/line.workflow.mjs, scripts/review-wave.mjs, scripts/dispatch.mjs, scripts/team-log.mjs, team/fixtures/negative-control/README.md, docs/adrs/meta/0015-decomposed-team.md], state: active, last: "claude@2026-09-10", key: ["run 1: five lenses, 34 findings survived 40 refutations, every lens vetoed; the control's split half failed on a unanimous veto", "the control conflates verdict unanimity with absent dissent; the human decides whether that is the instrument or the persona layer", "run 2 ran with isolation none because a harness worktree carries its own copy of the tracked log"] }
+agent-notes: { ctx: "the first real runs of the two step-6 workflows, with the human's opt-in", deps: [team/workflows/review-wave.workflow.mjs, team/workflows/line.workflow.mjs, scripts/review-wave.mjs, scripts/dispatch.mjs, scripts/team-log.mjs, team/fixtures/negative-control/README.md, docs/adrs/meta/0015-decomposed-team.md], state: active, last: "claude@2026-09-11", key: ["run 1: five lenses, 34 findings survived 40 refutations, every lens vetoed; the control's split half failed on a unanimous veto", "the control conflates verdict unanimity with absent dissent; the human decides whether that is the instrument or the persona layer", "run 2 ran with isolation none because a harness worktree carries its own copy of the tracked log"] }
 ---
 
 # First runs of the step-6 workflows (2026-09-10)
@@ -72,6 +72,20 @@ The human chose option 2: the flag reports the version of the `summon-team` pack
 
 **What the line check says.** 3 items, 0 violations; every claim on `first-run` across both passes was written by `dispatch.mjs claim`. `pnpm team:dissent` now reads 2 real items, 1 non-unanimous, rate 0.50, short of its window; `pnpm team:control` passes on presence.
 
+## Run 2, third pass: the scaffolded copy gets its own version (2026-09-11)
+
+The human's decision after the second review: the scaffolded copy carries its own version, so an upgrade pass by a person or a model can read which version of the team a project is on. The coordinator wrote the spec as `team/version.json` (`summon-team`, `scaffolded`, `source`), written by the scaffolder from its build-baked version, kept equal to the package version in this repo by a new canon rule, and read by the flag. Red (`tara#1`): 83 tests across three files, 22 red, with decoy fixtures pinning the fallback and cwd cases and the scaffolded project exercising the shipped script. Green (`sato#1`): 228 script tests, 166 package tests, canon OK. Review: 31 agents, 26 findings, 16 survived, 10 refuted; **every lens returned revise.** The diff was 665 lines, too large to carry through the workflow's arguments, so the lens agents read it from disk from a pointer in the `diff` field; the script should take a path from the start (finding 9 below).
+
+| Lens | Verdict | Kept |
+|---|---|---|
+| simplicity | revise | 1 important (the canon rule reimplements the validator the log tool exports), 3 suggestions |
+| test-quality | revise | 1 critical (the download branch writes `github:github:…`, the template constant already carries the scheme, and no test covers that branch), 1 important (a five-minute window lets a build-baked timestamp pass), 1 suggestion |
+| security | revise | 2 important (the `--local` path commits the developer's absolute directory into the project's first commit; the doubled scheme), 1 suggestion |
+| conformance | revise | 1 critical (ADR-0006 already fixes the installed version as `summonVersion` in `.summon/manifest.json` and says a Case A scaffold writes no manifest; this change adds a second manifest under another name and cites no record), 1 important (on the GitHub path the manifest stamps the CLI's version while the layers come from the default branch at download time), 1 suggestion |
+| operational | revise | 1 important (the GitHub branch is untested), 2 suggestions |
+
+**The coordinator's fault.** The conformance critical is a process miss by the coordinator, who wrote the spec without reading the decision records for the area, which is the conformance lens's first question. The line caught it. The fourth pass waits on the human because it amends an accepted record.
+
 ## Findings against step 6, in one place
 
 1. **The control's split half is the wrong instrument for a planted fixture** (run 1). Decided and applied the same day: presence on the fixture, spread on ten real items.
@@ -79,7 +93,9 @@ The human chose option 2: the flag reports the version of the `summon-team` pack
 3. **The line's review station needs a registered agent type** (run 2). Owed: the line workflow's review station should take the review-wave path (prepared lens prompts carried in the line's args, conditional lenses matched by the same globs in the script) so the line runs whole before cutover; after cutover the agent-type path also works.
 4. **`ingest` writes its own `claim`** even when the dispatcher already claimed the station, so the review station carries two claim events from the same instance. Harmless to the line check; untidy on the log. Owed: `ingest --claimed` or a check for an existing claim.
 5. **The pipeline's first-stage argument** cost one halt and a resume. Fixed in the script; a test that runs the stage functions against a stub `pipeline` would have caught it.
-6. **The repo's `package.json` has no `version`.** Decided (option 2: the summon-team package's version) and the item run back through the line; see the second pass above. What remains is the scaffolded-copy case the operational lens raised.
+6. **The repo's `package.json` has no `version`.** Decided twice: option 2 (the summon-team package's version), then a manifest in the scaffolded copy; the third pass found the manifest collides with ADR-0006 and waits on the human.
+7. **Review-wave arguments carry the diff verbatim.** At 665 lines it no longer fit; the third-pass lenses read it from disk via a pointer. The workflow should take a diff path and the lens agents should read it, with `changed` still computed by the script.
+8. **The coordinator wrote a spec without reading the area's decision records.** The conformance lens exists for exactly this and caught it on the third pass; a spec-writing step should cite the records it sits under, and `check-canon` could refuse a canon paragraph that names a new persistent file without citing an ADR.
 
 ## Verification
 
