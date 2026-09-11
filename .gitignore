@@ -30,3 +30,4 @@ pnpm-debug.log*
 # Under .summon/ only the event log is tracked; plans, orders, prepared waves, results, and worktrees are per-run scratch
 .summon/*
 !.summon/team-log.jsonl
+!.summon/manifest.json
