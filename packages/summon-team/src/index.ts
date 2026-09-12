@@ -1,11 +1,10 @@
-// agent-notes: { ctx: "summon-team CLI: scaffold a project, doctor, version", deps: ["./addons/impeccable", "./doctor", "../../../team/version.json", "../../../docs/methodology/team-layers.md"], state: active, last: "sato@2026-09-11", key: ["team/version.json is stamped after the copy and before git init: the build-baked VERSION, the scaffold time, and the source (local:<path> or github:<template>), overwriting whatever the template carried (team-layers.md § The version)", "meta paths are stripped after copy/download, not via the basename filter (ADR-0007)"] }
+// agent-notes: { ctx: "summon-team CLI: scaffold a project, doctor, version", deps: ["./addons/impeccable", "./doctor", "./manifest", "../../../docs/methodology/team-layers.md"], state: active, last: "sato@2026-09-11", key: [".summon/manifest.json is stamped after the meta strip and before git init, Case A included: the build-baked VERSION, the scaffold time, and the source (the TEMPLATE constant verbatim, or the bare string local), overwriting whatever the template carried (ADR-0006 #6, ADR-0015)", "meta paths are stripped after copy/download, not via the basename filter (ADR-0007)"] }
 import * as p from "@clack/prompts";
 import { downloadTemplate } from "giget";
 import { execFileSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
-  mkdirSync,
   readFileSync,
   readdirSync,
   rmSync,
@@ -14,6 +13,7 @@ import {
 } from "node:fs";
 import { basename, resolve } from "node:path";
 import { offerImpeccable } from "./addons/impeccable";
+import { buildManifest, writeManifest } from "./manifest";
 import {
   exitCodeFor,
   formatResults,
@@ -195,7 +195,9 @@ async function main() {
 
   const s = p.spinner();
 
-  // Where the template came from, for the version manifest written below.
+  // Where the template came from, for the install manifest written below. The
+  // bare string on --local: a path is one machine's fact and would be committed
+  // into a stranger's first commit.
   let source: string;
 
   if (localPath) {
@@ -206,7 +208,7 @@ async function main() {
       p.log.error(`Local template path is not a directory: ${resolvedLocal}`);
       process.exit(1);
     }
-    source = `local:${resolvedLocal}`;
+    source = "local";
     cpSync(resolvedLocal, targetDir, {
       recursive: true,
       filter: (src) => {
@@ -217,7 +219,7 @@ async function main() {
     s.stop("Template copied.");
   } else {
     s.start("Downloading Summon template...");
-    source = `github:${TEMPLATE}`;
+    source = TEMPLATE;
     try {
       await downloadTemplate(TEMPLATE, {
         dir: targetDir,
@@ -251,24 +253,16 @@ async function main() {
     if (existsSync(fullPath)) rmSync(fullPath, { recursive: true, force: true });
   }
 
-  // Stamp team/version.json (team-layers.md § The version): the version this
-  // team came from, when, and from where. Written from the CLI's own build-baked
-  // version, overwriting the template's copy, so the file is a fact about the
-  // project and not about the source. Created even when the template has no
-  // team/ — an upgrade pass reads it to learn which layers a project is on.
-  const teamDir = resolve(targetDir, "team");
-  mkdirSync(teamDir, { recursive: true });
-  writeFileSync(
-    resolve(teamDir, "version.json"),
-    JSON.stringify(
-      {
-        "summon-team": VERSION,
-        scaffolded: new Date().toISOString(),
-        source,
-      },
-      null,
-      2
-    ) + "\n"
+  // Stamp .summon/manifest.json (ADR-0006 #6; team-layers.md § The version):
+  // the version this team came from, when, and from where. Written from the
+  // CLI's own build-baked version after the meta strip (which removed any
+  // .summon/ the template carried) and before git init, so it lands in the
+  // first commit. Case A included: ADR-0015 supersedes ADR-0006's clause that a
+  // Claude-only install writes none — an upgrade pass reads it to learn which
+  // layers a project is on.
+  writeManifest(
+    targetDir,
+    buildManifest({ version: VERSION, source, now: new Date() })
   );
 
   // Reset CLAUDE.md to template state so /quickstart detects a fresh project

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-notes: { ctx: "tests for team-log: event validation, line constraints over a log, disagreement rate, the table renderer, the version flag", deps: [scripts/team-log.mjs, team/events.json, team/lines/tdd.json, team/version.json, docs/methodology/team-layers.md], state: draft, last: "tara@2026-09-11", key: ["no wall-clock reads: every event carries an explicit t", "disagreement rate direction derived from the spec: non-unanimous items over items with 2+ lens verdicts; the control measures presence only, spread needs a full window of real items", "the separation constraint is checked over the log, not asserted by the seat", "--version is the summon-team field of <root>/team/version.json and nothing else: every fixture root also carries a root package.json and packages/summon-team/package.json with a version no test expects, so a fallback to either fails; the default root is exercised from one module-level decoy cwd against the checked-in value read inside the test; error messages name team/version.json and, for a bad field, its quoted key"] }
+// agent-notes: { ctx: "tests for team-log: event validation, line constraints over a log, disagreement rate, the table renderer, the version flag", deps: [scripts/team-log.mjs, team/events.json, team/lines/tdd.json, docs/methodology/team-layers.md], state: draft, last: "tara@2026-09-11", key: ["no wall-clock reads: every event carries an explicit t", "disagreement rate direction derived from the spec: non-unanimous items over items with 2+ lens verdicts; the control measures presence only, spread needs a full window of real items", "the separation constraint is checked over the log, not asserted by the seat", "--version is summonVersion of <root>/.summon/manifest.json and nothing else: every fixture root also carries team/version.json, a root package.json, and packages/summon-team/package.json with a version no test expects, so a fallback to any fails; the source repo has no manifest, so the no-root run from a foreign cwd asserts the refusal; error messages name .summon/manifest.json and, for a bad field, its quoted key"] }
 //
 //   node --test scripts/team-log.test.mjs
 //
@@ -8,7 +8,7 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -296,105 +296,124 @@ test("CLI control prints the verdict per lens and exits 1 on a silent lens, neve
 });
 
 // --- the version flag --------------------------------------------------------
-// Spec (work order first-run, third pass; team-layers.md § The version): every project carries
-// team/version.json, { "summon-team": "<version>", "scaffolded": <ISO or null>, "source": <string or null> }.
-// `node scripts/team-log.mjs --version` prints the summon-team field, bare, and exits 0: the
-// scriptable form (`summon-team --version` is the human one). --root DIR reads DIR/team/version.json;
-// no --root means the repo this script lives in. Nothing else is read: not the root package.json,
-// not packages/summon-team/package.json (a scaffolded project has neither). Errors exit 1 naming
-// team/version.json; when the file is there but the field is wrong, the field is named too.
+// Spec (work order first-run, fourth pass; team-layers.md § The version; ADR-0006 § Additional
+// Decisions #6): every scaffolded project carries the one install manifest, .summon/manifest.json,
+// { manifestVersion, summonVersion, targets, scaffolded, source }. `node scripts/team-log.mjs
+// --version` prints summonVersion, bare, and exits 0: the scriptable form (`summon-team --version`
+// is the human one). --root DIR reads DIR/.summon/manifest.json; no --root means the repo this
+// script lives in, and this source repo records no installed version, so that run is a refusal.
+// Nothing else is read: not team/version.json (the third pass's file, gone), not the root
+// package.json, not packages/summon-team/package.json (a scaffolded project has none of them).
+// Errors exit 1 naming .summon/manifest.json; when the file is there but the field is wrong, the
+// field is named too; when the file is absent, the message says no installed version is recorded.
 //
 // Every run below sets cwd to a directory other than the root under test, so an implementation
 // that resolves from process.cwd() fails at least one of them.
 
-const VERSION_FILE = join("team", "version.json");
-const TEAM_PKG = join("packages", "summon-team", "package.json");
+const MANIFEST = join(".summon", "manifest.json");
+
+/** A well-formed manifest around one summonVersion; `rest` overrides or adds fields. */
+const manifestOf = (summonVersion, rest = {}) => ({ manifestVersion: 1, summonVersion, targets: ["claude"], scaffolded: "2026-09-11T00:00:00.000Z", source: "local", ...rest });
 
 /**
- * A fresh root. `manifest` goes to team/version.json: an object as JSON, a string verbatim,
- * undefined for no file. Both package.json files the earlier implementations read are always
- * present, carrying a version no test expects, so a fallback to either fails the test that took it.
+ * A fresh root. `manifest` goes to .summon/manifest.json: an object as JSON, a string verbatim,
+ * undefined for no file (the .summon/ directory is still there, as in any project with a log).
+ * Three decoys are always present, each carrying a version no test expects: team/version.json
+ * (the third pass's file), a root package.json, and packages/summon-team/package.json (the first
+ * two passes' files). A fallback to any of them prints a version and exits 0, which fails the
+ * test that took it.
  */
-function pkgRoot(manifest, fallback = "7.7.7-fallback") {
+function pkgRoot(manifest, decoy = "7.7.7-decoy") {
   const root = mkdtempSync(join(tmpdir(), "summon-pkg-"));
   roots.push(root);
+  mkdirSync(join(root, ".summon"), { recursive: true });
   mkdirSync(join(root, "team"), { recursive: true });
   mkdirSync(join(root, "packages", "summon-team"), { recursive: true });
-  if (manifest !== undefined) writeFileSync(join(root, VERSION_FILE), typeof manifest === "string" ? manifest : JSON.stringify(manifest));
-  writeFileSync(join(root, "package.json"), JSON.stringify({ name: "fixture-root", version: fallback }));
-  writeFileSync(join(root, TEAM_PKG), JSON.stringify({ name: "summon-team", version: fallback }));
+  if (manifest !== undefined) writeFileSync(join(root, MANIFEST), typeof manifest === "string" ? manifest : JSON.stringify(manifest));
+  writeFileSync(join(root, "team", "version.json"), JSON.stringify({ "summon-team": decoy, scaffolded: null, source: null }));
+  writeFileSync(join(root, "package.json"), JSON.stringify({ name: "fixture-root", version: decoy }));
+  writeFileSync(join(root, "packages", "summon-team", "package.json"), JSON.stringify({ name: "summon-team", version: decoy }));
   return root;
 }
 
 // One decoy for the whole section (second review): its only job is to be a cwd that is not the
 // root under test, carrying a version no test expects at every path an implementation might
-// resolve from cwd. No run writes into it, so one is enough; a fresh one per call was churn.
-const DECOY = pkgRoot({ "summon-team": "9.9.9-decoy", scaffolded: null, source: null }, "9.9.9-decoy");
+// resolve from cwd, the manifest included. No run writes into it, so one is enough.
+const DECOY = pkgRoot(manifestOf("9.9.9-decoy"), "9.9.9-decoy");
 
-// The message names the file: a project has three manifests with a version in them and the user
-// needs to know which one to open. For a bad field it names the field after the path; `version`
-// alone is already satisfied by the file name, so the field is matched by its quoted key.
-const NAMES_FILE = /team[\/\\]version\.json/;
-const NAMES_FILE_THEN_FIELD = /team[\/\\]version\.json[\s\S]*"summon-team"/;
+// The message names the file: a project has several files with a version in them and the user
+// needs to know which one to open. For a bad field it names the field after the path, by its
+// quoted key. For an absent file it says no installed version is recorded, in either order.
+const NAMES_FILE = /\.summon[\/\\]manifest\.json/;
+const NAMES_FILE_THEN_FIELD = /\.summon[\/\\]manifest\.json[\s\S]*"summonVersion"/;
+const NO_INSTALLED_VERSION = /no installed version[\s\S]*\.summon[\/\\]manifest\.json|\.summon[\/\\]manifest\.json[\s\S]*no installed version/i;
 const fails = (args, re) =>
   assert.throws(() => run(DECOY, args), (err) => err.status === 1 && re.test(String(err.stderr) + String(err.stdout)), `${args.join(" ")} should exit 1 matching ${re}`);
 
-test("CLI --version with no --root prints the summon-team field of this repo's team/version.json, from a foreign cwd", () => {
-  // Read inside the test, not at module load, so a broken checked-in manifest fails this one named
-  // test. Rule #11 keeps this value equal to the package version, so this test alone cannot tell
-  // the two files apart; the --root runs below do.
-  const checkedIn = JSON.parse(readFileSync(join(REPO, VERSION_FILE), "utf8"));
-  assert.equal(typeof checkedIn["summon-team"], "string", "the checked-in team/version.json carries a summon-team string");
-  assert.notEqual(checkedIn["summon-team"], "");
-  assert.equal(run(DECOY, ["--version"]), `${checkedIn["summon-team"]}\n`);
+test("CLI --version with no --root, from a foreign cwd, refuses: this source repo records no installed version", () => {
+  // The default root is the repo this script lives in. The Summon source repo is not a scaffolded
+  // project and carries no manifest (team-layers.md § The version), so the honest answer is the
+  // refusal, not a version. The cwd's own manifest says 9.9.9-decoy: an implementation that
+  // resolves from cwd prints that and exits 0, which fails here.
+  assert.equal(existsSync(join(REPO, MANIFEST)), false, "precondition: the source repo has no .summon/manifest.json");
+  fails(["--version"], NO_INSTALLED_VERSION);
 });
 
-test("CLI --version --root DIR prints DIR/team/version.json's summon-team field as the only line of stdout and exits 0, not the cwd's", () => {
-  const root = pkgRoot({ "summon-team": "1.2.3", scaffolded: "2026-09-11T00:00:00Z", source: "local:/somewhere" });
+test("CLI --version --root DIR prints DIR/.summon/manifest.json's summonVersion as the only line of stdout and exits 0, not the cwd's", () => {
+  const root = pkgRoot(manifestOf("1.2.3"));
   assert.equal(run(DECOY, ["--version", "--root", root]), "1.2.3\n");
 });
 
-test("CLI --version reads team/version.json and neither package.json, when all three carry different versions", () => {
-  const root = pkgRoot({ "summon-team": "1.2.3" });
+test("CLI --version reads .summon/manifest.json and none of the three decoys, when all four carry different versions", () => {
+  const root = pkgRoot(manifestOf("1.2.3"));
+  writeFileSync(join(root, "team", "version.json"), JSON.stringify({ "summon-team": "4.4.4", scaffolded: null, source: null }));
   writeFileSync(join(root, "package.json"), JSON.stringify({ name: "workspace-root", version: "5.5.5" }));
-  writeFileSync(join(root, TEAM_PKG), JSON.stringify({ name: "summon-team", version: "6.6.6" }));
+  writeFileSync(join(root, "packages", "summon-team", "package.json"), JSON.stringify({ name: "summon-team", version: "6.6.6" }));
   assert.equal(run(DECOY, ["--version", "--root", root]), "1.2.3\n");
 });
 
-test("CLI --version does not require --log, an event schema, a packages/ tree, or a root package.json", () => {
-  // The scaffolded-project shape: team/version.json and nothing else a version could come from.
-  const root = pkgRoot({ "summon-team": "0.0.1", scaffolded: "2026-09-11T00:00:00Z", source: "github:summon-dev/summon" });
+test("CLI --version does not require --log, an event schema, a packages/ tree, a root package.json, or team/version.json", () => {
+  // The scaffolded-project shape: .summon/manifest.json and nothing else a version could come from.
+  const root = pkgRoot(manifestOf("0.0.1", { source: "github:summon-dev/summon" }));
   rmSync(join(root, "packages"), { recursive: true, force: true });
   rmSync(join(root, "package.json"), { force: true });
+  rmSync(join(root, "team", "version.json"), { force: true });
   assert.equal(run(DECOY, ["--version", "--root", root]).trim(), "0.0.1");
 });
 
-test("CLI --version exits 1 naming team/version.json and the field when summon-team is absent", () => {
-  fails(["--version", "--root", pkgRoot({ scaffolded: null, source: null })], NAMES_FILE_THEN_FIELD);
+test("CLI --version exits 1 naming .summon/manifest.json and the field when summonVersion is absent", () => {
+  fails(["--version", "--root", pkgRoot({ manifestVersion: 1, targets: ["claude"], scaffolded: "2026-09-11T00:00:00.000Z", source: "local" })], NAMES_FILE_THEN_FIELD);
 });
 
-test("CLI --version exits 1 naming team/version.json and the field when summon-team is empty", () => {
-  fails(["--version", "--root", pkgRoot({ "summon-team": "" })], NAMES_FILE_THEN_FIELD);
+test("CLI --version exits 1 naming .summon/manifest.json and the field when summonVersion is empty", () => {
+  fails(["--version", "--root", pkgRoot(manifestOf(""))], NAMES_FILE_THEN_FIELD);
 });
 
-test("CLI --version exits 1 naming team/version.json and the field when summon-team is not a string", () => {
-  fails(["--version", "--root", pkgRoot({ "summon-team": 3 })], NAMES_FILE_THEN_FIELD);
-  fails(["--version", "--root", pkgRoot({ "summon-team": null })], NAMES_FILE_THEN_FIELD);
-  fails(["--version", "--root", pkgRoot({ "summon-team": ["1.2.3"] })], NAMES_FILE_THEN_FIELD);
+test("CLI --version exits 1 naming .summon/manifest.json and the field when summonVersion is not a string", () => {
+  fails(["--version", "--root", pkgRoot(manifestOf(3))], NAMES_FILE_THEN_FIELD);
+  fails(["--version", "--root", pkgRoot(manifestOf(null))], NAMES_FILE_THEN_FIELD);
+  fails(["--version", "--root", pkgRoot(manifestOf(["1.2.3"]))], NAMES_FILE_THEN_FIELD);
 });
 
-test("CLI --version exits 1 naming team/version.json and the field when the manifest is valid JSON but not an object", () => {
+test("CLI --version exits 1 naming .summon/manifest.json and the field when the manifest is valid JSON but not an object", () => {
+  // A non-object has no summonVersion to read: the field is what is missing, so it is named.
   fails(["--version", "--root", pkgRoot('"1.2.3"')], NAMES_FILE_THEN_FIELD);
   fails(["--version", "--root", pkgRoot("null")], NAMES_FILE_THEN_FIELD);
+  fails(["--version", "--root", pkgRoot("[]")], NAMES_FILE_THEN_FIELD);
 });
 
-test("CLI --version exits 1 naming team/version.json when the file is missing, with both package.json files present and versioned", () => {
-  // pkgRoot writes a root package.json and packages/summon-team/package.json with 7.7.7-fallback:
-  // an implementation that falls back to either prints a version and exits 0, which fails here.
-  fails(["--version", "--root", pkgRoot(undefined)], NAMES_FILE);
+test("CLI --version exits 1 saying no installed version is recorded, naming .summon/manifest.json, when the file is missing and every decoy is present and versioned", () => {
+  // pkgRoot writes team/version.json, a root package.json, and packages/summon-team/package.json
+  // with 7.7.7-decoy: an implementation that falls back to any of them prints a version and
+  // exits 0, which fails here. Both shapes of absence: .summon/ there without the file (a project
+  // with a log), and no .summon/ at all.
+  fails(["--version", "--root", pkgRoot(undefined)], NO_INSTALLED_VERSION);
+  const bare = pkgRoot(undefined);
+  rmSync(join(bare, ".summon"), { recursive: true, force: true });
+  fails(["--version", "--root", bare], NO_INSTALLED_VERSION);
 });
 
-test("CLI --version exits 1 naming team/version.json when the file is malformed JSON", () => {
+test("CLI --version exits 1 naming .summon/manifest.json when the file is malformed JSON", () => {
   fails(["--version", "--root", pkgRoot("{not json")], NAMES_FILE);
 });
 

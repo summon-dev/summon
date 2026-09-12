@@ -1,6 +1,6 @@
-// agent-notes: { ctx: "integration tests for summon-team CLI", deps: ["dist/index.js", "src/index.ts", "../../team/version.json", "../../scripts/team-log.mjs"], state: active, last: "tara@2026-09-11", key: ["team/version.json: the scaffolder stamps its own PKG.version, the scaffold time, and the source, overwriting the template copy; a synthetic template with a stale manifest is what proves the overwrite, since this repo's manifest already equals PKG.version", "the scaffold time is the one clock read a test tolerates, pinned to a window around the run", "shipped team-log.mjs --version is run inside the scaffolded project, cwd = project, no --root"] }
+// agent-notes: { ctx: "integration tests for summon-team CLI", deps: ["dist/index.js", "src/index.ts", "src/manifest.ts", "../../scripts/team-log.mjs", "../../.gitignore"], state: active, last: "tara@2026-09-11", key: [".summon/manifest.json is the one install manifest (ADR-0006 #6): the scaffolder stamps manifestVersion 1, its own PKG.version, targets claude, the scaffold time, and source, Case A included, overwriting anything the template carried; a synthetic template with a stale manifest proves the overwrite", "the scaffold time is the one clock read a test tolerates, pinned to the exact [before, after] window around the spawn with no slack: a build-baked stamp fails", "source is the bare string local on --local: the file carries no path", "the manifest is in the first commit: git ls-files and ls-tree HEAD inside the project list it, which also pins that .gitignore's !.summon/manifest.json shipped", "shipped team-log.mjs --version is run inside the scaffolded project through run's bin option, cwd = project, no --root"] }
 
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -22,14 +22,18 @@ const PKG = JSON.parse(
   readFileSync(resolve(__dirname, "..", "package.json"), "utf-8")
 );
 
+/**
+ * Spawn a node script and settle on its exit. `bin` defaults to the built CLI; a shipped script
+ * inside a scaffolded project (team-log.mjs, check-canon.mjs) runs through the same helper.
+ */
 function run(
   args: string[],
-  options: { cwd?: string } = {}
+  options: { cwd?: string; bin?: string } = {}
 ): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
     execFile(
       "node",
-      [CLI, ...args],
+      [options.bin ?? CLI, ...args],
       { cwd: options.cwd, env: { ...process.env, NO_COLOR: "1" } },
       (error, stdout, stderr) => {
         resolve({
@@ -278,137 +282,153 @@ describe("summon-team CLI", () => {
     // checks (#7 canon->meta boundary, #8 ADR numbering) must self-skip when there's no
     // docs/adrs/meta — otherwise the deliberate 0004-0007 numbering gap (those ADRs are
     // meta and excluded) would make a fresh user's very first check:canon run red.
-    // Rule #11 (team/version.json equals packages/summon-team/package.json) has no
-    // packages/ to compare against here and must pass on the stamped manifest alone.
+    // The installed version is .summon/manifest.json (ADR-0006 #6), not a canon rule:
+    // the third pass's team/version.json and its rule #11 are gone.
     const cwd = makeTempDir();
     const result = await run(["--local", REPO_ROOT, "canon-check"], { cwd });
     expect(result.code).toBe(0);
     const projectDir = join(cwd, "canon-check");
     expect(existsSync(join(projectDir, "scripts", "check-canon.mjs"))).toBe(true);
-    expect(existsSync(join(projectDir, "team", "version.json"))).toBe(true);
+    expect(existsSync(join(projectDir, ".summon", "manifest.json"))).toBe(true);
+    expect(existsSync(join(projectDir, "team", "version.json"))).toBe(false);
     expect(existsSync(join(projectDir, "packages"))).toBe(false);
 
-    const check = await new Promise<{ code: number; out: string }>((res) => {
-      execFile(
-        "node",
-        [join(projectDir, "scripts", "check-canon.mjs")],
-        { cwd: projectDir },
-        (err, stdout, stderr) =>
-          res({ code: err?.code ?? 0, out: stdout.toString() + stderr.toString() })
-      );
-    });
+    const check = await run([], { cwd: projectDir, bin: join(projectDir, "scripts", "check-canon.mjs") });
     expect(check.code).toBe(0);
-    expect(check.out).toContain("OK");
+    expect(check.stdout + check.stderr).toContain("OK");
   }, 30_000);
 
-  // --- team/version.json (work order first-run, third pass; team-layers.md § The version) ---
-  // The scaffolder writes the manifest after the copy: summon-team is the CLI's own build-baked
-  // version, scaffolded is the moment of the scaffold, source says where the template came from.
+  // --- .summon/manifest.json (work order first-run, fourth pass) ------------------------
+  // team-layers.md § The version; ADR-0006 § Additional Decisions #6 (the schema); ADR-0015
+  // supersedes 0006's clause that a Claude-only install writes none. Every scaffold writes the
+  // one install manifest, Case A included, after the meta strip and before git init, so it lands
+  // in the first commit. summonVersion is the CLI's build-baked version, scaffolded the moment of
+  // the scaffold, source the template constant verbatim on the download path and the bare string
+  // "local" on --local: a path is one machine's fact and would be committed into a stranger's
+  // first commit. The download branch's source is covered by buildManifest in manifest.test.ts.
 
-  function runIn(
-    cwd: string,
-    args: string[]
-  ): Promise<{ code: number; stdout: string; stderr: string }> {
-    return new Promise((res) => {
-      execFile("node", args, { cwd }, (err, stdout, stderr) =>
-        res({ code: err?.code ?? 0, stdout: stdout.toString(), stderr: stderr.toString() })
-      );
-    });
+  const MANIFEST = join(".summon", "manifest.json");
+
+  /** Scaffold `name` from the template at `src`; the window is the exact span of the spawn. */
+  async function scaffold(
+    src: string,
+    name: string
+  ): Promise<{ projectDir: string; before: number; after: number }> {
+    const cwd = makeTempDir();
+    const before = Date.now();
+    const result = await run(["--local", src, name], { cwd });
+    const after = Date.now();
+    expect(result.stderr + result.stdout).not.toContain("Could not initialize git");
+    expect(result.code).toBe(0);
+    return { projectDir: join(cwd, name), before, after };
   }
 
-  it("writes team/version.json into the scaffolded project: the CLI's version, the scaffold time, and the local source", async () => {
-    const cwd = makeTempDir();
-    // This repo's own manifest is the template copy; its scaffolded is null (never scaffolded).
-    // Read here, not at module load, so a broken checked-in manifest fails this named test.
-    const template = JSON.parse(
-      readFileSync(join(REPO_ROOT, "team", "version.json"), "utf-8")
-    );
-    expect(template.scaffolded).toBeNull();
-    expect(template.source).toBeNull();
+  /** A template with nothing but the two files the scaffolder resets: no team/, no .summon/. */
+  function bareTemplate(): string {
+    const src = makeTempDir();
+    writeFileSync(join(src, "README-template.md"), "# [Your Project Name]");
+    writeFileSync(join(src, "CLAUDE.md"), "**Project Name:** Summon");
+    return src;
+  }
 
-    const before = Date.now();
-    const result = await run(["--local", REPO_ROOT, "version-test"], { cwd });
-    expect(result.code).toBe(0);
-    const manifestPath = join(cwd, "version-test", "team", "version.json");
+  it("writes .summon/manifest.json into the scaffolded project: manifestVersion 1, the CLI's version, claude, the scaffold time, and source local", async () => {
+    const { projectDir, before, after } = await scaffold(REPO_ROOT, "manifest-test");
+    const manifestPath = join(projectDir, MANIFEST);
     expect(existsSync(manifestPath)).toBe(true);
-    const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+    // The third pass's file is not written any more; the manifest is the one record.
+    expect(existsSync(join(projectDir, "team", "version.json"))).toBe(false);
 
-    expect(manifest["summon-team"]).toBe(PKG.version);
+    const raw = readFileSync(manifestPath, "utf-8");
+    const manifest = JSON.parse(raw);
+    expect(manifest.manifestVersion).toBe(1);
+    expect(manifest.summonVersion).toBe(PKG.version);
+    expect(manifest.targets).toStrictEqual(["claude"]);
 
-    // The one legitimate clock read: the scaffolder stamps the moment. The expected value is a
-    // window around this run, not a fixed instant; the format is ISO-8601 and it must parse.
-    expect(manifest.scaffolded).not.toBeNull();
+    // The one legitimate clock read: the scaffolder stamps the moment. The expected value is the
+    // exact window around this spawn, no slack: a version stamped at build time, or copied from
+    // the template, falls outside it. The format is what Date#toISOString produces: it parses,
+    // and parsing then printing gives the string back.
     expect(typeof manifest.scaffolded).toBe("string");
-    expect(manifest.scaffolded).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/);
     const stamped = Date.parse(manifest.scaffolded);
     expect(Number.isNaN(stamped)).toBe(false);
-    const fiveMinutes = 5 * 60_000;
-    expect(stamped).toBeGreaterThanOrEqual(before - fiveMinutes);
-    expect(stamped).toBeLessThanOrEqual(Date.now() + fiveMinutes);
+    expect(new Date(stamped).toISOString()).toBe(manifest.scaffolded);
+    expect(stamped).toBeGreaterThanOrEqual(before);
+    expect(stamped).toBeLessThanOrEqual(after);
 
-    expect(manifest.source).toMatch(/^local:/);
-    expect(resolve(manifest.source.slice("local:".length))).toBe(resolve(REPO_ROOT));
+    // The bare string, and no path anywhere in the file: not the template's, not the project's.
+    expect(manifest.source).toBe("local");
+    expect(raw).not.toContain(REPO_ROOT);
+    expect(raw).not.toContain(projectDir);
   }, 30_000);
 
-  it("overwrites the template's own team/version.json rather than copying it through", async () => {
-    // This repo's manifest carries the same version the CLI is built from, so a copy-through
-    // would pass the version assertion above by accident. A synthetic template with a stale
-    // manifest is what tells "stamped" apart from "copied".
-    const cwd = makeTempDir();
-    const src = makeTempDir();
-    mkdirSync(join(src, "team"), { recursive: true });
+  it("overwrites the template's own .summon/manifest.json rather than copying it through", async () => {
+    // A copy-through of this repo's tree cannot be told from a stamp by the version alone. A
+    // synthetic template with a stale manifest, every field wrong and one extra key, is what
+    // tells "stamped" apart from "copied": the result carries exactly the stamped fields.
+    const src = bareTemplate();
+    mkdirSync(join(src, ".summon"), { recursive: true });
     writeFileSync(
-      join(src, "team", "version.json"),
+      join(src, MANIFEST),
       JSON.stringify({
-        "summon-team": "0.0.0-template",
-        scaffolded: "1999-01-01T00:00:00Z",
+        manifestVersion: 0,
+        summonVersion: "0.0.0-template",
+        targets: ["copilot"],
+        scaffolded: "1999-01-01T00:00:00.000Z",
         source: "github:stale/template",
+        addons: [{ name: "stale" }],
       })
     );
-    writeFileSync(join(src, "README-template.md"), "# [Your Project Name]");
-    writeFileSync(join(src, "CLAUDE.md"), "**Project Name:** Summon");
 
-    const result = await run(["--local", src, "overwrite"], { cwd });
-    expect(result.code).toBe(0);
-    const manifest = JSON.parse(
-      readFileSync(join(cwd, "overwrite", "team", "version.json"), "utf-8")
-    );
-    expect(manifest["summon-team"]).toBe(PKG.version);
-    expect(manifest.scaffolded).not.toBe("1999-01-01T00:00:00Z");
-    expect(manifest.source).toMatch(/^local:/);
-    expect(manifest.source).not.toBe("github:stale/template");
+    const { projectDir } = await scaffold(src, "overwrite");
+    const manifest = JSON.parse(readFileSync(join(projectDir, MANIFEST), "utf-8"));
+    expect(manifest.scaffolded).not.toBe("1999-01-01T00:00:00.000Z");
+    expect(manifest).toStrictEqual({
+      manifestVersion: 1,
+      summonVersion: PKG.version,
+      targets: ["claude"],
+      scaffolded: manifest.scaffolded,
+      source: "local",
+    });
   }, 30_000);
 
-  it("writes team/version.json even when the template has no team/ directory", async () => {
-    // Every project carries the manifest: an upgrade pass reads it to learn which version of
-    // the layers a project is on, and a template that predates team/ is exactly the project
-    // that needs saying so.
-    const cwd = makeTempDir();
-    const src = makeTempDir();
-    writeFileSync(join(src, "README-template.md"), "# [Your Project Name]");
-    writeFileSync(join(src, "CLAUDE.md"), "**Project Name:** Summon");
-
-    const result = await run(["--local", src, "no-team-dir"], { cwd });
-    expect(result.code).toBe(0);
-    const manifestPath = join(cwd, "no-team-dir", "team", "version.json");
+  it("writes .summon/manifest.json when the template has no .summon/ at all: Case A, the default install, records its version too", async () => {
+    // ADR-0006 said a Claude-only install writes no manifest; ADR-0015 supersedes that clause.
+    // An upgrade pass reads the manifest to learn which layers a project is on, and a template
+    // with no .summon/ is exactly the project that needs saying so.
+    const { projectDir } = await scaffold(bareTemplate(), "case-a");
+    const manifestPath = join(projectDir, MANIFEST);
     expect(existsSync(manifestPath)).toBe(true);
     const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-    expect(manifest["summon-team"]).toBe(PKG.version);
-    expect(typeof manifest.scaffolded).toBe("string");
-    expect(manifest.source).toMatch(/^local:/);
+    expect(manifest).toStrictEqual({
+      manifestVersion: 1,
+      summonVersion: PKG.version,
+      targets: ["claude"],
+      scaffolded: manifest.scaffolded,
+      source: "local",
+    });
+    expect(existsSync(join(projectDir, "team", "version.json"))).toBe(false);
+  }, 30_000);
+
+  it("commits .summon/manifest.json in the scaffold's first commit", async () => {
+    // Written before git init, and not ignored: the shipped .gitignore keeps .summon/* out of
+    // the tree except the log and the manifest. ls-files pins the index, ls-tree HEAD pins the
+    // commit, and the count pins that HEAD is the first one.
+    const { projectDir } = await scaffold(REPO_ROOT, "first-commit");
+    const git = (...args: string[]) =>
+      execFileSync("git", args, { cwd: projectDir, encoding: "utf-8" }).trim().split("\n");
+    expect(git("ls-files")).toContain(".summon/manifest.json");
+    expect(git("rev-list", "--count", "HEAD")).toStrictEqual(["1"]);
+    expect(git("ls-tree", "-r", "--name-only", "HEAD")).toContain(".summon/manifest.json");
   }, 30_000);
 
   it("shipped team-log.mjs --version, run inside the scaffolded project with no --root, prints the CLI's version bare", async () => {
     // The scriptable form. Same entry point a user's project runs: the shipped script, from
     // the project's own root, with packages/ gone (the scaffold excludes it).
-    const cwd = makeTempDir();
-    const result = await run(["--local", REPO_ROOT, "log-version"], { cwd });
-    expect(result.code).toBe(0);
-    const projectDir = join(cwd, "log-version");
+    const { projectDir } = await scaffold(REPO_ROOT, "log-version");
     expect(existsSync(join(projectDir, "scripts", "team-log.mjs"))).toBe(true);
     expect(existsSync(join(projectDir, "packages"))).toBe(false);
 
-    const v = await runIn(projectDir, [join(projectDir, "scripts", "team-log.mjs"), "--version"]);
+    const v = await run(["--version"], { cwd: projectDir, bin: join(projectDir, "scripts", "team-log.mjs") });
     expect(v.stderr).toBe("");
     expect(v.code).toBe(0);
     expect(v.stdout).toBe(`${PKG.version}\n`);

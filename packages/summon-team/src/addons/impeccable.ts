@@ -1,4 +1,4 @@
-// agent-notes: { ctx: "opt-in impeccable add-on: consent, install, digest (ADR-0014)", deps: ["node:crypto", "node:child_process"], state: active, last: "claude@2026-08-06" }
+// agent-notes: { ctx: "opt-in impeccable add-on: consent, install, digest (ADR-0014)", deps: ["node:crypto", "node:child_process", "../manifest"], state: active, last: "sato@2026-09-11", key: ["readManifest moved to ../manifest and is re-exported here: doctor.ts and impeccable.test.ts import it from this module"] }
 
 /**
  * The one opt-in add-on Summon offers, per ADR-0014 (Accepted 2026-08-05).
@@ -36,6 +36,7 @@ import {
 } from "node:fs";
 import { createInterface } from "node:readline/promises";
 import { join, relative, resolve, sep } from "node:path";
+import { readManifest } from "../manifest";
 
 /**
  * The pinned downloader — and ADR-0010's cooldown reaches only THIS artifact,
@@ -355,37 +356,11 @@ function manifestPath(root: string): string {
 }
 
 /**
- * Reads `.summon/manifest.json`, or null when there isn't one.
- *
- * §5: the schema must NOT be strict on unknown top-level keys. An older
- * `summon-team` reading a newer manifest must ignore fields it does not know,
- * not hard-fail — forward compatibility across CLI versions is the entire point
- * of a persistent on-disk artifact, and strictness would turn every future
- * additive field into a breaking change.
- *
- * That is why this returns parsed JSON rather than validating against a schema.
- * When #8 builds the real ADR-0006 manifest module, this constraint carries over
- * to it: whatever validator it uses must be non-strict at the top level.
+ * The lax read lives in ../manifest (ADR-0006 #6's module) and is re-exported
+ * here so this add-on's callers keep one import. §5's constraint carries over
+ * there: unknown top-level keys survive, and a malformed file reads as absent.
  */
-export function readManifest(root: string): Record<string, unknown> | null {
-  const path = manifestPath(root);
-  if (!existsSync(path)) return null;
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(readFileSync(path, "utf-8"));
-  } catch {
-    // Unreadable or malformed reads as absent rather than throwing. The add-on
-    // must not be fatal to a completed scaffold (§6), and this file is one the
-    // untrusted installer had write access to before Summon got here.
-    return null;
-  }
-  // A non-object (`null`, an array, a bare number) is not a manifest. Returning
-  // it would let a payload-supplied array reach the spread in `writeAddonEntry`.
-  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return null;
-  }
-  return parsed as Record<string, unknown>;
-}
+export { readManifest };
 
 /**
  * Appends an add-on entry, creating the manifest if absent.
