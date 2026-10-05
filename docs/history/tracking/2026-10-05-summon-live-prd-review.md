@@ -280,20 +280,28 @@ Sentinel as returned: 10 findings (2 blocking, 7 amend, 1 note).
 
 **Date:** 2026-10-05
 **Subject:** commit `9888dd0`, which added *The three symptoms are one chain*, W-10, D-5, H-7, and H-8 after the human said why the team was stopped
-**Reviewers:** Archie (architecture and feasibility), spawned as a standalone agent with instructions not to write files. The first attempt was lost to a container restart and re-spawned with the same brief.
-**Method:** As in round 1. The brief named the changed lines, the v3 code, and the saved Claude Code documentation, and asked five questions.
+**Reviewers:** Archie (architecture and feasibility) and Wei (challenger), each spawned as a standalone agent with instructions not to write files. The first attempt at both was lost to a container restart, and both were re-spawned with the same briefs.
+**Method:** As in round 1. Each brief named the changed lines and the sources to check; Archie's asked five questions and Wei's six. Wei's review notes that pointed questions prime content the way round 1's briefs primed format (his finding 12), so round 2's findings are answers to the coordinator's questions, not a sample of contest.
+
+Round 2 changed the answer more than the machinery. Wei showed that the chain was fitted to the fortnight around July 24 while the post dates the decline's onset to May 15, so the section is now *The three symptoms, two paths*, skip and decay, with a forensic pass (D-6) to find out which led before anything is built. Wei also showed that the voice probe cannot see a coordinator writing under a seat's name, that G0 let the notice come down with the post's recorded failure still live in conversation, and that the arguable fixture fails the Lucas critique it was meant to honour. Those became the production voice check (C-13), a conversational bar in G0, and the contest control as an open question. Archie found three false greens in the new requirements, all fixed: no expectation on the dispatched path, a hand-off check that could not see what a station changed, and a re-run that laundered a crossing.
 
 ### Sentinel check, round 2
 
 | Reviewer | Sentinel as returned | Findings present | Matches | Note |
 |---|---|---|---|---|
 | Archie | 13 findings (3 blocking, 9 amend, 1 note) | 13 | yes | Re-spawned once after the restart |
+| Wei | 12 findings (4 blocking, 6 amend, 2 note) | 12 | yes | Re-spawned once after the restart; fetched the public Opus 5 guide to check a citation |
 
 ### Claims the coordinator verified, round 2
 
 - **Hooks:** `Stop` carries `background_tasks` to tell "done" from "paused waiting for background work"; `SessionEnd` hooks get 1.5 seconds by default and a plugin's own timeout does not raise that; `-p` runs kill async hooks at teardown; `SubagentStart` is documented for the Agent tool, resumed subagents, and agent-team teammates, not for agents a Workflow script spawns; `PreToolUse` matches `Workflow`; `prompt_id` is a common input field.
 - **Sandbox and permissions:** `autoAllowBashIfSandboxed` defaults to true; a sandbox in a linked worktree may write the shared `.git` directory. One correction runs the other way: the settings reference says `Read` and `Edit` deny rules also apply to the shell commands Claude Code recognises as file commands (`cat`, `sed`, `tee`) and to redirection targets, though not to arbitrary subprocesses. H-8 now says so.
 - **v3 code:** `open` runs `git worktree add --detach`; `claim` checks only `order` and `distinct-instance` and records no tree; `dispatch.mjs` takes only `plan`, `open`, and `claim`; `appendEvent` throws on an undeclared event; `line.workflow.mjs` has no filesystem and each seat runs its own claim.
+- **The Opus 5 guide (Wei 1, 4, 5, 11):** fetched and read. Claude Code adds its delegation instruction on Opus 5 "only when you use its claude_code system prompt preset"; Opus 5 "finds real bugs at a high rate per pass, and its additional findings are mostly real issues rather than false positives"; it "performs well out of the box on existing Claude Opus 4.8 prompts"; and its sample delegation instruction says "do not use subagents to verify or double-check your own work".
+- **The post (Wei 1, 2, 10):** "Three things, inside about a fortnight"; the harness as "the axis that killed my team"; "I noticed, and filed it as cosmetic"; nesting recorded as "manually approving something that used to just run"; one audit date six months out, beside Boris Cherny's every-six-months advice, which the post quotes.
+- **ADR-0015 (Wei 4):** reversal trigger 1, as amended on 2026-09-10, keys on presence and on spread over ten real items, so reading the arguable fixture under it would amend it.
+- **Hook payloads (Wei 5):** inside a subagent every hook payload carries `agent_id` and `agent_type`, which is what lets W-11 tie a verdict to the agent that wrote it.
+- **This repository's history (Wei 1):** twelve v2-era tracking records from 2026-06-06 to 2026-08-06, among them a refutation on 2026-08-05 by a challenger who was "told to default to `REFUTED`".
 
 ### Archie, round 2
 
@@ -312,6 +320,23 @@ Sentinel as returned: 10 findings (2 blocking, 7 amend, 1 note).
 | 11 | amend | D-5 needs a planted positive; the trigger-1 reading reopens a decision | Sustained. Every D-5 run plants one absence per path; whether the arguable fixture counts under trigger 1 goes to the human in the ADR-0015 fold-in. | Part 5; G0 |
 | 12 | amend | The gate table cannot carry H-7 in Phase 1 | Sustained. The ADR-0015 fold-in row carries H-7, the ceremony binding, the `paths` binding, and the trigger-1 question; the wire row names `expect` and `absent`; casting takes D-5's voice half; host adapters take H-8; H-7 and H-8 get ADR-0012 E registry entries. | ADR table |
 | 13 | note | "skip" already means something in v3 | Adopted. The event is `absent` and the status *Seat never started*; v3's `skipped` keeps its meaning. The review below says `skip` because it reviewed the earlier wording. | Throughout |
+
+### Wei, round 2
+
+| # | Grade | Finding | Disposition | Where |
+|---|---|---|---|---|
+| 1 | blocking | The chain is fitted to the last fortnight | Sustained. The section is now *The three symptoms, two paths*: skip and decay, the onset ten weeks before any dated change stated as unexplained, the Opus 4.8 claim cut, the "visible, not happen" sentence cut, the post's counter-case and survivorship named, and the forensic pass (D-6) first in Phase 0. The Summary, the risk table, and the cross-references follow. | Two-paths section; Summary; Risks; D-6 |
+| 2 | blocking | "Voice is the earliest sensor" contradicts the thesis | Sustained. "Earliest" is gone; any C-8 or C-13 failure starts D-5 at once; the production voice check (C-13) compares ledger text with runs with and without the persona and raises *Voice missing (judged)* on the item, never on the persona. | Two-paths section; Part 2, C-13; statuses |
+| 3 | blocking | G0 doesn't gate the conversational path; W-10 can't see free text | Sustained, both halves. G0 holds the conversational route to a bar set from the baseline, typed and free text alike, and narrows the notice instead of lifting it if open question 8 is answered yes; D-5 measures free text in its own probes; W-10's limit is stated where the PRD relies on it; the dissent bar comes from the baseline or v2's pre-May artifacts, not "non-zero". | G0; D-5; Risks |
+| 4 | blocking | The arguable fixture is the Lucas critique by the letter | Sustained. It is now the contest control: scored on content, read against each model's own baseline at audition, automated only within a model, its answer key outside the public tree, retired after a persona edit that follows a failure, and out of G0 as open question 10. The "months" sentence is replaced with Summon's own throughput. | Part 5; G0; open questions |
+| 5 | amend | A token seat satisfies W-10 | Sustained. W-11: a `wrote` event ties each `append` to the calling agent's `agent_id`, so in conversation only a verdict written from inside its lens's agent is corroborated; every rate reads the latest corroborated verdict; *Framed* catches a lens prompt that `prepare` did not build. The coordinator's view of its own absence report is now in the Goodhart risk. | Part 1, W-11; Risks |
+| 6 | amend | H-7 enforces the split but doesn't test the hypothesis | Sustained. H-7 runs report-only first, measured against D-6's v2 base rate; the shortcut fixture (H-9) tests the hypothesis with a planted bug, outcome registered before the runs; "H-7 enforces; the shortcut fixture tests"; "unchanged" is struck, and the path check runs report-only in the bake-off. | Part 3, H-7, H-9; Success measures |
+| 7 | amend | Link 4's stop doesn't fire on the August pattern | Sustained. *Silence* (unanimous approval with no finding above note severity) stops the order like *Echo*; empty-set overlap is defined; D-1 says it sees where lenses point, not why. | Part 5, D-1, D-4; statuses |
+| 8 | amend | The need gate counts a lens skip toward a host that runs the review the same way | Sustained. Only an absent station seat counts. | Part 3 |
+| 9 | amend | The voice probe can be tuned against | Sustained. A persona edit forced by a release is recorded against ADR-0015's trigger 3 and voids that release for G0's last condition; a voice that no casting can keep is an input to ADR-0012 F's revisit trigger; probe prompts are held out and rotated after every edit. | Part 2; G0; Risks |
+| 10 | amend | More misquotes and overclaims | Sustained. "The post's own summary" is gone; the skip path marks the coordinator-writing step as inference and quotes what the post records for nesting; the calendar's case is restated; open question 9 says the post set one date and quotes Cherny. | Two-paths section; open questions |
+| 11 | note | The injected line now has a documented scope | Adopted and verified: the delegation instruction comes only with the `claude_code` preset. The Why-now rows and the two-paths section cite it, and D-5 records the preset on every route. | Why now; two-paths section; D-5 |
+| 12 | note | This review isn't independent evidence either | Adopted. The evidence paragraph says round 2's pointed briefs prime content and counts its findings as answers to the coordinator's questions. The clean sample Wei suggests, one lens given only the diff and the post, has not been run. | Two-paths section |
 
 ### Archie, round 2, verbatim
 
@@ -506,3 +531,134 @@ Short answers to the five checks:
 - **Fix:** Rename one of them (for example, `absent` for the event, or `not-applied` for the conditionals). W-10 then treats a not-applied lens as not expected.
 
 Sentinel as returned: 13 findings (3 blocking, 9 amend, 1 note).
+
+### Wei, round 2, verbatim
+
+Wei's review of the 9888dd0 revision to /home/user/summon/docs/history/design/summon-live-prd.md
+
+Other sources I read: the post (/tmp/claude-0/-home-user-summon/19f58b4c-ab90-5f99-8a34-13722f4112b6/scratchpad/post-i-killed-my-agent-team.md), the first-runs doc (.../scratchpad/v3/docs/history/tracking/2026-09-10-first-runs.md, lines 25-36), and ADR-0015 (.../scratchpad/v3/docs/adrs/meta/0015-decomposed-team.md, line 30 and reversal triggers 93-101). I also read PRD lines 84, 194, 321-325, 462-475 and 687 because findings needed them, and fetched the public *Prompting Claude Opus 5* guide to check the citation.
+
+My gut said this before I had a reason for it: a July 24 cause is being asked to explain a decline the author dates to May 15. The reasons follow.
+
+---
+
+**1. The chain is fitted to the last fortnight. "More than one way in" names the gap but doesn't close it. Blocking.** Lines 21, 102, 104, 113, 614.
+- Line 21 says the post "traces all three to one change underneath the team." The post doesn't say that. It says "Three things, inside about a fortnight": the model guidance, the harness caps and nesting, and the injected line. It gives a second mechanism that involves no skip at all: fitted dissent decaying "when the model underneath became more capable." And it names the harness, not the line, as "the axis that killed my team."
+- The line is a step change on July 24. The post describes a slow ramp: first the voices flattened, then the disputes thinned, then everything went unanimous. The last real dissent was May 15. A step can't cause a ramp that started ten weeks before it. Line 104 says the symptoms were seen "in the order they become visible, which is not the order they happen." That reconciles any order with any cause, which makes it unfalsifiable.
+- Line 113 offers three causes for the gap, but two of them are July events. 2.1.217 falls inside the PRD's own "July to August" range (line 75). The post ties fitted decay to the more capable model, which means Opus 5. The third cause, Opus 4.8 under-reaching, isn't in the post (line 687 sources it to the claude-api skill's migration notes) and has no date. The public Opus 5 guide treats 4.8 as the direct predecessor ("performs well out of the box on existing Claude Opus 4.8 prompts"). If 4.8 was the model in May, its under-reach was there during May's three-way split and can't explain the onset by itself. So at most one of the three causes fits the window, and only if 4.8 shipped near May 15.
+- Two readings are missing. One is the post's own strongest case: the model got better, so there was less to contest. The other is artifact survivorship: the post dates the last review *artifact* with real dissent, and a missing artifact doesn't prove dissent stopped.
+- The concession never reaches the rest of the document. The Summary, the section title, line 113's "the line that silenced the team", and line 614's Medium rating all still read as one cause.
+- Fix:
+  - Rewrite line 21 to match the post: three changes in a fortnight, two mechanisms, and an onset ten weeks earlier that nothing explains.
+  - Present the problem as two paths to one symptom: a skip path (links 1-3) and a decay path (spawned seats converging). Fitted decay should stop being link 4 of the skip chain.
+  - Give 4.8's ship date or cut the claim.
+  - Add a cheap forensic task to Phase 0. Go through v2's review artifacts week by week from April to August: count verdict splits, and check whether each lens's text came from its own run. If the human's local transcripts survived the harness's cleanup, also count subagent spawns per review session. Spawns steady through July with voices already flat means the decay path leads. Spawns falling before July 24 means there is a pre-line skip mechanism to name.
+
+**2. "Voice is the earliest sensor" contradicts the section's own thesis, and that answers the August question. Blocking.** Lines 104, 110, 115, 506; also 323, 462, 474.
+- The thesis (lines 102 and 110) is that voices flattened because seats weren't spawned and one context wrote every lens. But C-8 spawns the seat itself, on synthetic prompts, with and without the persona (line 323). Under the thesis, every probed persona speaks fine once spawned, so C-8 passes while production voices are flat.
+- D-5's voice readout covers "each persona that ran" (line 506). On a conversational run where seats were skipped, that is nobody, so the readout comes back empty rather than failed.
+- V-4's *Voice drift (judged)* does read recent outputs (line 474), but it is shown on the seat, and line 462 says no badge blames a seat "for something the process did." Either it excludes text the coordinator wrote under the seat's name, and then it can't see this mechanism, or it includes that text and blames the seat for the coordinator's writing.
+- So the PRD can't have both claims. If the thesis holds, W-10 fires first and C-8 never fires. If C-8 fires first, the thesis was wrong for that window.
+- Q2, directly:
+  - Something fires before August, but only in late July. The first instrument with evidence behind it is W-10's skip on D-5's conversational run. That run would come on the 2.1.217 release if the review fanned out from a nested subagent, and on Opus 5's release day at the latest. That is about ten weeks after the last real dissent, and after the voices had already gone.
+  - Between May 15 and mid-July, nothing this revision adds has evidence that it would fire, because the PRD has no mechanism for that window. If the cause was spawned seats converging, I'd name the arguable fixture on D-5's calendar or harness-release runs (see 4).
+  - The instrument that fires whatever the mechanism is the one the post itself names, "disagreement rate, trending to zero." v3 already has it; this revision inherits it rather than adding it.
+- The post's voice signal wasn't missed for lack of a sensor: "I noticed, and filed it as cosmetic." That was a failure to interpret, and in this PRD *Voice drift* is still a label with nothing attached to it.
+- Fix:
+  - Drop "earliest", or earn it by making any C-8 failure or *Voice drift* trigger an immediate D-5 run. Then the cheap signal starts the instrument that can tell a skip from decay.
+  - Measure voice where the human actually saw it go. On one real item in N, re-run a lens on the same composed prompt with and without its persona, and compare both against the lens text in the ledger. If the ledger text is closer to the bare run, raise a notice on the item, not the seat.
+
+**3. The conversational path: G0 doesn't gate it, and W-10 can't see its most common form. Blocking.** Lines 27, 121, 198, 557-558, 612, 627.
+- G0 requires "no seat skipped on the dispatched path." Conversational skips are only "reported" (line 558). Yet the one skip the post records happened in a conversational session, line 74 says the README sells the gate conversationally, and line 121 admits that path stays exposed. Under G0 as written, the notice can come down while the recorded failure is still live on the path the README sells. The post calls itself the notice "because no other channel reaches" template copiers. Removing it tells those copiers the team works.
+- W-10 writes `expect` only when a ceremony starts, "typed by the human or invoked by the model" (line 198). Line 121's own example is a human typing "review this." That starts no ceremony unless the model chooses to invoke one, and that choice is exactly what the injected line governs. No ceremony means no `expect` and no `skip`, so the record is empty rather than wrong. That means neither "visible the same day" (line 121) nor the mitigation for the High-rated risk at line 612 holds for the PRD's own example.
+- Fix:
+  - Either give G0 a conversational bar, set before the run from the Phase 0 baseline, with D-5 exercising the free-text request and not only the slash command. Or make G0 conditional on a yes to OQ8 and narrow the notice instead of removing it: seat-declaring ceremonies run as work orders, and the conversational path is flagged, not fixed.
+  - Have lines 121 and 612 say that W-10 sees only declared ceremonies.
+  - Also, G0's "non-zero over ten real items" passes on a single split. Set that bar from the baseline, or from v2's pre-May artifacts.
+
+**4. The arguable fixture is the Lucas critique by the letter, and "held out" answers a different critique. Blocking.** Lines 27, 506, 508, 559, 613.
+- Lucas says a relation fitted under one regime can't evaluate a change of regime. "On this diff, a healthy team splits at rate r" is fitted to the models and personas it was written against, and D-5 runs it on model release day, which is the regime change. Holding a fixture out guards against tuning to the test (Goodhart). It does nothing when the regime shifts.
+- The vendor's guide supplies the mechanism: Opus 5 "finds real bugs at a high rate per pass, and its additional findings are mostly real issues." Better reviewers converge, so a model that resolves the trade-off correctly reads as decay. The post already names this trap: absorbed and broke "produce the same symptom ... the only way to tell them apart is to look."
+- It isn't really held out anyway. Personas get reviewed edits for model fit (lines 30 and 325), made by someone who has read the last D-5 report. And the repo is public, so the fixture and its expected split become training data.
+- I checked the citation. As amended on 2026-09-10, ADR-0015 trigger 1 fires only on a negative-control miss, or on `dissent --last 10 --exclude negative-control` reading zero over ten real items. It also says "unanimity on a fixture built to be caught by every lens is not the signal." Nothing in it can trip on a fixture that fails to split. Reading a failure "under trigger 1" (lines 508 and 613) means amending wording the human settled on 2026-09-10. So the fixture does reopen that decision: it is option 3, which the human didn't take, promoted to a G0 condition.
+- "By the post's own timeline can take months": the post's timeline describes the lag from not looking. In the post, the rate "was sitting in my own review artifacts the whole time" and the reviewer ran "over every diff before I was allowed to commit." Ten items is slow on Summon's current throughput (two of ten in the first run), not on the post's.
+- The fixture's real case, which the PRD doesn't make, is as a control that separates "nothing to contest" from "can't contest." That holds within one model's regime: calendar and harness-release runs, which is exactly where a server-side line or a May-to-July drift would show up.
+- Fix:
+  - Score the fixture on content, the way the human chose for the negative control: each floor lens must surface its own true point, recorded before the runs, and the lenses' findings must differ in what they find and why. Report verdicts as information.
+  - Set the split baseline per model at audition, with the human reading it, and apply the automated bar only within that model.
+  - Burn and replace the fixture from a pool after any persona edit that follows a failure, and keep the answer key out of the public tree.
+  - Put the fixture to the human as an open question, and keep it out of G0 until answered.
+
+**5. A token seat satisfies W-10, and corroboration closes only one of three ways to do it. Amend.** Lines 29, 109, 194, 258, 608.
+W-10 checks only for a `start`. Corroboration only checks that start and stop events bracket the verdict, and line 194 says "'Who wrote the line' never decides it." Three ways through:
+- **Anchored seat.** The coordinator reviews in its own context, then spawns each lens with its findings in the prompt ("confirm from the security angle"). The seat files them inside its own bracket. There's no skip, the verdict is corroborated, and the voice is the coordinator's. This takes no malice. It's the compromise a model reaches when CLAUDE.md says spawn and the guide's own sample delegation instruction says "do not use subagents to verify or double-check your own work." C-11 covers only prompts the dispatcher composes.
+- **Timed write.** A background seat runs, and the coordinator writes that lens's verdict while it runs. If the verdict names the instance, it falls inside the bracket and counts as corroborated. Nothing I read prevents that.
+- **Superseding verdict.** The seat files, then the coordinator files a later verdict for the same lens. The later one is uncorroborated, but the rate reads "the latest verdict per lens per item" (first-runs, line 29), so the coordinator's verdict is the one counted.
+
+Corroboration closes the third way only if every rate reads the latest *corroborated* verdict, and the PRD doesn't say that. It closes neither of the other two. Also, W-10 measures the coordinator, and the coordinator sees the skip report; line 608's "seats never see the meter" doesn't cover that.
+- Fix:
+  - Add a W-10 fixture in which a token seat starts and stops while the coordinator writes its verdict. That verdict must not come out corroborated.
+  - Have the wire record a digest of each declared lens's spawn prompt (PreToolUse on the agent tool) and raise *Framed* when the prompt isn't the composer's spec-plus-diff prompt. That is C-11 enforced by a hook.
+  - Tie corroboration to the seat's own process wherever the hook payload identifies the calling agent. Where it can't, say that corroboration isn't available on the conversational path.
+  - Make every rate read the latest corroborated verdict.
+
+**6. H-7 enforces the split; it doesn't test the post's hypothesis. Amend.** Lines 119, 395-397, 405, 421, 560.
+- The acceptance criterion (line 421) only tests that the check fires. The success measure, "crossed ... and were built on: zero" (line 560), is zero by construction whenever H-7 is installed. The number that matters for the hypothesis is how often a station tries to cross a boundary, and nothing measures it.
+- There is a natural experiment nobody has looked at. ADR-0015 line 30 shows the v2 boundary was prose all year, and the post credits that year's boundary with "structurally" removing the failure mode. Either prose was enough on those models, or crossings happened and nobody saw them. `git log` over v2 and the human's trading-system repo would show which. The guide's "effective writer-verifier patterns" is the redundancy branch again, also unmeasured.
+- A path check isn't a weakening check. The realistic wrong implementation that passes H-7 makes a failing test pass without touching a test path: a test-environment branch in source, a loosened assertion helper under `src/`, or a snapshot outside the `must-not` globs.
+- Line 405 says H-7 "runs there unchanged" in the human's bake-off. But that bake-off runs skills on Codex, with no claims or returns for H-7 to check. And if H-7 refused crossings there, the split would hold by fiat, which answers a different question than the post asks. The post says of the enforcement layer, "I'm suspicious of anyone who currently claims to" know its shape.
+- Fix:
+  - Give H-7 a report-only mode and run that first.
+  - Measure v2's base rate of crossings from git.
+  - Add a planted shortcut fixture: a failing test that is cheaper to weaken than to satisfy. Run it with H-7 refusing and in report-only mode, and set the outcome before the runs: does the final suite still catch the planted bug (a mutation check)?
+  - Reword line 119 to "H-7 enforces; the shortcut fixture tests."
+  - Strike "unchanged" at line 405, or say H-7 runs there report-only.
+
+**7. Link 4's "stops the work" doesn't fire on the August pattern. Amend.** Lines 111, 502, 505; also 466.
+- D-4 needs a window that is both unanimous and overlapping. The post's August was "one verdict for everything: approved ... no findings that stung." Thin findings, with each lens nitpicking its own corner, give low overlap, which D-1 calls "agreement worth having."
+- With no findings at all, overlap is 0/0, and the PRD doesn't say how that rounds.
+- D-1 is keyed on file and line window, so it sees where lenses point, not why. Depending on the threshold, which isn't set, the first-run case could even read as *Echo*.
+- Fix: add a *Silent* class (unanimous approval with no finding above note severity, or no findings at all) that stops the order the way *Echo* does. Define what empty-set overlap means, and reword line 111 to match what D-4 actually catches.
+
+**8. The need gate counts a review-lens skip toward a host that runs the review the same way. Amend.** Lines 364, 389.
+- Line 364 counts a Workflow-host skip as need, "because a seat the dispatcher starts as its own process is one that no model decided to spawn."
+- But line 389 keeps the review formation inside one pane, running the same review-wave workflow. A skipped lens would recur on herdr under the same caps (line 75: an advisory default of under 10 agents, against the 45 the first run used). Lens skips are also the kind D-5 is most likely to find.
+- Fix: count only skipped station seats toward the need gate, or run the five floor lenses as their own panes on herdr.
+
+**9. The revision protects the fixture from tuning but allows tuning against the voice probe. Amend.** Lines 27, 30, 556; also 325.
+- G0 requires every persona to be distinguishable from its bare seat, and lines 30 and 325 allow a reviewed persona edit to keep the voice. So the probe fails, the persona is edited, the probe passes, and G0 is satisfied. That is refitting the curve, and the post is explicit that "Lucas's remedy went deeper than refitting the curve more often." The probe has no held-out rule at all.
+- The PRD also handles a persona failure two different ways: the fixture failure goes to trigger 1, whose remedy is to re-argue the skills-only alternative, while a probe failure gets an edit.
+- Fix:
+  - Make a voice failure that no casting can fix an input to ADR-0012 F's revisit trigger (line 323 already says the probe is that trigger's measurement), not a G0 condition an edit can satisfy.
+  - If voice edits stay, hold the probe prompts out and rotate them after each edit.
+  - State whether a persona edit forced by a model release trips G0's last condition and ADR-0015 trigger 3. I couldn't tell from what I read.
+
+**10. More misquotes and overclaims of the post. Amend.** Lines 102, 109-110, 113, 628. (Line 21 is covered in 1, line 508 in 4.)
+- Line 102 calls one mid-paragraph sentence "the post's own summary." The post's summary-level claims are the fitted-curve thesis and "disagreement rate, trending to zero."
+- Links 2-3 (lines 109-110), where the coordinator writes the review and labels the parts by lens, aren't in the post. "One careful, forgettable author" is a simile. The only skip the post records is a deprecation session working solo, not a review ceremony. For nesting, the post records a different failure: "manually approving something that used to just run." Label these links as inference.
+- Line 113 and OQ9 say the line "arrived from a server with no release to trigger a check." Line 102 has it arriving on Opus 5's release day, in Opus 5 sessions only, so a model-release run would have caught its arrival. The honest case for a calendar is that a server-gated line can change between releases, and that a May-to-July drift had no release at all.
+- OQ9 says "the post's own audit runs every six months." The post sets one date six months out. The recurring six-month rule is Cherny's advice, which the post quotes.
+
+**11. The injected line now has a documented scope. Use it. Note.** Lines 76, 84, 102, 108.
+- The guide now says Claude Code adds its delegation instruction on Opus 5 "only when you use its `claude_code` system prompt preset." Line 84 cites the guide but not this condition, and line 102 repeats the post's "no opt-out."
+- Fix: have D-5 record which preset each path ran under, and check whether the dispatcher can launch seats without the preset. If it can, link 1 on the dispatched path is closed by configuration as well as by script.
+
+**12. This review isn't independent evidence either. Note.** Line 117.
+- Line 117 discounts the first round because its briefs primed format. This round's brief primes content: six pointed questions aimed at the revision's weak spots. That is exactly the framing C-11 keeps out of a lens prompt.
+- Count these findings as the coordinator's questions answered, not as contest. For a clean sample, run one lens with only the diff and the post.
+
+---
+
+**The six questions, briefly.**
+1. Yes. The chain is fitted to the last fortnight, and the "more than one way in" paragraph names the gap and then papers over it (finding 1).
+2. W-10, via D-5, fires in late July at the earliest, about ten weeks late. Nothing this revision adds has evidence that it would fire between May 15 and mid-July. Under the PRD's own thesis, the voice probe never fires first (finding 2).
+3. Yes, across a model release: holding it out answers Goodhart, not Lucas. The fixture is valid within one model's regime and should be scored on content (finding 4).
+4. Yes, in three ways, plus the case where no ceremony starts at all. Corroboration closes one of them, and only if every rate reads corroborated verdicts (findings 5 and 3).
+5. H-7 only asserts that enforcement works. It doesn't test the hypothesis, and in refuse mode it would confound the human's bake-off (finding 6).
+6. Yes, at lines 21, 102, 109-110, 113, 508 and 628 (findings 1, 4 and 10).
+
+**What holds.** Putting an instrument on every link instead of a fix on the first is the right design, and it survives every objection above. The problem is the story told around it. "What this does not fix" (line 121) is the most honest paragraph in the revision; it only needs the W-10 limit added. C-12 and leaning yes on OQ8 are what actually break link 1 rather than just watch it. H-7 reads git, which is the right layer; it's mislabelled, not misbuilt. And D-5 on a calendar is right, for a better reason than the one the PRD gives.
+
+**Assessment.** The direction is sound, but the diagnosis is overfitted. Two instruments measure the wrong variable or work across the wrong boundary: the voice probe can't see ventriloquism, and the fixture is fragile at model releases. The post's recorded failure lives on the conversational path, and G0 lets the notice come down without it. Fix 1-4 and this is a credible answer to the post. Without those fixes, it reads as an answer to the post's last two weeks.
+
+Sentinel as returned: 12 findings (4 blocking, 6 amend, 2 note).
