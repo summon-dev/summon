@@ -1,60 +1,64 @@
 ---
-agent-notes: { ctx: "PRD: live seats, model casting, herdr host, visual world", deps: [README.md, docs/adrs/meta/0005-behavioral-benchmark.md, docs/adrs/meta/0006-multi-runtime-install.md, docs/adrs/meta/0012-executable-canon.md, docs/adrs/meta/0014-optional-addons.md, docs/process/team-governance.md, docs/history/design/team-hero-sprites-16bit.md, site/src/components/TeamGrid.astro], state: draft, last: "claude@2026-10-05", key: ["builds on ADR-0015 (Proposed) on branch claude/summon-team-v3-decomposed-jyiur2, issue #138", "four parts (wire, casting, herdr host, world), each phase earn-gated; personas never change when models do", "spec only: four ADRs and an Architecture Gate come before any code; Pierrot gates the first Summon-authored hook"] }
+agent-notes: { ctx: "PRD: live seats, model casting, herdr host, visual world", deps: [README.md, docs/adrs/meta/0005-behavioral-benchmark.md, docs/adrs/meta/0006-multi-runtime-install.md, docs/adrs/meta/0012-executable-canon.md, docs/adrs/meta/0014-optional-addons.md, docs/adrs/0013-design-authority.md, docs/process/team-governance.md, docs/history/design/team-hero-sprites-16bit.md, docs/history/tracking/2026-10-05-summon-live-prd-review.md, site/src/components/TeamGrid.astro], state: draft, last: "claude@2026-10-05", key: ["builds on ADR-0015 (Proposed) on branch claude/summon-team-v3-decomposed-jyiur2, issue #138", "revised after a five-persona review (46 findings, 12 blocking); G0 is the condition for lifting the deprecation notice", "spec only: ADRs and an Architecture Gate come before any code; ADR-0012 E and Pierrot's threat-model pass gate Phase 0"] }
 ---
 
 # Summon Live
 
-**Product requirements document.** Draft for the human's review, 2026-10-05.
+**Product requirements document.** Revised draft for the human's review, 2026-10-05.
 
 | | |
 |---|---|
 | Owner | Pat (scope, acceptance). Archie owns the ADRs this PRD asks for. |
 | Drafted by | The coordinator, at the human's request, on `claude/multi-agent-coding-improvements-ip34gt` |
+| Reviewed | 2026-10-05 by Wei, Pierrot, Pat, Archie, and Dani as standalone agents: 46 findings, 12 blocking, all dispositioned in `docs/history/tracking/2026-10-05-summon-live-prd-review.md` |
 | Builds on | ADR-0015, *The Decomposed Team* (Proposed, 2026-09-09), on branch `claude/summon-team-v3-decomposed-jyiur2`, epic #138 |
-| Zone | Meta (ADR-0007 § 1). This is about building Summon; nothing here ships into a scaffolded project until an ADR classifies it. |
-| Decides | Nothing yet. Every part that changes architecture needs its own ADR and an Architecture Gate before code. |
+| Zone | Meta (ADR-0007 § 1). This is about building Summon; each asset it proposes is classified on its own in the Architecture Gate section. |
+| Decides | Nothing yet. Every part that changes architecture needs an ADR and an Architecture Gate before code. |
 
 ## Summary
 
-Summon v3 split the fused agent file into a role, a persona, a skin, and a fitted harness adapter, and gave the team an event log that no harness owns. That answered the structural half of the August deprecation. The operational half is still open: every seat runs on `model: inherit`, the structured work rests on subagent primitives whose limits moved twice this summer, and half of the event log is the seats' own account of themselves. The team is also invisible while it works, so the human learns what happened by reading JSONL afterwards.
+Summon v3 split the fused agent file into a role, a persona, a skin, and a fitted harness adapter, and gave the team an event log that no harness owns. That answered the structural half of the August deprecation. The operational half is still open: every seat runs on `model: inherit`, the record of what the team did is mostly the seats' own account of themselves, and nobody sees the team while it works, so dissent can decay with no one watching.
 
-Summon Live adds four things on top of v3, in an order where each one is useful without the ones after it:
+Summon Live is four additions on top of v3, ordered so each is useful without the ones after it, and one goal that says when they are enough.
 
-1. **The wire.** Harness hooks, the dispatcher, and the multiplexer write the record from outside the model, and every event says who wrote it. A review that never spawned can no longer pass as a completed review (#129).
-2. **Casting.** Each seat and station gets a model and an effort level from a fitted file that expires on every model release, and no casting is promoted until it passes an audition on the negative control. The persona never changes when the model behind it does.
-3. **The herdr host.** A work order can run each seat as its own long-lived session in a [herdr](https://github.com/herdrdev/herdr) pane instead of as a subagent, so the team's shape comes from the dispatcher and stops depending on whether the coordinating model feels like delegating today. The human can walk up to any seat and watch it work.
-4. **The world.** Renderers draw the log through the 16-bit skin Summon already has: a party bar in the terminal, a herdr wall, a Guild Hall in the browser where the sprites work at their stations, a review rendered as a turn-based battle, and a replay you can attach to a PR. Every status effect on screen is computed from the log and maps to a real failure mode.
+**G0. The deprecation notice can come down.** It comes down when, on the current model, the review formation passes the negative control on presence, dissent is non-zero over a full window of ten real items, content divergence is reported for every item, and one model release has landed with changes only in fitted files.
+
+1. **The wire.** Hooks and scripts write *out-of-band* events (who started, who stopped, which model actually ran) into the log beside the seats' own *testimony*, and every event says who wrote it. A verdict is *corroborated* only when out-of-band events bracket the same seat, item, and lens. A review that never ran stops passing as a completed one (#129). None of this is proof, and the PRD says where it stops holding.
+2. **Casting.** One model with effort set per station is the default. A fitted casting file holds it, expires on every model release, and changes only when the human promotes a casting that an audition did not block. A recast never edits a persona; when a new model needs a persona change to keep its voice, that is its own reviewed edit.
+3. **herdr, in two steps.** First, Summon labels the herdr panes it already runs in, so herdr's sidebar shows seat, station, item, and state, with no new powers for any seat. Later, and only after a need gate and OS-level containment, the herdr host runs seats as their own sessions in panes that the human can step into.
+4. **The world.** A party bar in the terminal first, then a replay with a turn-based battle view of each review, then a Guild Hall that starts as a quest board. Every badge leads with plain words, is computed from the log, and names a real failure mode, and a unanimous, overlapping window of reviews stops the work order until the human acknowledges it.
 
 How the parts fit, with v3's pieces unmarked and this PRD's additions marked `+`:
 
 ```
-STARTS THE SEATS              WRITES THE RECORD                       READS THE RECORD
+STARTS THE SEATS              WRITES THE RECORD                         READS THE RECORD
 
 work order                    dispatch.mjs       spawn, claim     ─┐
    │                          run-checks.mjs     check, receipt    │
-dispatch.mjs                + wire.mjs           start, exit,      ├─► ledger ──────┬─► checks: dissent, control,
-   │ + cast from casting                         cast, block       │   (tracked)    │   line, + witness
-   │                        + herdr host         block, unblock    │                │
-host: + herdr, Workflow,      seats (testimony)  claim, finding,  ─┘                └─► + renderers, with the skin:
-      or subagents                               verdict, return                        party bar, herdr wall,
-   │                                                                                ┌─► Guild Hall, battle, replay
-seat sessions on a cast     + wire.mjs           tool calls, cost ───► + telemetry ─┘
-                                                                         (untracked)
+dispatch.mjs                + wire.mjs           start, stop,      │  out-of-band
+   │ + cast from casting                         cast, block       │
+   │                        + herdr host         pane state        ├─► ledger ──────┬─► checks: dissent, control,
+host: Workflow, subagents,    seats, ingest      claim, finding,   │  testimony     │   line, + corroboration
+      + herdr                                    verdict, return  ─┘  (tracked)     │
+   │                                                                                └─► + renderers, plain words
+seat sessions on a cast     + wire.mjs           tool calls, cost ───► + telemetry ─┬─► first, then the skin:
+                                                                         (untracked) │  party bar, herdr labels,
+                                                                                     └─► replay and battle, hall
 ```
 
 ## A night with the party
 
-The scenario is illustrative. Every number in it would come from the log.
+The scenario is illustrative, and each beat is tagged with the phase that delivers it. Every number in it would come from the log.
 
-At 22:40 the human hands Grace a work order: three items on the `tdd` line. `dispatch.mjs open --host herdr` creates the worktrees and a herdr workspace. Panes come up titled by seat and instance (`Tara#1 · red`, `Sato#1 · green`, `Review#1`), each one a Claude Code session started as its composed seat, on the model and effort the casting file names for that station. Tara#1 runs on Sonnet 5.5 at high effort and starts red on item 1. In the browser tab, the Sentinel Archer walks to the range.
+At 22:40 the human hands Grace a work order: three items on the `tdd` line, cast on the default (Opus 5.5 throughout, effort by station: high for red, medium for green, low for the skeptics) [Phase 1]. The dispatcher opens a branch per item and starts the seats, each in its own herdr pane [Phase 3]. herdr's sidebar lists them by seat and state, `Tara#1 · red · working` and `Sato#1 · green · idle` [Phase 1]. A one-line party bar in the human's own session shows the same seats with the model each is actually running on and its tokens so far [Phase 0].
 
-At 22:52 Sato#1's pane turns yellow in herdr's sidebar: blocked on a permission prompt for `curl`. The Forge-Knight in the Guild Hall stops hammering and raises a hand, and the human's phone gets one notification. The human answers from the herdr pane, where the whole terminal is live, and goes back to the sofa. Had nobody answered for five minutes, the Forge-Knight would have fallen asleep at the anvil, which is the *Sleep* status.
+At 22:52 Sato#1 stops on a permission prompt for `curl`. Its pane label changes to `Sato#1 · green · waiting on you`, herdr raises a desktop notification, and the party bar's line for Sato says the same in words [Phase 1]. The human answers in the pane, where the whole terminal is live [Phase 3], and goes back to the sofa.
 
-At 23:30 item 1 reaches the review table. The formation convenes as a battle: Vik, Tara's test-quality lens, Pierrot, and Archie's conformance lens take turns against the diff. Each finding lands as a hit coloured by severity. The skeptic stage, cast on Sonnet 5.5 at low effort because it is forty agents out of forty-five, refutes three of them, and those show as MISS with the skeptic's reason underneath. The bubble over Vik shows the first line of the finding Vik actually filed. Verdicts split (revise, revise, accept, revise) and the dissent meter in the corner ticks up.
+At 23:30 item 1 reaches review. The four floor lenses run in parallel on Opus 5.5, and the skeptic stage tries to refute each finding [v3]. Next morning the replay draws it as a battle: hits in timestamp order, each labelled with its severity in words, three of them marked REFUTED with the skeptic's reason underneath and the finding still visible, the forty skeptics drawn as one chorus with a count. Verdicts split (revise, revise, accept, revise), and the dissent line on the party bar moves [Phase 2].
 
-Item 3 goes badly. Sato#2's session compacts twice (*Fatigue*), the green station returns `ok: false`, and the casting file's escalation rule re-runs it on Opus 5.5. In the morning the human scrubs the replay to 01:14, sees where the escalation happened and what it cost, and drags the exported replay into the PR description, where a reviewer can watch it without installing anything.
+Item 3 goes badly. Sato#2's session compacts twice, the green station returns `ok: false`, and the casting's escalation rule re-runs it once at high effort, logging why and what it cost [Phase 2]. In the morning the human scrubs the replay to 01:14, sees the escalation, and drags the exported replay into the PR description. The export shows severities and verdicts, never the text of a finding, so it cannot leak an unfixed vulnerability to a public PR [Phase 2].
 
-No agent saw any of it, because the skin, the meter, and the badges never enter a model's context.
+Had all three items come back unanimous with overlapping findings, the dispatcher would have refused to close the order until the human acknowledged the run [Phase 1]. No agent saw any of it, because the skin, the meter, and the badges never enter a model's context.
 
 ## Why now
 
@@ -64,11 +68,11 @@ The README's notice of 2026-08-18 names four causes and one failure mode. ADR-00
 
 | Named on 2026-08-18 | What ADR-0015 does | Still open | Answered here by |
 |---|---|---|---|
-| Opus 5 guidance inverted delegation and verification | Adapter field `delegation: null`; the line runs as a workflow, not a prose mandate | The conversational coordinator still carries one posture for every model | Casting (posture profiles) |
-| Subagent defaults churned | `dispatch` limits moved into the adapter, labelled as expiring | A seat is still a subagent. Between Claude Code 2.1.212 and 2.1.224 (July to August 2026) a session spawn cap was added and removed, a 20-agent concurrency cap arrived, and nesting was switched off and back on at depth 3 | The herdr host |
-| Sessions told not to invoke agents unless asked | Named as the one thing no file in the team can counter | Unchanged | The herdr host: the human runs the dispatcher; the dispatcher starts sessions; no model has to choose to delegate |
-| `maxTurns` and `model: inherit` hard-coded | Moved into the fitted adapter | `inherit` is still the only model value anywhere in `team/` | Casting |
-| Stale tuning degrades into unanimous approval | `disagreement-rate` over ten real items; negative control split into presence and spread | Verdict-level only; `claim`, `verdict`, and `return` are self-reported; nobody sees the rate unless they run a command | The wire, dissent instruments, the world |
+| Opus 5 guidance inverted delegation and verification | Adapter field `delegation: null`; the line runs as a workflow, not a prose mandate | Work orders no longer depend on posture; the conversational ceremonies, including the Architecture Gate that the README sells, still do | Casting (posture under `team/casting/`, C-7) and the Architecture Gate as a line (C-12) |
+| Subagent defaults churned | `dispatch` limits moved into the adapter, labelled as expiring | A seat is still a subagent. Between Claude Code 2.1.212 and 2.1.224 (July to August 2026) a session spawn cap was added and removed, a 20-agent concurrency cap arrived, and nesting was switched off and back on at depth 3 | Mostly by v3's Workflow host already; the herdr host removes the rest for the seats it runs |
+| Sessions told not to invoke agents unless asked | Named as the one thing no file in the team can counter | Answered for work orders, which a script dispatches; still open for conversational ceremonies | C-12 for the gate; posture for the rest |
+| `maxTurns` and `model: inherit` hard-coded | Moved into the fitted adapter | `inherit` is still the only model value in `team/`; two of this PRD's five reviewers (Pierrot at 20 turns, Archie at 25) hit their v2 `maxTurns` cap mid-review on 2026-10-05 | Casting |
+| Stale tuning degrades into unanimous approval | `disagreement-rate` over ten real items; negative control split into presence and spread | Verdict-level only; most of the log is testimony; nobody sees the rate unless they run a command | The wire, dissent instruments (D-1 to D-4), the world |
 
 The first real runs on the v3 branch (2026-09-10, `docs/history/tracking/2026-09-10-first-runs.md` there) added four findings this PRD also picks up. The review station used 45 agents and about 2.3M tokens on one small diff, and 40 of those agents were skeptics. The line's review station failed to start because Claude Code loads its agent registry at session start, so a composed seat staged mid-session was never seen. The dispatcher's worktrees and the harness's worktrees turned out to be two different things, and a worktree carries its own copy of the tracked log. And five lenses each vetoing a diff with four planted critical defects read as "unanimous" to the instrument while their 34 surviving findings disagreed in content.
 
@@ -76,7 +80,7 @@ The first real runs on the v3 branch (2026-09-10, `docs/history/tracking/2026-09
 
 **Model guidance now flips between releases, and it is written down.** Anthropic's migration notes tell Opus 4.8 users to add explicit delegation triggers because that model under-reaches for subagents. The *Prompting Claude Opus 5* guide then says Opus 5 "delegates to subagents more readily than prior models", recommends deterministic caps on spawning, and says to remove verification instructions ("use a subagent to verify") because they cause over-verification; it also confirms that Claude Code adds a delegation instruction of its own on that model, which is the session-level instruction the deprecation notice ran into. The *Prompting Claude Fable 5* guide reverses both: use subagents frequently, prefer long-lived asynchronous ones, and use separate fresh-context verifiers, which "tend to outperform self-critique". The same guide says skills written for prior models "are often too prescriptive" and can degrade output quality. A methodology that hard-codes one delegation posture is wrong on at least one current model by construction.
 
-**Claude Code grew the primitives this needs.** As of October 2026 the subagent frontmatter accepts `model` (an alias such as `opus` or `fable`, or a full model ID) and `effort` (`low` through `max`), and the Workflow tool's `agent()` takes `model` and `effort` per call. Hooks can be `command`, `http`, `mcp_tool`, `prompt`, or `agent`; any hook can run with `async: true`; `allowedHttpHookUrls` restricts where HTTP hooks may post; and when a session runs with `--agent`, every hook event carries `agent_type`. `PostToolUse` and `SubagentStart` cannot block, and a timed-out hook does not block the tool. OpenTelemetry export carries `agent.name`, `model`, and `cost_usd` (agent names are redacted unless `OTEL_LOG_TOOL_DETAILS=1`), traces are in beta, and the trace context reaches subprocesses through `TRACEPARENT`. The `subagentStatusLine` script receives every running subagent with its `name`, `status`, `model`, `effort`, and `tokenCount`. Plugins can bundle agents, hooks, a status line, monitors, and executables.
+**Claude Code grew the primitives this needs.** As of October 2026 the subagent frontmatter accepts `model` (an alias such as `opus` or `fable`, or a full model ID) and `effort` (`low` through `max`), and the Workflow tool's `agent()` takes `model` and `effort` per call. Hooks can be `command`, `http`, `mcp_tool`, `prompt`, or `agent`; any hook can run with `async: true`; and when a session runs with `--agent`, every hook event carries `agent_type`. `PostToolUse` and `SubagentStart` cannot block. Hooks, file tools, and MCP servers run outside Claude Code's OS sandbox, which covers shell commands only; the sandbox can deny writes outside the working directory, block Unix sockets (on Linux only with its optional seccomp filter), and strip named environment variables from sandboxed commands. OpenTelemetry export carries `agent.name`, `model`, and `cost_usd`, and traces are in beta. The `subagentStatusLine` script receives every running subagent with its `name`, `status`, `model`, `effort`, and `tokenCount`.
 
 **herdr became the terminal for running many agents.** It is a single Rust binary (Apache-2.0, v0.9.3 released 2026-09-29, about 42k GitHub stars) whose server owns real PTY panes, keeps them alive across detach and SSH, and marks every agent pane `working`, `blocked`, `done`, or `idle` by reading its screen, so it knows Claude Code is waiting on a permission prompt without any hooks. Its CLI and newline-delimited JSON socket API can start a named agent of a given kind in a pane, prompt it and wait for it to settle, label the pane, and stream state changes; Part 3 lists the calls. It starts Claude Code, Codex, Gemini, Cursor, OpenCode, Amp, and about twenty other agents, and since v0.7.0 it takes out-of-process plugins. Its maintainers keep the core small on purpose and have declined fleet-level events, pane lineage, and per-turn cost tracking (herdr issues #4027, #2871, #2742). That is the layer Summon would supply.
 
@@ -86,426 +90,486 @@ The first real runs on the v3 branch (2026-09-10, `docs/history/tracking/2026-09
 
 ## The problem
 
-Summon's promise is a team whose disagreement carries information. After v3, three things outside Summon's files still decide whether that holds. The model behind each seat is whatever the session inherited, so a model release recasts the whole team silently and the next unanimous window is the first sign. The structured work depends on subagent semantics and on a coordinating model's willingness to delegate, both of which change per release. And the record of what the team did is half testimony: a seat that forgets to log, or never ran, looks the same as one that ran and agreed.
+Summon's promise is a team whose disagreement carries information. After v3, three things outside Summon's files still decide whether that holds. The model behind each seat is whatever the session inherited, so a model release recasts the whole team silently and the next unanimous window is the first sign. The conversational ceremonies, the Architecture Gate first among them, still depend on a coordinating model's appetite for delegation, which changes per release. And the record of what the team did is mostly testimony: a seat that forgets to log, or never ran, looks the same as one that ran and agreed.
 
-Underneath all three sits a plainer problem. The team works in a place the human cannot see. Dissent decays quietly because nobody is watching it decay, and the instruments that would show it are commands nobody runs at 23:30.
+Underneath all three sits a plainer problem. The team works where the human cannot see it, so dissent decays quietly, and the instruments that would show the decay are commands nobody runs at 23:30.
 
 ## Goals and non-goals
 
-| ID | Goal |
-|---|---|
-| G1 | Spawns, exits, blocks, and casts are written by something other than the seat, and every event in the log says who wrote it. |
-| G2 | Each seat and station gets a model and an effort level from one file that a model release invalidates, and that file changes only through an audition. |
-| G3 | A work order produces the same team shape on any coordinating model, because a script starts the seats. |
-| G4 | Persona files never change because a model did, and a voice check says whether each persona still comes through. |
-| G5 | A human can see, live and in replay, who is working, who is blocked, who disagreed, and what it cost, through the skin Summon already has. |
-| G6 | The review station costs measurably less per item, with no planted defect lost. |
+| ID | Goal | Measured by |
+|---|---|---|
+| G0 | The deprecation notice can come down | All four conditions in the Summary hold on the current model, recorded in one tracking doc the human signs |
+| G1 | Every event in the log says who wrote it, and every verdict says whether it is corroborated | The corroboration report (D-3) runs on every item |
+| G2 | Each seat and station gets its model and effort from one fitted file that a model release invalidates and only the human's promotion changes | No item runs on an unaudited model without a recorded acknowledgement |
+| G3 | A work order produces the same team shape on any coordinating model | The same order on two coordinating models produces identical spawn sequences |
+| G4 | Identity changes only on purpose | No recast edits a persona file; persona edits for model fit are their own reviewed changes; the voice probe runs on every seat an audition exercises |
+| G5 | A human can see, live and in replay, who is working, who is waiting on them, who disagreed, and what it cost | The timed tasks in Phase 2 and Phase 4 beat `team-log.mjs render` |
+| G6 | The review station costs less per item than the Phase 0 baseline, with no planted defect lost | Cost per reviewed item against the baseline; zero refuted plants |
 
 | ID | Out of scope |
 |---|---|
-| N1 | A hosted service, an account, or network egress for telemetry. Everything stays on the machine. |
-| N2 | A terminal multiplexer. herdr is the host; Summon writes an adapter and a plugin and never forks it. |
+| N1 | A hosted service, an account, push notifications, or network egress for telemetry. Everything stays on the machine. |
+| N2 | A terminal multiplexer. herdr is the host; Summon writes an adapter and never forks it. |
 | N3 | A supervisor or control plane. ADR-0012's rejection stands, and so does its tamper-boundary clause: nothing here is tamper-proof, and the human reviewing the PR remains the integration authority. |
-| N4 | Views that feed model context or take actions. The world is read-only in this PRD, and the skin never enters a prompt (ADR-0015). |
-| N5 | Claims that multi-model casting improves quality. That is a hypothesis with a null allowed, and benchmark claims stay with ADR-0005. |
+| N4 | Views that feed model context or take actions. Renderers are read-only, apart from the human's acknowledgement in D-4, and the skin never enters a prompt (ADR-0015). |
+| N5 | Claims that multi-model casting improves quality. H1 is a hypothesis with a null allowed, and benchmark claims stay with ADR-0005. |
 | N6 | Replacing v3. Every part extends ADR-0015's layers, log, line, and work order. |
+| N7 | Throughput views, sound, and a Summon plugin for herdr. All three were cut in review. |
 
 ## Who this is for
 
-The README's audience does not change: a solo developer or a two-to-three-person team who will answer for the code later. Summon Live adds a reason for that person to run longer, unattended work orders, and the jobs below are the ones it serves.
+The README's audience does not change: a solo developer or a two-to-three-person team who will answer for the code later. Summon Live gives that person a reason to run longer, unattended work orders and a way to trust what comes back.
 
 | Job | Today on v3 | With Summon Live |
 |---|---|---|
-| Run a work order overnight and know in the morning what happened | Read `.summon/team-log.jsonl`, run `team:dissent` and `team:watch` | Scrub a replay; every event shows who wrote it |
-| Notice the moment the review formation goes quiet | Remember to run `pnpm team:dissent` | *Echo* status on the formation, and the party bar turns it red |
-| Upgrade the model under the team | Edit nothing and hope, since everything inherits | Run an audition; promote the casting or keep the incumbent; the ledger records which model actually ran |
-| Get a second opinion from another vendor's model | Leave Summon | Cast one lens on a Codex pane under the same persona text (opt-in) |
-| Step in when a seat is stuck | Find the subagent transcript afterwards | Focus the seat's herdr pane and type |
+| Run a work order overnight and know in the morning what happened | Read `.summon/team-log.jsonl`, run `team:dissent` and `team:watch` | Scrub a replay; every verdict says whether it is corroborated |
+| Notice the moment the review formation goes quiet | Remember to run `pnpm team:dissent` | The order will not close on a unanimous, overlapping window until the human acknowledges it |
+| Upgrade the model under the team | Edit nothing and hope, since everything inherits | Run an audition, promote or keep the incumbent, and see which model each seat actually ran on |
+| See which seat is waiting on them | Find the subagent transcript afterwards | Read it in herdr's sidebar or on the party bar, in words |
 | Show a reviewer how a change was made | Link the tracking doc | Attach the replay to the PR |
 
 ## Principles
 
-**Identity is canon; casting is configuration; configuration is measured.** A persona's priors, dissent, voice, and tells live in its persona file and nowhere else. The model and effort behind a seat live in a fitted casting file, which expires on every model release and changes only through an audition. In the JRPG skin the model is equipment: Vik can change gear and is still Vik.
+**Identity is canon; casting is configuration; configuration is measured.** A persona's priors, dissent, voice, and tells live in its persona file. The model and effort behind a seat live in a fitted casting file that expires on every model release. A recast never edits a persona, and a persona edit for model fit is a deliberate, reviewed change (ADR-0015 already says "model fit is a persona edit"). In the JRPG skin the model is equipment: Vik can change gear and is still Vik.
 
-**Write the record from outside the model.** A seat's own events are testimony. Hooks, the dispatcher, the check runner, and herdr are witnesses. The log keeps both and labels them, and checks that need proof read only witnessed events.
+**Testimony, out-of-band events, and proof are three different things.** A seat's own events are testimony. Events written by a script or hook that the seat does not run are out-of-band. Neither is proof, because a seat that can write the log file can forge any line in it. Out-of-band events resist forgery only on installs where seats run their shell in Claude Code's sandbox and cannot edit the log, the wire, or settings; `doctor` reports whether that holds, and every ceremony says which mode it ran in.
 
-**Structure by dispatch, never by delegation.** Which seats run, on which items, in what order, is decided by `dispatch.mjs` from a work order. A coordinating model's appetite for subagents can then flip between releases without changing the team.
+**Structure by dispatch, never by delegation.** Which seats run, on which items, in what order, is decided by a script from a work order or a line. A coordinating model's appetite for subagents can then flip between releases without changing the team.
 
 **No silent recasting.** A casting names full model IDs. Aliases such as `opus` move when Anthropic ships, which is the same silent change that killed v2's tuning.
 
-**Every flashy thing answers a question the log cannot answer quickly.** Each renderer is specified with the question it exists for, and its earn-gate tests that question.
+**Fail closed on silence.** A full window of unanimous reviews with overlapping findings stops the order until a human acknowledges it. A badge nobody is awake to see is decoration.
 
-**Degrade loudly.** When a host, hook, or renderer is missing, the ceremony announces its mode at invocation, as ADR-0012 C already requires.
+**Plain words first, flavour second.** Every status says what is wrong in plain words; the JRPG name is the skin's decoration on top. Every renderer answers a stated question, and its gate times that question against the table renderer that already exists.
+
+**Degrade loudly.** When a host, hook, sandbox, or renderer is missing, the ceremony announces its mode at invocation, as ADR-0012 C already requires.
 
 ## Part 1: The wire
 
-The wire is one new writer, `scripts/wire.mjs` (zero dependencies, run as asynchronous command hooks), alongside the two outside-the-model writers v3 already has and the herdr host's state events. It answers the limit ADR-0015 names itself ("the log is partly written by the seats themselves") and issue #129.
+The wire is one new writer, `scripts/wire.mjs` (zero dependencies, run as asynchronous command hooks), alongside the outside-the-model writers v3 already has. It answers the limit ADR-0015 names itself ("the log is partly written by the seats themselves") and issue #129, with the honesty clause above attached.
 
 ### Who writes what
 
-Every ledger event gains a `by` field. Checks that need proof filter on it.
+Every new ledger event carries `by`. Lines written before this change read as `unattributed`, never as `seat`, because dispatch, the runner, and `ingest` wrote some of them.
 
-| `by` | Writer | Events | Outside the model |
+| `by` | Writer | Events | Kind |
 |---|---|---|---|
-| `dispatch` | `scripts/dispatch.mjs` | `spawn`, `claim` (already on v3) | yes |
-| `runner` | `scripts/run-checks.mjs` | `check` with tree-bound receipt (already on v3) | yes |
-| `wire` | `scripts/wire.mjs` from harness hooks | `start`, `exit`, `cast`, `block`, `unblock`, `compact` (new) | yes |
-| `host` | the herdr host adapter | `start`, `exit`, `block`, `unblock` from pane state (new) | yes |
-| `seat` | the seat, through its composed Log section | `claim`, `finding`, `verdict`, `return` | no |
+| `dispatch` | `scripts/dispatch.mjs` | `spawn`, `claim` (the dispatcher claims before it prompts, so `claim` has one writer) | out-of-band |
+| `runner` | `scripts/run-checks.mjs` | `check` with a tree-bound receipt | out-of-band |
+| `wire` | `scripts/wire.mjs` from harness hooks | `start`, `stop`, `cast`, `block`, `unblock`, `compact` (new) | out-of-band |
+| `host` | the herdr host | pane state from herdr's screen detection (new) | out-of-band, excluded from corroboration because herdr reads it off the screen and any socket client can overwrite it |
+| `ingest` | `scripts/review-wave.mjs ingest` | `finding`, `verdict`, `return` relayed from a workflow's return | testimony, because the content is a model's |
+| `audition` | `scripts/audition.mjs` (new) | `audition` | out-of-band |
+| `seat` | the seat, through the `append` CLI | `finding`, `verdict`, `return` | testimony; the seat-facing CLI stamps `seat` and refuses any other value |
+| `coordinator` | the main session | `ack`, notes | testimony, under a reserved seat name |
 
-An event written by a seat is *testimony*. An event written by anything else is *witnessed*. A verdict is witnessed when the same instance has a witnessed `start` before it and a witnessed `exit` after it.
+### Corroboration
 
-### Two streams
+A verdict is *corroborated* when out-of-band `start` and `stop` events for the same instance, item, and lens bracket it. A station's `return` is corroborated the same way, keyed on instance, item, and station. "Who wrote the line" never decides it.
+
+That needs one change to v3. Today `review-wave.workflow.mjs` spawns every lens without an `agentType`, so `SubagentStart` cannot name the lens. The composer emits one agent type per formation lens and one for the skeptic chorus, and the workflow passes it, so every `start` and `stop` names its lens. A long-lived session that handles several items brackets all of them, so corroboration is per turn (claim to return), never per session.
+
+### The hook set
+
+Every wire hook is `async: true` and is wired as `node <absolute path> >/dev/null 2>&1`. The script carries its own two-second exit timer, because Claude Code enforces no timeout on async hooks. It never prints anything and never emits JSON, because `SessionStart` and `PostModelSwitch` stdout reaches the model as context. It opens the log with `O_NOFOLLOW` and refuses anything that is not a regular file, so a planted FIFO or symlink cannot hang it or redirect it.
+
+| Claude Code event | Stream | Becomes | Note |
+|---|---|---|---|
+| `SessionStart` | ledger | `start`, `cast` | `cast` records the model the session reports; the status-line payload's `model.id` is the fallback source |
+| `SubagentStart` / `SubagentStop` | ledger | `start` / `stop` | `agent_type` names the composed seat or lens |
+| `SessionEnd`, `Stop`, `StopFailure` | ledger | `stop` | carries `ok: false` on `StopFailure` |
+| `PermissionRequest`, `Notification` | ledger | `block` | the human is now the bottleneck |
+| `PreCompact` | ledger | `compact` | context pressure inside one seat |
+| `PreModelSwitch` / `PostModelSwitch` | ledger | `cast` | a mid-session recast is still a recast |
+| `PreToolUse` / `PostToolUse` / `PostToolUseFailure` | telemetry | `tool` | tool name, duration, exit status, and the redacted fields below |
+| `WorktreeCreate` / `WorktreeRemove` | telemetry | `worktree` | joins harness worktrees to dispatcher worktrees |
+
+Item and instance attribution comes from environment variables the dispatcher sets on each seat it starts (`SUMMON_SEAT`, `SUMMON_INSTANCE`, `SUMMON_ITEM`, `SUMMON_STATION`, `SUMMON_LOG`). Under the Workflow host those are not per agent, so the wire attributes by `agent_type` and the dispatcher's claim, and says so in the event.
+
+### Where the wire's code lives
+
+A hook runs outside the sandbox with the session's environment, and `scripts/wire.mjs` in a seat's worktree is a file a coder seat can edit, so its next tool call would run the edited code. The wire therefore runs from a pinned path outside every worktree: installed as a Claude Code plugin, or passed by the dispatcher on the command line with `--settings`, which outranks project and local settings. It is never wired from a project or local settings file. That gives up ADR-0014's preference for wiring that review can see in a tracked file, so the visibility moves to the record instead: the work order and `.summon/manifest.json` carry the wire's version and content hash, and `doctor` reports what is wired, from where, and whether the hash matches.
+
+Three more guards keep seats away from their own instruments. During a work order a `ConfigChange` hook refuses edits to project and local settings; it is a blocking hook, so every ADR-0012 condition on blocking hooks applies to it. Seats never run with `bypassPermissions`. And `check --line` fails any work-order diff that touches `.claude/**`, the wire, `team/harness/`, `team/hosts/`, or `team/casting/`.
+
+One consequence reaches past Summon. Claude Code trusts the folder in `claude -p` and SDK runs, so any project hook runs in any CI job that calls `claude -p` on a PR checkout, with that job's secrets. Scaffolded projects get a line in their runbook to pass `--settings '{"disableAllHooks": true}'` for CI runs on untrusted checkouts.
+
+### Two streams and one resolver
 
 The v3 ledger stays what it is: low volume, schema-validated, git-tracked so CI can read it. Tool-level events go to a second stream that is never committed.
 
 | Stream | Path | Holds | Tracked | Read by |
 |---|---|---|---|---|
-| Ledger | `.summon/team-log.jsonl` (v3) | Semantic events in `team/events.json`, plus `start`, `exit`, `cast`, `block`, `unblock`, `compact` | yes | checks, renderers |
+| Ledger | `.summon/team-log.jsonl` (v3) | Semantic events in `team/events.json`, plus `start`, `stop`, `cast`, `block`, `unblock`, `compact`, `audition`, `ack` | yes | checks, renderers |
 | Telemetry | `.summon/telemetry/<date>.jsonl` | Tool calls, durations, pane states, token and cost samples | no (gitignored, rotated after 14 days) | renderers only |
 
-### The hook set
-
-All hooks are `async: true`, carry a timeout of five seconds or less, always exit 0, and never write to stdout, so none of them can block or steer a seat.
-
-| Claude Code event | Stream | Becomes | Note |
-|---|---|---|---|
-| `SessionStart` | ledger | `start`, `cast` | `cast` records the model the session reports at start, which may differ from what the casting asked for; the status-line payload's `model.id` is the fallback source |
-| `SubagentStart` / `SubagentStop` | ledger | `start` / `exit` | `agent_type` names the composed seat; this is the subagent and Workflow host |
-| `SessionEnd`, `Stop`, `StopFailure` | ledger | `exit` | carries `ok: false` on `StopFailure` |
-| `PermissionRequest`, `Notification` | ledger | `block` | the human is now the bottleneck |
-| `PreCompact` | ledger | `compact` | context pressure inside one seat |
-| `PreModelSwitch` / `PostModelSwitch` | ledger | `cast` | a mid-session recast is still a recast |
-| `PreToolUse` / `PostToolUse` / `PostToolUseFailure` | telemetry | `tool` | tool name, duration, relative path for file tools, first word of a Bash command, exit status |
-| `WorktreeCreate` / `WorktreeRemove` | telemetry | `worktree` | joins harness worktrees to dispatcher worktrees |
-
-Item and instance attribution comes from environment variables the dispatcher sets on each seat (`SUMMON_SEAT`, `SUMMON_INSTANCE`, `SUMMON_ITEM`, `SUMMON_STATION`, `SUMMON_LOG`). Under the Workflow host those variables are not per-agent, so the wire attributes by `agent_type` and the dispatcher's claim instead, and says so in the event.
-
-### Where the log lives
-
-The first-runs report found that a worktree carries its own copy of the tracked log. The wire writes to one log only: the absolute path in `SUMMON_LOG` when the dispatcher set it, and otherwise the `.summon/` directory of the checkout that owns the repository's shared git directory (`git rev-parse --git-common-dir`), which resolves to the main checkout from every worktree. Each event is one line written by one `O_APPEND` write call, which does not interleave with another writer's line on a local filesystem; network filesystems are out of scope, and W-5 tests the claim under load.
+Every writer resolves the log through one function in `team-log.mjs`: `SUMMON_LOG` when the dispatcher set it, otherwise the `.summon/` directory of the checkout that owns the repository's shared git directory (`git rev-parse --git-common-dir`), which is the main checkout from every worktree. Today dispatch, `ingest`, the runner, and the seats' Log section each resolve it from their working directory, which is how the first-runs report found a worktree writing to its own copy. Each event is one line written by one `O_APPEND` write call, which does not interleave with another writer's line on a local filesystem; network filesystems are out of scope.
 
 ### Tokens and cost
 
-Hooks carry no token counts, so cost comes from two places Claude Code already provides. The party bar's status script (Part 4) receives `cost.total_cost_usd` and the context-window figures for its session, and `subagentStatusLine` receives a `tokenCount` per running subagent; the script appends a sample to the telemetry stream when the numbers change, which costs nothing extra because Claude Code runs it anyway. When the human enables Claude Code's OpenTelemetry export, `claude_code.cost.usage` and `claude_code.token.usage` with `model` and `agent.name` are the better source (W-8). Cost per item and per seat, the audition's cost probe, and the *Doom* status all read these samples, and every report states which source it used.
+Hooks carry no token counts. The party bar's status script (Part 4) receives `cost.total_cost_usd` and context-window figures for its session, and `subagentStatusLine` receives a `tokenCount` per running subagent; the script appends a sample to the telemetry stream when the numbers change, which costs nothing extra because Claude Code runs it anyway. OpenTelemetry is optional and stays local (W-8). Every cost report says which source it used.
 
 ### Redaction
 
-The telemetry stream never stores tool output, file contents, environment variables, prompts, or full shell commands. It stores tool names, durations, exit codes, paths relative to the worktree, and the first word of a Bash command (`git`, `pnpm`). `SUMMON_WIRE_DETAIL=1` keeps full commands in the telemetry stream for local debugging; it is off by default and the stream is never committed either way. The ledger events the wire writes carry no tool input at all, so the tracked file cannot leak a secret that passed through a tool.
+Secrets reach the log by two routes, and both are closed at append time. The telemetry stream never stores tool output, file contents, environment variables, prompts, or full shell commands. For a Bash call it stores the basename of the first token that is not a variable assignment, checked against an allowlist (`git`, `pnpm`, `node`, and so on), so `GITHUB_TOKEN=ghp_… curl …` is stored as `curl`; anything off the list is stored as `other`. Paths are relative to the worktree, never absolute, so usernames stay out. Testimony is the second route: a security finding can quote the secret it found, so every writer, the seat-facing CLI included, scrubs known credential formats and high-entropy strings before append. `SUMMON_WIRE_DETAIL=1` keeps full commands in the untracked telemetry stream for local debugging and is never read by an export.
 
 ### Requirements
 
 | ID | Requirement | Priority | Acceptance |
 |---|---|---|---|
-| W-1 | Every ledger event carries `by`; v3 events gain it by writer | P0 | `team-log.mjs append` refuses an event without `by`; existing writers set it; old lines read as `by: seat` |
-| W-2 | `scripts/wire.mjs` maps the hook set above, zero dependencies | P0 | Recorded hook payload fixtures replay into the expected ledger and telemetry lines |
-| W-3 | Hooks are async, fail-open, silent, and time-bounded | P0 | A wire that throws, hangs, or finds no log leaves the seat's behaviour byte-identical in a fixture session |
-| W-4 | `team-log.mjs witness --item <id>` reports every testimony event lacking a witnessed start and exit | P0 | A fixture of #129 (verdicts with no spawned seat) is reported as an unwitnessed review |
-| W-5 | One log across worktrees via `SUMMON_LOG` | P0 | Three stations in three worktrees write one ledger with no lost lines under concurrent appends |
-| W-6 | Redaction as specified; detail mode opt-in | P0 | A fixture containing a bearer token in a `curl` command produces no token in either stream |
-| W-7 | Hook wiring lives in tracked `.claude/settings.json` or a Summon plugin, never `settings.local.json` | P0 | `doctor` reports where the wire is wired and refuses to report it present from an untracked file |
-| W-8 | Optional OTLP/HTTP JSON receiver in the world server for cost and token data | P2 | With `CLAUDE_CODE_ENABLE_TELEMETRY=1` and `OTEL_LOG_TOOL_DETAILS=1`, cost per seat appears in telemetry |
+| W-1 | `by` on every new event; old lines read as `unattributed`; the seat-facing CLI stamps `seat` and refuses other values | P0 | `append` without `by` from an out-of-band writer fails; the seat CLI given `by: wire` fails; check-canon's historical-line validation still passes |
+| W-2 | `scripts/wire.mjs` maps the hook set, zero dependencies | P0 | Recorded hook payload fixtures replay into the expected ledger and telemetry lines |
+| W-3 | The hook contract: async, exit 0, empty stdout and stderr, ends within two seconds by its own timer, refuses a FIFO or symlink log | P0 | Contract tests for each clause, plus a fixture in which the wire tries to emit `additionalContext` and nothing reaches the model |
+| W-4 | `team-log.mjs corroborate --item <id>` reports every verdict and return without bracketing out-of-band events for the same key | P0 | Two fixtures: four verdicts with three lens starts, which must name the missing lens; and a review pane that starts, skips the wave, writes five verdicts, and stops, which must report five uncorroborated verdicts |
+| W-5 | One resolver for the log across every writer and worktree | P0 | Three stations in three worktrees write one ledger with no lost lines under concurrent appends |
+| W-6 | Redaction at append for every writer | P0 | Fixtures: a bearer token in a `curl` command, a `GITHUB_TOKEN=` prefix, an absolute home path, and a secret quoted in a finding summary; none survive in either stream |
+| W-7 | The wire runs from a pinned, hashed path outside every worktree | P0 | `doctor` reports the wire's source, version, and hash, and refuses to report it present from a project or local settings file |
+| W-8 | Optional local OTLP/HTTP receiver for cost and token data | P2 | It keeps an allowlist of fields and never stores tool arguments, even when `OTEL_LOG_TOOL_DETAILS=1` is set |
+| W-9 | Guards on the enforcement surface during work orders | P1 | A seat's settings edit is refused by `ConfigChange`; a seat cast with `bypassPermissions` is refused by `plan`; a diff touching `.claude/**` fails `check --line` |
 
 ## Part 2: Casting
 
 ### The default is one model
 
-Anthropic's own cost guidance says to measure the most capable model at a lower effort before building a multi-model cascade, because lower effort on the newest models often matches older models at high effort, and because prompt caches are per model, so a cascade gives up cache reuse. Summon Live takes that as the baseline. The default casting is **one model, effort by station**. Every multi-model casting has to beat it in an audition, and the audition report states the cache cost of switching.
+Anthropic's cost guidance says to measure the most capable model at a lower effort before building a multi-model cascade, because lower effort on the newest models often matches older models at high effort, and because prompt caches are per model, so a cascade gives up cache reuse. Summon Live takes that as the default: one model, effort set per station. The first phase that casts anything ships only that, with a cost target based on effort alone. Multi-model castings, model escalation, and cross-vendor seats wait for H1, because H1 decides whether they should exist at all.
 
 ### The casting file
 
-`team/casting/<name>.json` is fitted (`"fitted": true`, with a `review` field like the harness adapter's) and is the only place a model ID may appear under `team/`. That widens ADR-0015's rule from one fitted file per harness to two kinds of fitted file, and reversal trigger 3 has to read accordingly: a model release that forces a change outside `team/harness/` and `team/casting/` means the seam failed.
+Casting lives in `team/casting/<name>.json`. It is fitted (`"fitted": true`, with a `review` field like the harness adapter's) and is one of a closed list of fitted locations (`team/harness/`, `team/hosts/`, `team/casting/`) that `docs/methodology/team-layers.md` names and check-canon enforces. A model ID may appear nowhere else under `team/`. The posture blocks, the skeptics' effort (hard-coded today as `effort: 'medium'` in `review-wave.workflow.mjs`), and the model used by judged checks move here too. Folding this list into ADR-0015 at its ratification saves a later ADR from amending it straight away, and ADR-0015's reversal trigger 3 then reads against the whole list.
 
 ```json
 {
-  "casting": "anthropic-2026-10",
+  "casting": "anthropic-2026-10-default",
   "fitted": true,
   "review": "Re-audition on any release of a model named here, and on any harness release that changes how model or effort is set.",
-  "auditioned": { "date": "2026-10-12", "report": "docs/history/tracking/2026-10-12-audition.md" },
+  "promoted": { "by": "human", "date": "2026-10-14", "audition": "docs/history/tracking/2026-10-14-audition.md" },
   "default": { "model": "claude-opus-5-5", "effort": "medium" },
-  "seats": {
-    "archie": { "*": { "model": "claude-opus-5-5", "effort": "high" } },
-    "tara":   { "red": { "model": "claude-sonnet-5-5", "effort": "high" } },
-    "sato":   { "green": { "model": "claude-sonnet-5-5", "effort": "medium",
-                           "escalate": { "after": "fail", "to": { "model": "claude-opus-5-5", "effort": "high" } } } },
-    "grace":  { "*": { "model": "claude-haiku-4-5" } }
+  "stations": {
+    "red":    { "effort": "high" },
+    "green":  { "effort": "medium", "escalate": { "after": "fail", "to": { "effort": "high" } } },
+    "review": { "effort": "high" },
+    "refute": { "effort": "low", "capPerLens": 6 }
   },
-  "formations": {
-    "review-party": {
-      "lenses": { "security": { "model": "claude-opus-5-5", "effort": "high" } },
-      "skeptic": { "model": "claude-sonnet-5-5", "effort": "low", "capPerLens": 6 }
-    }
-  }
+  "judge": { "model": "claude-opus-5-5", "effort": "low" },
+  "posture": { "claude-opus-5-5": "opus-5.md" }
 }
 ```
 
-The composer resolves a cast for every seat and station and emits it where the host can apply it: `model` and `effort` frontmatter for the subagent host, `opts.model` and `opts.effort` for the Workflow host, and launch flags for the herdr host. The values above are an illustration of shape, not a recommendation. The first real casting is whatever wins the first audition.
+The composer resolves a cast for every seat and station and emits it where the host can apply it: `model` and `effort` frontmatter for the subagent host, `opts.model` and `opts.effort` for the Workflow host, and a `launch` argument template in each harness adapter for the herdr host (Part 3). The values above illustrate the shape. The first real casting is whatever the human promotes after the first audition.
 
-### Auditions
+### Auditions block; the human promotes
 
-`pnpm team:audition --casting <file>` runs four probes and writes an `audition` event to the ledger with the result.
+`pnpm team:audition --casting <file>` runs four probes and writes an `audition` event. An audition can block a casting. It never promotes one; the human does, and the casting file records who and when.
 
 1. **Presence.** The review formation runs the v3 negative-control fixture under the candidate. Every lens must find its planted defect, and the skeptic stage must refute none of them. A skeptic that talks a lens out of a real defect hides a bug, and that asymmetry is why this is a hard floor.
-2. **Recall on replays.** A small set of past items whose real defects are known (from the ledger: findings that led to a fix commit) runs again. The candidate's recall of known findings is compared with the incumbent's.
-3. **Voice.** Each persona's tells are probed on its outputs (below).
-4. **Cost and time.** Tokens, list-price cost, and wall time per item, from the wire.
+2. **Recall on replays.** A replay set of past items with known defects runs again. The set is seeded from fix commits and from defects the incumbent missed, so a challenger that finds different defects can win; a set built only from the incumbent's hits would score every difference as a regression. The block rule: no defect the incumbent caught may be lost. Union recall is reported beside it.
+3. **Voice.** Each persona's probes run on station prompts that say nothing about format (below).
+4. **Cost and time.** Tokens, list-price cost, and wall time per item.
 
-A casting is promoted only when presence is complete, recall is no worse than the incumbent's by more than a stated tolerance, and every persona keeps its voice. Cost is reported, not gated. Auditions spend real money and run only when the human asks or opts into a schedule. With a handful of items they are a smoke test, and ADR-0005's benchmark stays the only place a quality claim can come from.
+These are smoke tests, and the PRD says so plainly. A clean presence run covers about twenty findings on planted defects, which by the rule of three only bounds the skeptics' refutation rate below about 15 percent. The number of replay items is pre-registered before the first audition, and every quality claim stays with ADR-0005's benchmark and its statistics.
 
 ### The review formation
 
-The first run's 45 agents were 5 lenses and 40 skeptics. If the skeptics' share of tokens tracks their share of agents (unmeasured; the report gives only the 2.3M total), casting them on Sonnet 5.5 cuts the wave's bill by roughly 40 to 45 percent at list price before any effort change, and Haiku 4.5 by roughly two thirds. That is arithmetic on assumptions, and the audition measures the real number. The skeptic cap per lens, which the report recommended, is logged when it drops a finding so the cap is never silent.
+The first run's 45 agents were 5 lenses and 40 skeptics. The default casting lowers the skeptics' effort, and the audition measures what that saves; the draft's arithmetic about casting skeptics on a cheaper model is withdrawn until H1 says whether a second model belongs in the formation at all. The skeptic cap per lens, which the first-runs report recommended, is logged whenever it drops a finding, so the cap is never silent.
 
-Two cheaper changes come before any mixed-model experiment, both from the research above. The review station's prompt carries the item's spec and the diff and nothing that frames the change: never the coder's own summary of what it did, never PR titles or descriptions (C-11). v3's `review-wave.mjs prepare` already builds lens prompts from the diff alone; this makes that a tested rule that the herdr host's hand-off files must follow too. And a veto backed by a witnessed check, such as a failing test the runner executed, is recorded as stronger than a veto backed by prose, which is the lesson of the unanimous padding oracle.
+Two cheaper changes come first, both from the research above. The review station's prompt carries the item's spec and the diff and nothing that frames the change: never the coder's own summary of what it did, never PR titles or descriptions (C-11). v3's `review-wave.mjs prepare` already builds lens prompts from the diff alone; this makes that a tested rule. And a veto backed by an out-of-band check, such as a failing test the runner executed, is recorded as stronger than a veto backed by prose, which is the lesson of the unanimous padding oracle.
 
-Mixed-model lenses are the more interesting question. Lenses on the same base model share blind spots, so their agreement is weaker evidence than it looks, and the correlation findings above suggest that more lenses on one model buy less independence than the count implies. Summon Live tests this as hypothesis **H1**: at equal cost, a review formation whose lenses run on different model families has lower finding overlap and higher union recall on the control and the replay set than a single-family formation. The experiment is pre-registered in ADR-0005's style, and a null result is published like any other. The same papers temper the hope: larger models correlate across providers too, so H1 may well come back null, and the default casting does not wait on it.
+Mixed-model lenses are the open question. Lenses on the same base model share blind spots, so their agreement is weaker evidence than it looks. Summon Live tests this as hypothesis **H1**: at equal cost, a review formation whose lenses run on different models has lower finding overlap and higher union recall on the control and the replay set than a single-model formation. H1 runs in two arms. Arm A uses Anthropic's own models and sends no code anywhere new. Arm B, with a second vendor, runs only after arm A reports, and only through the separate cross-vendor decision in Part 3. Both are pre-registered in ADR-0005's style, and a null result is published like any other. The correlation papers above suggest arm A may well come back null, and the default casting does not wait on it.
 
 ### Escalation
 
-A station may name an `escalate` cast and a trigger (`after: "fail"` when the station returns `ok: false`, or `after: "veto"` when the review vetoes twice). The dispatcher re-runs the station once on the escalated cast and writes a `cast` event with the reason. Cost is judged per completed item, never per request, so an escalation that finishes the item counts as cheaper than two cheap failures.
+A station may name an `escalate` cast and a trigger (`after: "fail"` when the station returns `ok: false`, or `after: "veto"` when the review vetoes twice). Under the default casting, escalation raises effort; it switches model only in a casting that H1 has justified. The dispatcher re-runs the station once and writes a `cast` event with the reason. Cost is judged per completed item, so an escalation that finishes the item counts as cheaper than two cheap failures, and escalation never runs past the item's token budget (C-10).
 
-### Posture profiles
+### Posture, and the gate as a line
 
-For the conversational coordinator, the part of Summon that is still a model choosing whether to delegate, `team/posture/<family>.md` holds a short fitted block per model family drawn from that family's prompting guide (cap spawns and keep verification in the main loop on the Opus 5 line; delegate asynchronously with fresh-context verifiers on the Fable line). The composer picks the block by the coordinator's cast model. This is where ADR-0015's `delegation: null` gets a value. On every model release the posture files are run through the `prompt-audit` procedure in Claude Code's bundled `claude-api` skill, which audits agent configuration files for instructions a new model no longer needs. Work orders do not read posture at all.
+For the conversational coordinator, the part of Summon that is still a model choosing whether to delegate, `team/casting/` holds a short posture block per model family, drawn from that family's prompting guide (cap spawns and keep verification in the main loop on the Opus 5 line; delegate asynchronously with fresh-context verifiers on the Fable line). The coordinator is not a composed seat, so the composer emits the block as a generated output style rather than as text in `CLAUDE.md`, where a generated block is exactly the drift ADR-0015's trigger 4 watches for. This gives ADR-0015's `delegation: null` a value. On every model release the posture blocks go through the `prompt-audit` procedure in Claude Code's bundled `claude-api` skill.
 
-### Voices survive recasting
+Posture still leaves the README's own pitch, the Architecture Gate, resting on a model's willingness to call Wei. So the gate becomes a line (C-12): Archie authors, Wei challenges on a distinct instance, Archie responds, and the human approves, with the stations, order, and separation checked over the log like the `tdd` line. ADR-0012 C already sequences an architecture-gate workflow after the review wave earns its keep; this is that workflow, expressed as a line.
 
-The deprecation post noted that the voices flattened first, before anyone noticed the review had stopped working. That makes voice the cheapest early warning there is. Each v3 persona already lists its *Tells*, and several are mechanical: Wei numbers challenges and grades each one blocking, amend, or note; Pierrot attaches a time-to-exploit or a blast radius to every finding; Vik counts things and ends a finding with a choice. `team/voice/<persona>.json` turns the mechanical tells into probes (graded deterministic) and leaves the rest to a judged check (graded inferential, run by a cheap model, never the seat's own). An audition fails a casting that loses a persona's voice, and the world shows a *Muted* badge on a seat whose recent outputs show none of its tells.
+### Voices survive recasting, or the edit is deliberate
 
-### Requirements
+The deprecation post noted that the voices flattened first, before anyone noticed the review had stopped working, which makes voice a cheap early warning. Each v3 persona lists its *Tells*, and several are mechanical: Wei numbers challenges and grades each one blocking, amend, or note; Pierrot attaches a time-to-exploit or a blast radius to every finding; Vik counts things and ends a finding with a choice.
 
-| ID | Requirement | Priority | Acceptance |
-|---|---|---|---|
-| C-1 | Casting file schema, fitted, full model IDs only | P0 | The composer refuses an alias and names the ID it resolves to today |
-| C-2 | Composer emits casts per host (frontmatter, Workflow opts, herdr flags) | P0 | Composing the same party on three hosts yields the same cast per seat and station |
-| C-3 | `cast` events from the wire record the model that actually ran | P0 | A session whose model differs from its cast produces a *Stale gear* status and a doctor warning |
-| C-4 | Auditions with the four probes and the promotion rule | P1 | A casting whose skeptics refute a planted defect is refused promotion |
-| C-5 | Skeptic cast and cap, logged when they drop work | P1 | The cap drops are visible in the ledger and on the battle screen |
-| C-6 | Escalation ladder in the dispatcher | P1 | A fixture item that fails green once escalates exactly once and logs why |
-| C-7 | Posture profiles per model family | P2 | Changing the coordinator's cast swaps the block; no other file changes |
-| C-8 | Voice probes and the *Muted* badge | P1 | Each persona has at least one mechanical tell probe with a fixture that passes and one that fails |
-| C-9 | H1 experiment, pre-registered | P2 | The registration exists before the first mixed-model run |
-| C-10 | Work orders take an optional token budget per item; escalation never runs past it | P1 | A fixture item at its budget is reported as stopped on budget, with no escalation started |
-| C-11 | Blind review: lens prompts carry the spec and the diff, never the coder's summary or PR metadata | P0 | A fixture whose hand-off file claims "no security impact" produces lens prompts that do not contain the claim |
+Each persona's frontmatter carries its probes: the mechanical tells as patterns (graded deterministic) and the rest as a judged check (graded inferential, run on the casting's `judge` model, never the seat's own). The probes run on station prompts that say nothing about format, because a brief that asks for numbered, graded findings gets them from any model, persona or not. And each probe runs twice, with and without the persona attached (the composer already supports both), so the probe measures what the persona adds; when the two outputs become indistinguishable, the persona has gone flat. That comparison is also the measurement ADR-0012 F's revisit trigger has been waiting for.
 
-## Part 3: The herdr host
-
-### Why a host at all
-
-Casting and the wire do not need herdr. Both run on the v3 Workflow host and on plain subagents, and they come first in the phasing for that reason. A host earns its place with four things the subagent path cannot give.
-
-- **Seats as sessions.** Each seat instance is its own top-level session started with its composed seat as the main thread (`claude --agent <seat>`), on its cast model and effort. Subagent caps, nesting depth, and the session-level instruction about invoking agents stop applying, and the agent registry is read at that seat's own start, which removes the first-runs failure where a composed seat staged mid-session was never seen.
-- **Long-lived seats.** A seat instance can hold its context across items, which is the asynchronous, long-lived delegation Anthropic recommends for Fable 5.1 and which saves cache reads.
-- **The human can step in.** Every seat is a real terminal. The human can watch a seat, answer its permission prompt, or type into it, and herdr's blocked state is a witness the wire does not have to infer.
-- **Other vendors' agents.** herdr hosts Codex, OpenCode, Cursor, and others beside Claude Code, which is what makes a cross-vendor lens possible without leaving the team.
-
-### How a work order runs
-
-The dispatcher stays the only thing that drives herdr. The commands below are herdr v0.9.3's; the host adapter pins them and `doctor` probes the version (0.7.5 is the floor for the agent commands).
-
-1. **Plan.** `dispatch.mjs plan` is unchanged from v3: one instance per station per item, `distinct-instance` satisfied by construction.
-2. **Open.** `dispatch.mjs open --host herdr` creates one git worktree per instance, as v3 does, and runs every seat with harness isolation off, which leaves exactly one worktree per seat and removes the first-runs mismatch between the dispatcher's worktrees and the harness's. It creates one herdr workspace per order (`workspace create --label <order> --no-focus`) and one pane per instance (`pane split ... --cwd <worktree> --env SUMMON_SEAT=... --env SUMMON_INSTANCE=... --env SUMMON_ITEM=... --env SUMMON_LOG=<absolute path> --no-focus`), or the whole wall in one `layout.apply` call. It writes `spawn` events as it does today.
-3. **Start.** `herdr agent start tara-1 --kind claude --pane <id> -- --agent tara --model claude-sonnet-5-5 --effort high` starts the composed seat as the session's main thread on its cast, with the tool allowlist and permission mode the composer already emits for that seat. herdr agent names allow lower-case letters, digits, `-`, and `_`, so instance `tara#1` is named `tara-1`. The dispatcher then labels the pane without touching herdr's detection: `pane report-metadata <id> --source summon --display-agent "Tara#1 · red" --token persona=tara --token station=red --token item=42 --token cast=sonnet-5.5/high`. The wire's `SessionStart` hook writes the witnessed `start` and `cast`.
-4. **Run a station.** `herdr agent prompt tara-1 "<station prompt>" --wait --until idle --until done --until blocked --timeout <budget>`. Long hand-offs travel as files under the main checkout's `.summon/handoff/`, which is herdr's own advice for output too long to read back from a pane.
-5. **Blocked.** When the wait returns `blocked`, the dispatcher writes `block` (by `host`), raises one notification (`notification show`), and waits for the human (`agent wait --until idle --until done`). It never answers a dialog itself; herdr's own agent skill gives the same rule.
-6. **Settle.** On `idle` or `done` the dispatcher reads the ledger, never the screen. A station is complete only with the seat's `return` for that item and a witnessed `exit` or idle after it. A seat that went idle without a `return` is an unwitnessed failure.
-7. **Next item.** A long-lived instance gets the next item's prompt in the same pane and keeps its context. Otherwise the dispatcher exits the agent and closes only the panes it created.
-
-Two herdr behaviours shape this. Subagents inside one Claude Code process are invisible to herdr, which sees processes per pane, so on this host every seat instance is its own process. And `pane report-agent` would take lifecycle authority away from herdr's screen detection for Claude Code, so Summon only ever uses `report-metadata`.
-
-The review formation is the exception to one pane per seat. Forty skeptic panes would bury the wall, so the review station runs as one pane whose session runs v3's review-wave workflow, with its lenses and skeptics as subagents inside it. herdr sees one pane; the wire still sees every lens and skeptic through `SubagentStart` and `SubagentStop`, so the battle renderer and the witness check lose nothing.
-
-### Cross-vendor seats
-
-A seat may be cast on a non-Claude harness in a herdr pane. The role and persona files are plain Markdown already; the `skills` adapter emits the role, and a new `agents-md` adapter emits role plus persona as the `AGENTS.md` that most other harnesses read. Wei on another vendor's model is still Wei, because identity lives in the persona file and the skin, and the model is the gear. Cross-vendor seats are off by default, and enabling one is a recorded human decision per project, because it sends the project's code to a second vendor. Their witnessing is weaker: where the other harness has no hooks, only herdr's pane state witnesses them, and the ledger marks that.
-
-### The Summon herdr plugin
-
-herdr's plugin v1 is a directory with a `herdr-plugin.toml` manifest and commands in any language, run out of process with the whole herdr CLI as their API and no sandbox. It has no sidebar widgets, border badges, per-pane colours, or graphics (a pane graphics API was removed in v0.9.2). What it does have is enough:
-
-- An `[[events]]` hook on `pane.agent_status_changed` runs `node scripts/wire.mjs herdr`, which reads `HERDR_PLUGIN_EVENT_JSON` and writes `block`, `unblock`, and telemetry state for panes that carry a `persona` token, and does nothing for any other pane. herdr plugins are installed per user and see every workspace, so the no-op path matters.
-- `[[actions]]` for opening the Guild Hall, exporting the current order's replay, and showing a seat's card in a popup pane (the v3 table renderer, filtered to one instance).
-- Sidebar rows built from the tokens the dispatcher sets (`$persona`, `$station`, `$item`, `$cast`, `$verdict`), with a suggested `[ui.sidebar.agents]` snippet and styling rules the user pastes into their own config. Colour stays the user's choice, which is how herdr wants it.
-
-The plugin is a first-party subdirectory of this repo, installed pinned to a release (`herdr plugin install summon-dev/summon/<subdir> --ref <tag>`), zero-dependency, and small enough to read in one sitting, because herdr runs it unsandboxed with full control of every pane.
-
-### Fallback hosts
-
-The host is chosen per work order, and the ceremony announces it. With herdr absent, the order runs on the v3 Workflow host, which the human must opt into per ADR-0012 C, and after that on prose subagents. Claude Code's experimental agent teams are a candidate fourth host: teammates can use custom subagent definitions and run in tmux panes, but they are Claude-only, the lead coordinates them by conversation rather than by plan, and several frontmatter fields (`skills`, `hooks`, `permissionMode`) do not apply to teammates. It stays a candidate until the experiment flag is gone.
+Tells are a floor and cannot judge substance; a seat can keep its tic and lose its point. Content divergence (D-1) and presence are what catch that, which is why the voice probe never gates alone. If no candidate casting keeps a persona's voice on a new model, the persona gets a reviewed edit for that model (ADR-0015's "model fit is a persona edit"). It is never a silent change, and it never blocks moving off a model that is being retired.
 
 ### Requirements
 
 | ID | Requirement | Priority | Acceptance |
 |---|---|---|---|
-| H-1 | Host adapter `team/harness/herdr.json`, fitted, version-pinned | P1 | `doctor` probes the herdr version and the socket, and reports the host as unavailable rather than failing |
-| H-2 | `dispatch.mjs open --host herdr` starts one pane per instance with the cast, the worktree, and the `SUMMON_*` environment | P1 | The v3 `first-run` order runs end to end with zero line violations and every station witnessed |
-| H-3 | Station prompts delivered at launch; completion read from the ledger and pane state | P1 | A seat that exits without a `return` is reported as an unwitnessed failure, never as a pass |
-| H-4 | No seat may drive herdr | P0 | Every composed seat on this host denies the herdr binary; a `PreToolUse` hook refuses Bash commands naming the binary or `HERDR_SOCKET_PATH`; a fixture diff that tells a reviewer to prompt the coder's pane produces a refusal and a ledger finding, never a prompt |
-| H-5 | Long-lived instances across items | P2 | An instance that handles two items logs both claims and shows cache reads on the second |
-| H-6 | `agents-md` adapter and opt-in cross-vendor seats | P2 | A Codex pane holding one lens writes its findings through the same Log section and is marked host-witnessed |
-| H-7 | Summon herdr plugin | P2 | Pane display names come from the skin, sidebar rows read the dispatcher's tokens, and the plugin does nothing on panes without a `persona` token |
+| C-1 | Casting schema, fitted, full model IDs only, in the closed list of fitted locations | P0 | The composer refuses an alias and names the ID it resolves to today; check-canon refuses a model ID outside the list |
+| C-2 | The composer emits casts per host | P0 | Composing the same party for the subagent and Workflow hosts yields the same cast per seat and station |
+| C-3 | `cast` events record the model that actually ran | P0 | One definition of *Unaudited model*: a seat ran on a model ID that no promoted casting names for that seat and station; it raises the status and a `doctor` warning |
+| C-4 | Auditions with four probes; they block, never promote | P0 | A casting whose skeptics refute a planted defect is blocked; a replay-set defect the incumbent caught and the candidate lost is blocked; nothing is ever promoted without a human `promoted` entry |
+| C-5 | Skeptic cast and cap, logged when they drop work | P1 | Every dropped finding appears in the ledger with the cap that dropped it |
+| C-6 | Escalation ladder in the dispatcher, effort first | P1 | A fixture item that fails green once escalates exactly once, logs why, and stops at its budget |
+| C-7 | Posture blocks under `team/casting/`, emitted as an output style | P1 | Changing the coordinator's cast swaps the block; no other file changes |
+| C-8 | Voice probes in persona frontmatter, format-neutral prompts, with and without the persona | P0 | Every seat an audition exercises has a probe with a passing and a failing fixture |
+| C-9 | H1 arm A, pre-registered; arm B only after A reports | P2 | The registration exists before the first mixed-model run |
+| C-10 | Work orders take an optional token budget per item | P1 | A fixture item at its budget is reported as stopped on budget, with no escalation started |
+| C-11 | Blind review: lens prompts carry the spec and the diff, never the coder's summary or PR metadata | P0 | A fixture whose hand-off file claims "no security impact" produces lens prompts without the claim |
+| C-12 | The Architecture Gate as a line | P1 | A gate order runs author, challenger, response, and approval in order on distinct instances, and `check --line gate` passes |
+
+## Part 3: herdr, in two steps
+
+### Why herdr at all
+
+Wei's challenge in review was that herdr does not earn a host's place: the subagent limits bite at the review station, which stays on subagents anyway, v3's Workflow host is already a script that no model has to choose to run, and ADR-0015's cutover fixes the registry failure. That is largely right, and it reshaped this part. What herdr gives that nothing else in the stack does is a terminal the human can see and step into, sessions that survive a closed laptop or a dropped SSH connection, and a sidebar that already knows when an agent is waiting on a person. The first step takes those benefits without giving any seat a new power. The second step, seats as sessions in panes, waits until a real work order needs it and the containment below is in place.
+
+### Step 1: herdr-aware (Phase 1)
+
+When a Summon session runs inside herdr (`HERDR_ENV=1`), the wire labels its own pane. Hooks already run outside the sandbox with herdr's environment, so this adds one socket write from code Summon pins, and nothing a seat can call:
+
+```
+herdr pane report-metadata "$HERDR_PANE_ID" --source summon \
+  --display-agent "Sato#1 · green · waiting on you" \
+  --token seat=sato --token item=42 --token cast=opus-5.5/medium
+```
+
+The state goes into the display name in words, so the sidebar says who is waiting without relying on colour. Summon only ever uses `report-metadata`, which leaves herdr's own screen detection in charge of the pane's lifecycle; `pane report-agent` would take that authority away. herdr raises a local desktop notification on `blocked` when its toast delivery is set to `system`, which needs no push service. Renderers never trust herdr's tokens for identity, because any socket client can set them; identity comes from the ledger.
+
+### Step 2: the herdr host (Phase 3, gated)
+
+**The need gate.** The host is built only after a real work order where the human needed to step into a running seat, needed a run to survive a disconnect, or saw the Workflow host fail in a way separate sessions would fix. The order and what went wrong are recorded in the tracking doc that opens the host ADR.
+
+**Containment comes first.** herdr's socket has no authentication beyond its `0600` file mode, and herdr exports `HERDR_SOCKET_PATH` and `HERDR_BIN_PATH` into every process it starts, with its own values winning. With the socket, a seat can press Enter on another seat's permission prompt with `agent send-keys` and so borrow its tools, read every pane, overwrite the pane state that the host reports, and install persistent plugin code. A seat does not need the herdr binary or the variable to do it: five lines of Node opening `~/.config/herdr/herdr.sock` are enough, so a string-matching hook cannot stop it. The host therefore requires all of the following before it runs a seat, and `doctor` refuses the host when any is missing:
+
+- Every seat runs its shell in Claude Code's sandbox, with herdr's socket left off `network.allowUnixSockets`. On Linux that needs the sandbox's optional seccomp filter, without which Unix sockets stay open.
+- `HERDR_*` variables are denied to sandboxed commands through `sandbox.credentials.envVars`, passed by the dispatcher in `--settings`, because Claude Code ignores credential entries in project and local settings by design.
+- Permission rules deny the edit tools on the ledger, the wire, herdr's configuration directory, and settings files, because file tools run outside the sandbox.
+- A test opens a raw socket connection from inside a seat, and it must fail.
+
+The `PreToolUse` hook that refuses commands naming herdr stays as a tripwire that logs an attempt. It is not a control and is not graded as one.
+
+**Host adapters.** A host is not a harness. `team/hosts/herdr.json` (fitted, version-pinned, `min_herdr_version` 0.7.5 for the agent commands) says how to start, prompt, wait on, label, and close a pane. Each harness adapter gains a `launch` argument template, because `--agent`, `--model`, and `--effort` are Claude Code's flags and a Codex pane needs Codex's. `dispatch.mjs plan` takes `--host`, `spawn` events carry `host`, and v3's single `isolation` field splits into the harness's isolation and the dispatcher's worktree policy. herdr itself falls under ADR-0010's release-age cooldown like any other dependency, and every `host` event records which version of herdr's detection rules judged the pane, because herdr updates them remotely.
+
+**One branch per item.** v3's `open` creates every instance's worktree at one detached head before any station runs, so the coder never sees the tester's commits; the line check passes anyway because it reads only claims. On the herdr host each item gets a branch. Each station commits its output and records the commit on its `return`, and at the next claim the dispatcher checks that commit out in the next station's worktree.
+
+**How a work order runs.**
+
+1. `dispatch.mjs plan --host herdr` assigns one instance per station per item, as v3 does, and refuses any seat cast with `bypassPermissions`.
+2. `open` creates the item branches and worktrees, one herdr workspace per order (`workspace create --label <order> --no-focus`), and one pane per instance (`pane split ... --cwd <worktree> --env SUMMON_SEAT=... --no-focus`). It writes `spawn` events and records the human's ADR-0012 C opt-in on the work order, since no human sits inside the review pane to give it.
+3. For each instance it runs `herdr agent start sato-1 --kind claude --pane <id> -- <launch argv>`, which expands to `--agent sato --model claude-opus-5-5 --effort medium --settings <containment JSON>`. herdr agent names allow lower-case letters, digits, `-`, and `_`, so instance `sato#1` is named `sato-1`.
+4. At each station the dispatcher claims, checks out the previous station's commit, and prompts: `herdr agent prompt sato-1 "<station prompt>" --wait --until idle --until done --until blocked --timeout <budget>`. Hand-offs travel as committed files, which is herdr's own advice for output too long to read back from a pane.
+5. On `blocked` it writes `block`, raises one local notification, and waits for the human (`agent wait --until idle --until done`). It never answers a dialog itself; herdr's own agent skill gives the same rule.
+6. On `idle` or `done` it reads the ledger, never the screen. A station is complete only with a corroborated `return`.
+7. A long-lived instance can take the next item's prompt in the same pane and keep its context; otherwise the dispatcher exits the agent and closes only the panes it created.
+
+The review formation stays inside one pane, whose session runs v3's review-wave workflow, because forty skeptic panes would bury the wall; the wire still sees every lens and skeptic through their own agent types.
+
+**One runner, not two.** The herdr loop above and v3's `line.workflow.mjs` must not become two implementations of the line. Both run over one host interface (start, prompt, wait, stop), and a parity test feeds the same plan to both and requires the same claims and returns. The dispatcher is not the supervisor ADR-0012 A rejected: it is a foreground command the human runs, it holds nothing the human's shell does not, it keeps no state outside the repository's log, it exits when the order ends, and it claims no tamper resistance.
+
+### Cross-vendor seats are a separate decision
+
+A seat held by another vendor's agent sends the project's code to that vendor, and Claude Code's hooks and sandbox do not exist in that agent's terminal. Cross-vendor seats are therefore split out of this PRD's host ADR into their own decision, taken only after H1's arm A reports, only with an equivalent sandbox for the other agent, and only as a recorded human decision per project. The persona would travel as the `AGENTS.md` that most other harnesses read, emitted by a new adapter. Identity lives in the persona file, never in the skin, which no model sees; whether the persona survived the other model is the voice probe's call.
+
+### What was cut
+
+The draft proposed a Summon plugin for herdr. It is cut. The CLI calls above cover labels and notifications, and a plugin runs unsandboxed with control of every pane for the sake of convenience. If it ever returns, it is pinned to a commit that `doctor` checks against what herdr reports, it has no `[[build]]` or `[[startup]]` entries, it is never installed from a live checkout, and it waits out ADR-0010's cooldown.
+
+### Requirements
+
+| ID | Requirement | Priority | Acceptance |
+|---|---|---|---|
+| H-1 | herdr-aware pane labels from the wire, state in words | P1 | Inside herdr, a blocked seat's pane reads `· waiting on you` within two seconds; outside herdr, nothing is attempted |
+| H-2 | `team/hosts/herdr.json`, `launch` templates per harness, `plan --host`, split isolation, `host` on `spawn` | P1 | `doctor` probes herdr's version and the socket and reports the host as unavailable rather than failing |
+| H-3 | Containment preconditions for the herdr host | P0 | The raw-socket test fails from inside a seat; `doctor` refuses the host without the seccomp filter on Linux |
+| H-4 | One branch per item with commit hand-off at each claim | P1 | On the `first-run` order, the coder's worktree contains the tester's commit, and the line check reads it from the returns |
+| H-5 | One runner over a host interface | P1 | The parity test yields identical claims and returns from the Workflow and herdr hosts for the same plan |
+| H-6 | Long-lived instances across items | P2 | An instance that handles two items logs both claims, both corroborated, and shows cache reads on the second |
 
 ## Part 4: The world
 
 ### Rules every renderer follows
 
-A renderer reads the ledger, the telemetry stream, and a skin. It never writes the ledger, never feeds text into any model's context, and takes no action in this PRD. Each renderer is specified with the question it exists to answer, and its earn-gate checks that the question is answered faster than reading the log.
+A renderer reads the ledger, the telemetry stream, and a skin. It never writes the ledger (apart from the human's `ack` in D-4), never feeds text into any model's context, and treats testimony as untrusted text, because a finding's summary was written by a seat that read a possibly hostile diff. In practice: text goes into the page through `textContent` only, data is embedded as `application/json` with `<` escaped, C0 and C1 control characters are stripped before anything reaches a terminal (an OSC 52 sequence in a finding could otherwise write the clipboard), and every export carries a content security policy of `default-src 'none'`. Each renderer is specified with the question it answers, and its gate times that question against `team-log.mjs render`, the table renderer v3 already has.
 
 ### The renderers
 
 | Renderer | Surface | Answers | Phase |
 |---|---|---|---|
-| Party bar | Claude Code `statusLine` and `subagentStatusLine` | Who is running right now, on what model, at what cost, and is the formation in *Echo*? | 1 |
+| Party bar | Claude Code `statusLine` and `subagentStatusLine` | Who is running, on which model, at what cost; is anyone waiting on me? | 0 (read-only), 1 |
 | Table | `team-log.mjs render` (v3, exists) | Everything, densely | exists |
-| herdr wall | herdr panes plus the Summon plugin | Which seat is blocked on me, and can I step in? | 2 |
-| Guild Hall | Local web page | What is the whole party doing, and where is it stuck? | 3 |
-| Battle | Local web page, review station only | How did this review go: who hit what, what got refuted, how did the verdicts split? | 4 |
-| Line | Local web page, work orders | Where is the queue, and which station is the bottleneck? | 4 |
-| Replay | Self-contained HTML export | What happened last night, in order, with costs, attachable to a PR? | 3 |
+| herdr labels | herdr's sidebar, through Part 3 step 1 | Which seat is waiting on me, and where is its terminal? | 1 |
+| Replay with battle | Self-contained HTML export | Who vetoed this item and why, what got refuted, how did the verdicts split, and what did it cost? | 2 |
+| Guild Hall | Local web page, starting as a quest board | Who is waiting on me, on which item, and for how long? | 4 |
+
+The draft's assembly-line view is folded into the quest board, and sound is cut; neither answered a question for the person this PRD is for.
 
 ### The party bar
 
-The cheapest renderer and the first one built. Claude Code already hands a `subagentStatusLine` script every running subagent with its `name`, `model`, `effort`, and `tokenCount`, and hands the main status line `agent.name`, `model`, `effort`, and `cost`. A Summon status script joins those with the skin and the ledger and prints one line per seat: display name in its accent colour, station, cast, tokens, plus the dissent meter and the last control result. It has no server and no dependency, and it works on the subagent host on day one. Where Claude Mods are available (2.1.287 and later), the same data can render as a live band inside Claude Code; the status-line version stays the floor because it works on every install.
+The cheapest renderer and the first one built, read-only in Phase 0. Claude Code hands a `subagentStatusLine` script every running subagent with its `name`, `model`, `effort`, and `tokenCount`, and hands the main status line `agent.name`, `model`, `effort`, and `cost`. A Summon status script joins those with the ledger and prints one line per seat: a coloured glyph and the name, station, the model it actually ran on, tokens, and its state in words, plus the dissent line and the last control result. It colours a glyph rather than the name, honours `NO_COLOR`, and says "waiting on you" or "uncorroborated" in words rather than turning anything red. Where Claude Mods are available (2.1.287 and later), the same data can render as a live band inside Claude Code; the status line stays the floor because it works on every install.
+
+### The replay and the battle
+
+`world.mjs export --order <id>` writes one HTML file with the ledger slice, the redacted telemetry slice, the skin, and the sprites inlined as data URIs. It opens offline, scrubs by time, and plays at any speed. By default it shows severities, verdicts, refutations, costs, and timings, and no finding text, because a speech bubble in a replay attached to a public PR can disclose an unfixed vulnerability. Finding text is an explicit option for private use. Exports are built from a field allowlist and never include detail-mode telemetry.
+
+Each review renders as a turn-based battle. The lenses act in parallel, so hits appear in timestamp order, each labelled with its severity in words. A refuted finding shows REFUTED with the skeptic's reason, and the finding stays visible, because a skeptic refuting a real defect is the case the audition treats as worst. The skeptics are drawn as one chorus with a count. Hit effects stay under three flashes a second. A second tab draws Dani's "diff as a map": files as tiles, a banner where each lens filed a finding, knocked over when it was refuted. It is the one picture of content divergence (D-1), which shows whether the lenses were looking at different things or echoing each other.
 
 ### The Guild Hall
 
-A single-screen pixel room drawn from the jrpg-16bit skin, served by `scripts/world.mjs serve` (Node standard library only, `127.0.0.1`, a random token in the URL, server-sent events tailing both streams). Each seat has a station that matches its class: the Forge-Knight at a forge, the Sentinel Archer at a range, the Master Builder at a drafting table, the Nightblade on a watchtower, the Marshal at the quest board where work-order items hang as notices. Seats walk to a shared table when the review formation convenes. Speech bubbles show the first line of a real finding or verdict from the ledger and nothing else; the world never invents dialogue. Clicking a seat opens its recent events, receipts, cast, and cost, and its herdr pane name for stepping in.
+The hall answers "who is waiting on me?" for a work order in flight, and it starts as Dani's first sacrificial concept, the quest board: items pinned under station banners, each live seat standing under its item's notice with its state in words and a timer. It is cheap, readable, and absorbs the old line view. It is mocked on paper with the `first-run` order before any code, and its timed gate is "who is waiting on me" against `team-log.mjs render`.
 
-The sprites exist already as 64-pixel masters under `site/src/assets/team-16bit/_src/`, drawn to one master palette per the 16-bit art bible. Phase 3 animates them procedurally (idle bob, a hop when working, a tool icon for the tool in use, emote bubbles), which needs no new art. Hand-pixelled or generated four-frame sheets per state are a Phase 4 deliverable owned by Dani under the same bible, dropped in by the existing convention for team sprites in `docs/team-directives.md`.
+A fuller room (fixed stations, no walking, a review cutting to the battle) is the second concept, built only if the quest board passes its gate and the human wants the charm. It needs art the sprites do not have yet: every 16-bit sprite has its stage token baked in, so a bob drags the floor with it, and a raised hand is a new pose. The minimum art is re-exports without the token, one working frame per persona, a shared emote sheet, and motion in whole master pixels, with no walking, under Dani's art bible and its lossless-PNG rule (the team-directives drop-in convention names the older HD-2D path and does not apply). The canon world cannot depend on `site/`, which the scaffolder excludes, so the sprites move into the skin's directory, or the scaffolded world falls back to v3's `plain` skin.
+
+`world.mjs serve` binds loopback only, checks the `Host` header against DNS rebinding, swaps a one-time URL token for an `HttpOnly; SameSite=Strict` cookie on first load so the token does not linger in history, sends `Referrer-Policy: no-referrer`, and serves read-only endpoints. Its usage gate counts local `serve` launches against work-order sessions, with no telemetry leaving the machine.
 
 ### Status effects
 
-JRPG status effects carry the signals, and every one is computed from events, so the flash has a source.
+Each status leads with plain words and is computed from events. The JRPG name is the skin's flavour on top, in the `jrpg-16bit` skin only. Statuses about an item go on the item's notice, never on a persona, so no badge blames a seat for something the process did.
 
-| Status | Shown when | The failure it names |
-|---|---|---|
-| *Echo* | `team:dissent` reports a full window of ten real items with unanimous verdicts | The deprecation's failure mode: review that only ever agrees |
-| *Silence* | A seat has testimony with no witnessed start or exit | #129: a review that never ran, reported as complete |
-| *Sleep* | A `block` with no `unblock` for over five minutes | The human is the bottleneck |
-| *Fatigue* | A `compact` event in the seat's current session | Quality risk late in a long session |
-| *Confuse* | `check --line` reports an out-of-order or same-instance station | Separation of duties broken |
-| *Stale gear* | The model a seat ran on is not one its casting auditioned | Silent recasting after a release |
-| *Muted* | No persona tells in the seat's recent outputs | Voice flattening, the early sign of tuning decay |
-| *Doom* (with a counter) | An item has spent over 80 percent of its token budget | Cost overrun |
-
-### Replays
-
-`world.mjs export --order <id>` writes one HTML file with the ledger slice, the redacted telemetry slice, the skin, and the sprites inlined as data URIs (sixteen 64-pixel PNGs are a few kilobytes each). It opens offline, scrubs by time, and plays at any speed. The README's "read the receipt yourself" becomes something a stranger can watch. Exports include no file contents, prompts, or commands, and print what they excluded at the top.
+| Plain label | Skin flavour | Computed from | Shown on |
+|---|---|---|---|
+| Agreeing without diverging (10 items) | *Echo* | A full window of ten real items whose verdicts were unanimous **and** whose findings overlapped above the D-1 threshold | the formation; the order stops until acknowledged (D-4) |
+| Uncorroborated verdict | none | Testimony with no bracketing out-of-band events (W-4) | the item |
+| Out of order | none | `check --line` reports an out-of-order or same-instance station | the item |
+| Waiting on you, 3 min | the seat holds up a card | A `block` with no `unblock` | the seat |
+| Context compacted | *Fatigue* | A `compact` in the seat's current session | the seat |
+| Unaudited model | *Stale gear* | C-3's definition | the seat |
+| Voice drift (judged) | none | The voice probe's judged check failed on recent outputs | the seat, labelled as judged |
+| Budget 84% | none | An item past 80 percent of its token budget | the item |
 
 ### Accessibility
 
-Dani reviews every renderer before it ships. Each one honours `prefers-reduced-motion` by replacing animation with static state badges, never uses colour as the only signal (every status has an icon and a text label), uses the skin's per-persona `alt` text, is fully keyboard-navigable, and offers a toggle to the table renderer. The world's CSS must pass the repo's own `pnpm check:css` contrast and reduced-motion checker. Sound is off by default.
+Dani reviews every renderer before it ships, against this floor. `pnpm check:css` cannot see colours drawn on a canvas and is advisory under ADR-0013 § 6, so the world gets its own `node --test` case that runs the checker's contrast function over every accent against the named hall background, plus axe on the DOM. On the site's `#0f172a`, six accents fail 4.5:1 as text (Pierrot 1.78, Pat 2.23, Diego 3.33, Prof 3.63, Vik 3.75, Grace 4.22), and Pierrot, Pat, and the formation's `#4f46e5` (2.84) fail even 3:1, so accent text is lifted with the team-directives `color-mix` rule, and the sprite rim is baked into the frames because CSS filters do not survive `drawImage`.
+
+The hall has a visible pause control (WCAG 2.2.2) as well as honouring reduced motion. Severity and state are always in words as well as colour (1.4.1). One polite `role="status"` region announces only what needs the human (a block, a verdict, a status raised, an escalation, an order done), at most once every ten seconds, and never telemetry; the event list is not `role="log"`, and scrubbing a replay stays silent. The canvas is mirrored by a DOM list of buttons named by state ("Sato#1, green, item 42, waiting on you 3 min"), because the skin's `alt` text describes a portrait, not a state, and the seat dialog returns focus when it closes.
 
 ### Requirements
 
 | ID | Requirement | Priority | Acceptance |
 |---|---|---|---|
-| V-1 | Party bar status scripts | P1 | On the subagent host, a running review formation shows one line per lens with its cast and tokens |
-| V-2 | `world.mjs serve`: loopback only, URL token, read-only, zero dependencies | P1 | A request without the token, or from a non-loopback address or a foreign `Host` header, is refused |
-| V-3 | Guild Hall with stations, procedural animation, and click-through | P2 | Given a recorded order, the human answers "who vetoed item X and why" from the page faster than from the JSONL, in a timed task |
-| V-4 | Status effects computed from events, with a fixture per status | P1 | Each status has a fixture that raises it and one that does not |
-| V-5 | Replay export with stated exclusions | P2 | The export opens offline and contains no prompt, file content, or command string from the fixture |
-| V-6 | Battle and Line renderers | P2 | The battle replays the v3 negative-control run with its 34 findings, 6 refutations, and five verdicts |
-| V-7 | Accessibility floor and `check:css` | P1 | Dani's review passes and `pnpm check:css` is green on the world's stylesheet |
-| V-8 | Skin never in context | P0 | The composer test that pins this on v3 is extended to every renderer asset |
+| V-1 | Party bar status scripts | P0 read-only, P1 full | In Phase 0, a running review formation shows one line per lens with the model it ran on, its tokens, and its state in words |
+| V-2 | `world.mjs serve` with the controls above | P2 | A request without the cookie, from a non-loopback address, or with a foreign `Host` header is refused; the token is gone from the URL after first load |
+| V-3 | Guild Hall as a quest board | P2 | A paper mock first; then the timed "who is waiting on me" task beats `team-log.mjs render` |
+| V-4 | Status effects computed from events, plain label first | P0 | Each status has a fixture that raises it and one that does not |
+| V-5 | Replay export, severity-only by default | P1 | The export opens offline and contains no prompt, file content, command, or finding text from the fixture |
+| V-6 | Battle and map views inside the replay | P1 | The timed "who vetoed item X and why" task beats `team-log.mjs render`; the battle redraws the v3 negative-control run with its 34 findings, 6 refutations, and five verdicts |
+| V-7 | Accessibility floor | P0 | The contrast test and axe pass; the pause control, status region, DOM mirror, and focus return each have a test |
+| V-8 | Skin never in context; testimony never rendered as markup | P0 | The composer test that pins the first is extended to every renderer asset; a fixture finding containing `</script>` and an OSC 52 sequence renders as inert text everywhere |
 
 ## Part 5: Dissent instruments
 
-v3's `disagreement-rate` reads verdicts. The first run showed the gap: five lenses each vetoing a diff with four critical defects is unanimity on the scale and disagreement on the content. Three instruments widen what Summon measures.
+v3's `disagreement-rate` reads verdicts. The first run showed the gap: five lenses each vetoing a diff with four critical defects is unanimity on the scale and disagreement on the content. Four instruments widen what Summon measures and make one of them stop the work.
 
-1. **Content divergence.** Per item, the pairwise overlap of findings between lenses, keyed on file and a small line window. High overlap with a unanimous verdict is the real *Echo*; low overlap with a unanimous verdict is agreement worth having.
-2. **Independence weighting.** Agreement between two lenses cast on the same model family counts less than agreement across families. The dissent report shows both numbers.
-3. **Witness ratio.** The share of verdicts that are witnessed. Below 0.95 on the herdr host, the dissent rate itself is untrustworthy, and the report says so before it says anything else.
+| ID | Instrument | Priority | Phase |
+|---|---|---|---|
+| D-1 | **Content divergence.** Per item, the pairwise overlap of findings between lenses, keyed on file and a small line window. High overlap with a unanimous verdict is the real *Echo*; low overlap with a unanimous verdict is agreement worth having. | P0 | 1, with V-4 |
+| D-2 | **Independence weighting.** Agreement between two lenses on the same model counts less than agreement across models; the report shows both numbers. | P2 | after H1 arm A |
+| D-3 | **Corroboration report.** The share of verdicts and returns that are corroborated, per host. Pane state from herdr never counts toward it. Below the target set after the Phase 0 baseline, the report says the dissent rate itself is untrustworthy before it says anything else. | P0 | 0 |
+| D-4 | **Fail closed.** When a full window is unanimous and overlapping, the dispatcher refuses to close the order until the human writes an `ack` event naming what they checked. | P1 | 1 |
 
-The negative control also gets a schedule: on every casting change (part of the audition) and, if the human opts in, weekly.
+The negative control also gets a schedule: every audition runs it, and the human can opt into a weekly run.
 
 ## Security and privacy
 
-Pierrot owns this section's review; it lists what the gate has to cover.
+Pierrot owns this section's review and the threat-model entry it requires. The entry needs a home first; issue #123 records that `docs/security/` does not exist, and Phase 0 cannot pass its gate until that is resolved.
 
-- **Summon's first hooks.** ADR-0014 § 4 had Summon plant zero hooks, and ADR-0012 sequenced its own exit-path hook last as the most invasive asset. The wire would be the first Summon-authored hook, and it is the least invasive kind there is: observe-only, asynchronous, fail-open, silent to the model, no network. That makes it a reasonable first candidate for the threat-model gate ADR-0012 requires, and passing that gate de-risks the later blocking hooks. The wiring goes in a tracked file (W-7) for ADR-0014's F4 reason.
-- **The herdr socket is a keyboard, and every seat holds the address.** herdr's socket has no authentication beyond its `0600` file mode, and herdr exports `HERDR_SOCKET_PATH` and `HERDR_BIN_PATH` into every process it launches, with its own values winning over anything the dispatcher passes. Any seat whose shell runs as the user can therefore type into every other seat. Summon contains this in two layers and claims no more than that: every composed seat on this host denies the herdr binary in its tool rules (H-4), and a `PreToolUse` hook on `Bash` refuses commands that name the herdr binary or socket path. That hook would be Summon's first blocking hook, so it inherits every condition ADR-0012 put on blocking hooks, including the false-positive policy. A seat that writes its own socket client in a scripting language gets past both layers, and ADR-0012's tamper-boundary clause applies in full: this hardens against a confused seat, not a hostile one. Only the dispatcher, a script, drives herdr, and the coordinator reaches herdr only through `pnpm team:dispatch`. The cross-pane prompt-injection fixture is a P0 test. This is the herdr-host version of #79.
-- **The local server.** Loopback binding, a per-run URL token, `Host` header checking against DNS rebinding, a strict content security policy, no remote assets, read-only endpoints.
-- **Secrets in streams.** Redaction by construction (W-6), telemetry never tracked, ledger events from the wire carry no tool input.
-- **Cross-vendor egress.** Off by default, enabled per project as a recorded human decision.
-- **Third-party plugins.** Summon ships one first-party herdr plugin and installs no others. ADR-0014's add-on discipline applies if that ever changes.
-- **Where the threat model lives.** Issue #123 records that `docs/security/` does not exist. The wire's gate needs a home for its threat-model entry, so #123 blocks Phase 0's gate.
+| Surface | Threat | Mitigation in this PRD |
+|---|---|---|
+| The wire, a hook outside the sandbox | Talks to the model through stdout or JSON output; hangs on a planted FIFO; runs code a seat edited | W-3's hook contract; code pinned outside every worktree (W-7); `ConfigChange` guard, no `bypassPermissions`, and the `check --line` diff rule (W-9) |
+| The ledger | A seat forges out-of-band lines or relabels testimony | Seat CLI stamps `seat`; the edit tools are denied on the ledger; out-of-band claims hold only where seats are sandboxed, and `doctor` and every ceremony say whether they are |
+| Project hooks in CI | `claude -p` on a PR checkout runs any project hook with the job's secrets | The wire is never wired from project settings; scaffolded projects' runbooks carry the `disableAllHooks` line for CI |
+| herdr's socket | A seat drives other panes: approves their prompts, reads them, spoofs their state, installs plugins | Step 1 gives seats no access; step 2 requires the containment preconditions (H-3), with the string-matching hook demoted to a tripwire |
+| Testimony in renderers | Markup injection in the hall or a replay; terminal escape sequences | The renderer rules and V-8 |
+| Secrets in streams and exports | Tokens in commands, findings quoting secrets, usernames in paths | Redaction at append (W-6); severity-only exports built from a field allowlist (V-5) |
+| The local server | Token leakage through history, Referer, or a shared screen; DNS rebinding; cross-site POSTs to a write endpoint | V-2's controls; the optional OTLP receiver requires a header token, an exact `application/json` content type, and a body size cap |
+| herdr and its detection rules | A compromised release; rules updated remotely | ADR-0010's cooldown for herdr; the rule-set version on every `host` event |
+| Cross-vendor seats | Code leaves for a second vendor; no Claude hooks or sandbox there | A separate decision after H1 arm A, with an equivalent sandbox |
+
+ADR-0012 already reserves the hook layer for enforcement, gates the first canon hook on Pierrot's threat model, and sequences the capability registry (its sub-decision E) first. The wire would be Summon's first hook of its own and its first observe-only one, so the wire ADR amends ADR-0012 B to admit observe-only hooks, and the registry has to exist before the wire can be entered into it. ADR-0014 § 4's zero-hooks rule governs third-party add-ons and needs no change.
 
 ## Phasing and earn-gates
 
-Each phase is useful alone, and none starts before ADR-0015 is ratified and its step 7 cutover has run, because the composed seats are what every phase casts, witnesses, and draws.
+Three prerequisites come before Phase 0. ADR-0012 E's capability registry has not shipped on `main` or on the v3 branch, and the wire needs it (its 90-day checkpoint, 2026-10-24, already counts that as a reversal trigger). Issue #123 must give the threat model a home. And issue #109 must make CI run on stacked PRs, or the phases below merge unchecked. ADR-0015's ratification and step 7 cutover gate Phase 1, not Phase 0, because Phase 0 runs on recorded fixtures.
 
 | Phase | Builds | Earn-gate before the next phase |
 |---|---|---|
-| 0. The wire | W-1 to W-7, `witness` subcommand, ledger `by` field, the threat-model entry | The #129 fixture is reported unwitnessed; the wire is shown not to change seat behaviour; Pierrot's gate passes |
-| 1. Casting and the party bar | C-1 to C-6, C-8, C-10, V-1, V-4, V-8, first audition | The first audition promotes a casting with complete presence and zero skeptic-refuted plants, and reports measured review cost per item on at least five real items |
-| 2. The herdr host | H-1 to H-4, `dispatch.mjs --host herdr` | The v3 first-run order runs on herdr with zero line violations, every station witnessed, no registry failure, and the human attaches to a running seat once |
-| 3. The Guild Hall and replays | V-2, V-3, V-5, V-7 | The timed "who vetoed and why" task beats the JSONL; Dani's review passes; the human has opened the hall unprompted in most work-order sessions over a month (self-reported) |
-| 4. Battle, Line, and the experiment | V-6, H-5 to H-7, C-7, C-9, sprite sheets, sound | H1 is pre-registered before its first run |
+| 0. The wire, visible | W-1 to W-7, D-3, V-1 read-only, V-4 for *Uncorroborated verdict*, the threat-model entry, and a baseline run: Phase 0's own items through the v3 line on all-inherit | Both W-4 fixtures caught; the hook contract tests pass; Pierrot's gate passes; the baseline records cost per item, a first recall corpus, and the first dissent samples |
+| 1. Casting and dissent | C-1 to C-5, C-8, C-10, C-11, D-1, D-4, V-4 in full, V-7, V-8, W-9, H-1 | The first audition blocks a deliberately broken candidate and passes the default; the human promotes a casting; cost per item is reported against the baseline |
+| 2. Replays, the gate line, and H1 arm A | V-1 full, V-5, V-6, C-6, C-7, C-9 arm A, C-12 | The battle beats the table on "who vetoed and why"; H1 arm A reports, null allowed; a gate order runs clean |
+| 3. The herdr host | H-2 to H-5, after the need gate | The raw-socket test fails from a seat; the parity test passes; the `first-run` order runs with zero line violations, every return corroborated, and the tester's commit in the coder's worktree |
+| 4. The hall and what H1 earns | V-2, V-3, H-6, W-8, D-2, the minimum art, and the cross-vendor decision if arm A justified it | The quest board beats the table on "who is waiting on me"; `serve` launches show the hall in use |
 
-If Phase 3's last gate fails after sixty days (nobody opens the hall), the hall is deleted and the party bar and replays stay. ADR-0014 used the same kind of reopen trigger for an unused prompt.
+If the hall is not opened in most work-order sessions sixty days after it ships, counted by local `serve` launches, it is deleted, and the party bar and replays stay. ADR-0014 used the same kind of trigger for an unused prompt.
 
 ## Success measures
 
+Targets are set from the Phase 0 baseline; the draft's 40 percent cost cut and two-day re-audition were arithmetic on assumptions and are withdrawn.
+
 | Measure | Target | Source |
 |---|---|---|
-| Witness ratio on the herdr host | at least 0.95 of verdicts | `team-log.mjs witness` |
-| Files changed outside `team/harness/` and `team/casting/` on the next model release | zero | ADR-0015 reversal trigger 3, widened |
-| Time from a model release to a promoted, re-auditioned casting | two days or less | `audition` events |
-| Review-station cost per item against the all-inherit baseline | 40 percent lower | wire cost samples |
+| G0: the notice can come down | All four conditions on the current model | the G0 tracking doc |
+| Corroboration, per host | Set after the baseline, reported from Phase 0 | D-3 |
+| Files changed outside the fitted list on the next model release | zero | ADR-0015 reversal trigger 3, read against the list |
+| Items run on an unaudited model without an acknowledgement | zero | C-3 |
+| Review cost per item against the Phase 0 baseline | lower, by a margin set after the baseline | wire cost samples |
 | Planted defects refuted by skeptics | zero | auditions |
-| Personas with a passing voice probe after any recast | all fifteen v3 seats | auditions |
-| *Echo* raised on a unanimous fixture window | within one item | status fixture |
-| "Who vetoed item X and why" from the hall vs the JSONL | faster, every time in the timed task | Phase 3 gate |
+| Voice probe on every seat an audition exercises | passes with the persona, and differs from the run without it | auditions |
+| Same work order on two coordinating models | identical spawn sequences | G3 fixture |
+| Timed tasks against `team-log.mjs render` | faster for the battle and the hall | Phase 2 and Phase 4 gates |
 
 ## Architecture Gate: the ADRs this needs
 
-Four ADRs, numbered when written (after ADR-0015 lands, since `check-canon` requires contiguous numbers). Each goes through Archie's authorship, Wei's challenge as a standalone agent, and the human's approval.
+The ADRs below are meta, because they are about building Summon; each asset they introduce is classified on its own. Each goes through Archie's authorship, Wei's challenge as a standalone agent, and the human's approval, and is numbered when written, after ADR-0015 lands, since `check-canon` requires contiguous numbers.
 
-| ADR | Decides | Zone | Gate notes |
-|---|---|---|---|
-| The wire | Witnessed events, the `by` field, the two streams, the first Summon-authored hook | Canon (it observes user projects) | Pierrot's threat-model pass first; amends ADR-0014's zero-hooks posture for Summon's own hooks only |
-| Casting and auditions | The fitted casting file, full IDs, the promotion rule, escalation, posture profiles, voice probes | Canon | Widens ADR-0015's fitted-file rule and its reversal trigger 3 |
-| Host adapters | herdr as a host, seats as sessions, cross-vendor seats, the herdr plugin | Canon (adapter), meta (Summon's own plugin release process) | Data-governance note on cross-vendor egress; version-pin and probe discipline from ADR-0012 E |
-| The world | Renderer rules, the local server, replays, status effects | Canon for the rules and server; meta for Summon's own art pipeline | Dani's accessibility gate; "view never in context" carried over from ADR-0015 |
+| Decision | Where | Gate notes |
+|---|---|---|
+| The closed list of fitted locations, and `by` with `unattributed` for old lines | Folded into ADR-0015 at its ratification | Saves two of the ADRs below from amending ADR-0015 straight away |
+| The wire: out-of-band events, corroboration, the hook contract, where the wire's code lives | New ADR | Amends ADR-0012 B to admit observe-only hooks; needs ADR-0012 E's registry entry, a canon source, and an escape hatch; Pierrot's threat-model pass first |
+| Casting and auditions: one-model default, block-never-promote, posture as an output style, voice probes, the gate line | New ADR | Shares the fitted list with ADR-0015 |
+| Host adapters: herdr-aware labels, the herdr host, containment, item branches, one runner | New ADR | Opened only with the need-gate record; version-pin and probe discipline from ADR-0012 E |
+| Cross-vendor seats and data egress | New ADR, later | Only after H1 arm A |
+| The world: renderer rules, the local server, replay defaults, the accessibility floor, plain words first | New ADR | Dani's accessibility gate; "view never in context" carried over from ADR-0015 |
+
+| Asset | Zone |
+|---|---|
+| Casting schema, `team/casting/` format, wire, world server, host adapter format, status vocabulary | Canon: they ship into user projects |
+| Summon's own casting, audition reports, replay set, the G0 tracking doc | Meta, unless the human answers open question 2 by shipping a default casting |
+| Sprites | Currently under `site/`, which the scaffolder excludes; they move into the skin's directory, or the canon world falls back to the `plain` skin |
 
 ## Alternatives considered
 
-**Stay on v3 as it is.** This is the strongest alternative, and it partly wins: the wire and casting do not need herdr, which is why they come first. The Workflow host already accepts `model` and `effort` per agent, and ADR-0015's cutover fixes the registry failure on its own. What staying gives up is the human stepping into a running seat, sessions that outlive a coordinator, and any route to a second vendor's model. If Phase 2's gate fails, this is where Summon lands, and it is a good place.
+**Stay on v3 as it is.** This is the strongest alternative, and review moved the PRD toward it. The wire, casting, the dissent instruments, the party bar, and the replays all run on v3's Workflow host; the Workflow host already takes `model` and `effort` per agent and runs as a script no model has to choose to call; and ADR-0015's cutover fixes the registry failure on its own. What staying gives up is only what Part 3 step 2 adds, and step 2 now waits for a need gate. If that gate never fires, this is where Summon lands, and it is a good place.
 
-**Claude Code agent teams as the host.** First-party, panes in tmux, a task list and a mailbox, and teammates can use custom subagent definitions, so the persona survives. It loses on three counts for now: it is experimental and Claude-only, the lead coordinates by conversation where Summon needs a plan the dispatcher computes (ADR-0012 already rejected it as a substrate for that reason), and `skills`, `hooks`, and `permissionMode` do not apply to teammates. It stays a candidate host and should be re-read when the flag is removed.
+**Move herdr to its own PRD.** Wei's counter-proposal, half adopted. The host itself is need-gated and fenced behind containment, as a separate PRD would have done; the herdr-aware labels stay here because they cost almost nothing, give seats no new power, and the human asked how Summon would fit into herdr.
 
-**Adopt an external orchestrator.** Gas Town is the strongest candidate, and it overlaps this PRD more than any other project: persistent worker identities, a merge queue that verifies before merging, watchdog roles, and agents from several vendors in tmux. Adopting it would hand Summon's dispatch to a system built for throughput, with its own vocabulary and its own tracker, when Summon's product is the decision record, the vetoes, and the measured dissent. The overlap is real enough to leave two doors open: a Beads tracking adapter beside the GitHub Projects and Jira ones, and a Gas Town host adapter for a user who already runs a town. Neither is in scope here, and a user who wants throughput above accountability should use Gas Town, as the README already says about bare agents.
+**Claude Code agent teams as the host.** First-party, panes in tmux, a task list and a mailbox, and teammates can use custom subagent definitions, so the persona survives. It loses for now on three counts: it is experimental and Claude-only, its lead coordinates by conversation where Summon needs a plan a script computes (ADR-0012 already rejected it as a substrate for that reason), and `skills`, `hooks`, and `permissionMode` do not apply to teammates. It should be re-read when the experiment flag is removed.
 
-**One model everywhere at varied effort.** Adopted as the default rather than rejected. Its argument is strong (one cache, fewer moving parts, and current guidance that low effort on a new model often beats high effort on an old one), and multi-model casting has to beat it in an audition to exist.
+**Adopt an external orchestrator.** Gas Town is the strongest candidate and overlaps this PRD more than any other project: persistent worker identities, a merge queue that verifies before merging, watchdog roles, and agents from several vendors in tmux. Adopting it would hand Summon's dispatch to a system built for throughput, with its own vocabulary and tracker, when Summon's product is the decision record, the vetoes, and measured dissent. Two doors stay open: a Beads tracking adapter beside the GitHub Projects and Jira ones, and a Gas Town host adapter for a user who already runs a town. A user who wants throughput above accountability should use Gas Town, as the README already says about bare agents.
 
-**An off-the-shelf tracing backend instead of a world.** Langfuse, Phoenix, or any OTLP backend would show spans, tokens, and costs with no UI to build, and the wire's optional OTLP receiver keeps that door open. What a span view cannot show is a seat, a verdict, or a disagreement, which are the things Summon exists to make visible.
+**One model everywhere at varied effort.** Adopted as the default rather than rejected; anything else has to earn its way in through H1 and an audition.
 
-**A VS Code extension in the manner of Pixel Agents.** Many developers live there, and the web renderer could later sit in a webview. Starting there would tie the world to one editor while the herdr host is terminal-first.
+**An off-the-shelf tracing backend instead of a world.** Langfuse, Phoenix, or any OTLP backend would show spans, tokens, and costs with no UI to build, and W-8 keeps that door open. A span view cannot show a seat, a verdict, or a disagreement, which are what Summon exists to make visible.
+
+**A VS Code extension in the manner of Pixel Agents.** Many developers live there, and the replay could later sit in a webview. Starting there would tie the world to one editor while the herdr labels and party bar are terminal-first.
 
 ## Risks
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| The world becomes a toy that nobody uses for decisions | Medium | The question-per-renderer rule, the timed task gate, and the sixty-day delete trigger |
-| Goodhart on dissent: pressure to disagree for the meter | Low for seats, real for humans | Seats never see the meter (the skin is never in context); the human sees content divergence beside the verdict rate |
-| Long-lived sessions on the herdr host cost more than subagents | Medium | Per-item budgets with *Doom*, adapter limits, and costs measured per completed item in Phase 2 |
-| herdr changes fast: v0.7.0 to v0.9.3 between June and September 2026, with a breaking removal in v0.9.2 | High | Fitted host adapter, `min_herdr_version` pin, `doctor` probe, a plugin limited to tokens, events, and actions (the surface stable since v0.7.x), and two fallback hosts |
-| Claude Code changes hook payloads | Medium | The wire is fitted to the harness, tested against recorded payloads, and fail-open |
+| The world becomes a toy nobody uses for decisions | Medium | Question-per-renderer, timed tasks against the existing table, the quest board before the room, and the sixty-day delete trigger |
+| "Corroborated" is read as "proven" | Medium | The principle and the security table say what it is not; every ceremony announces whether seats were sandboxed |
+| A seat forges or edits its own instruments | Medium without the sandbox, low with it | W-7, W-9, the seat CLI's `by` stamp, and the sandbox mode reported on every run |
+| Cross-pane control through herdr's socket | High without containment | The host does not exist without H-3; step 1 gives seats nothing |
 | A skeptic cast too cheaply refutes real findings | Medium | The zero-refuted-plants floor in every audition |
-| Cross-pane prompt injection through herdr | Medium | H-4 and its fixture are P0 |
-| Scope: a solo developer drowns in panes and pages | Medium | Every phase stands alone; the party bar alone is a complete Phase 1 |
+| Goodhart on dissent: pressure to disagree for the meter | Low for seats, real for humans | Seats never see the meter; the human sees content divergence beside the verdict rate, and D-4 asks what they checked |
+| herdr changes fast: v0.7.0 to v0.9.3 between June and September 2026, with a breaking removal in v0.9.2 | High | Fitted host adapter, version pin, cooldown, `doctor` probe, and two other hosts |
+| Claude Code changes hook payloads | Medium | The wire is fitted to the harness, tested against recorded payloads, and fail-open |
+| Scope: a solo developer drowns in panes and pages | Medium | Every phase stands alone; Phase 0 is a status line and a report |
 
 ## Open questions
 
-These are live, and the human decides each one.
+These are live, and the human decides each one. Where a reviewer recommended an answer, it is noted.
 
-1. Should the ledger stay git-tracked once wire events land? This PRD keeps it tracked and adds volume only for semantic events; the v3 dispatch review chose tracking so CI can read it, and nothing here overturns that.
-2. Does a default casting ship into scaffolded projects as canon, or does every project start on one-model-varied-effort and audition its own? The second is safer and slower.
-3. Is Wei on another vendor's model still Wei? This PRD says yes, because identity lives in the persona file and the skin. A human who disagrees would want cross-vendor seats limited to throughput seats without personas.
-4. Should a recorded audition be allowed to promote a casting automatically, or does promotion stay a human act? This draft keeps it human.
-5. How much of the herdr plugin is worth building while herdr's maintainers keep orchestration out of core? This draft limits it to tokens, one event hook, and three actions. A community plugin such as `herdr-projects` already runs a coordinator with workers, and the human may prefer to contribute the wire's event hook upstream to a shared plugin over shipping a Summon one.
-6. Does procedural animation read as alive enough, or does the hall need sprite sheets in Phase 3 to be worth opening?
+1. Should the ledger stay git-tracked once out-of-band events land? This PRD keeps it tracked with semantic events only; the v3 dispatch review chose tracking so CI can read it, and nothing here overturns that.
+2. Does a default casting ship into scaffolded projects as canon, or does every project start on one model with varied effort and audition its own? Pat recommends shipping none.
+3. Is promotion always a human act? This PRD says yes, and Pat agrees.
+4. What counts as need for the herdr host's gate? This PRD proposes the three cases in Part 3; the human may want a stricter or looser bar.
+5. Which of Dani's three hall concepts does the human want mocked first: the quest board (recommended), the room, or the diff as a map? Dani asks which one the human hates.
+6. Summon has no design profile (`docs/design-profile.md` is still a scaffold stub), which ADR-0013 makes the human's to write. Dani recommends filling it before the hall is designed.
+7. Is a generated output style the right place for the coordinator's posture, or should the coordinator become a composed seat run through Claude Code's `agent` setting?
 
 ## Related in-flight work
 
@@ -513,15 +577,15 @@ Reconnoitred on 2026-10-05 per the Session Entry Protocol. Nothing below was cha
 
 | Item | Relation | Suggested disposition |
 |---|---|---|
-| #138, ADR-0015, branch `claude/summon-team-v3-decomposed-jyiur2` | Prerequisite for every phase | Ratify (Archie's gate read is owed), then cutover (step 7), before Phase 0 |
-| #129 review wave that never spawned reports as complete | Answered by the wire (W-4) | Keep open until W-4 lands; link this PRD |
-| #123 `docs/security/` does not exist | Blocks Phase 0's threat-model gate | Resolve first, or pick an interim home for the entry |
-| #79 prompt injection through add-on skill content | Same class as cross-pane injection | Cross-reference in the host ADR |
+| #138, ADR-0015, branch `claude/summon-team-v3-decomposed-jyiur2` | Prerequisite; Phase 1 needs its ratification and cutover | Ratify (Archie's gate read is owed), folding in the fitted list and `by`; then cut over |
+| ADR-0012 E (capability registry), not shipped | Gates Phase 0; its checkpoint on 2026-10-24 counts it as a reversal trigger | Build it first |
+| #123 `docs/security/` does not exist | Blocks Phase 0's threat-model gate | Resolve now |
+| #109 CI only runs on PRs into `main` | Stacked phase PRs would merge unchecked | Fix now |
+| #129 review wave that never spawned reports as complete | Answered by W-4 and D-3 | Keep open until W-4 lands; link this PRD |
+| #79 prompt injection through add-on skill content | Same class as cross-pane control through herdr | Cross-reference in the host ADR |
 | #74 no meta zone for living registers | This PRD sits in `docs/history/design/` meanwhile | No change |
-| #31, #32, #33 behavioral benchmark | Auditions reuse ADR-0005's grader discipline; quality claims stay with the benchmark | No change |
-| #121, #124, #128 packet harvester; PRs #95, #105, #116, #120, #131 | Superseded by v3 on the human's direction of 2026-09-09; the wire gives the harvester's goal a witnessed source | The human closes them, as recorded in the v3 handoff |
-| #109 CI only runs on PRs into `main` | Stacked PRs for these phases would merge unchecked | Fix before stacking Phase 0 work |
-| ADR-0012's 90-day checkpoint, 2026-10-24 | Its trigger 1 (the capability registry) and its deferred receipt schema meet the wire | Read this PRD at the checkpoint |
+| #31, #32, #33 behavioral benchmark | Auditions are smoke tests; quality claims stay with the benchmark | No change |
+| #121, #124, #128 packet harvester; PRs #95, #105, #116, #120, #131 | Superseded by v3 on the human's direction of 2026-09-09; the wire gives the harvester's goal an out-of-band source | The human closes them, as recorded in the v3 handoff |
 
 ## Terms this PRD introduces
 
@@ -529,13 +593,15 @@ When an ADR adopts one of these, the definition moves to `docs/methodology/team-
 
 | Term | Meaning |
 |---|---|
-| Witnessed event | A ledger event written by the dispatcher, the check runner, the wire, or the host, never by the seat it describes |
-| Testimony | A ledger event written by the seat it describes |
+| Testimony | A ledger event whose content comes from a model, written by the seat itself or relayed by `ingest` |
+| Out-of-band event | A ledger event written by a script or hook the seat does not run; not proof, and resistant to forgery only where seats are sandboxed |
+| Corroborated | A verdict or return bracketed by out-of-band `start` and `stop` events for the same instance, item, and lens or station |
 | Casting | The fitted file that gives each seat and station a model and an effort level |
-| Audition | The four-probe run a casting must pass before promotion |
+| Audition | The four-probe run that can block a casting; promotion is the human's |
 | Host | What starts a seat: prose subagents, the Workflow tool, or herdr |
-| Posture profile | The coordinator's delegation and verification guidance for one model family |
-| Status effect | A world badge computed from events that names a failure mode |
+| herdr-aware | Summon labelling the herdr panes it already runs in, without starting seats in panes |
+| Posture block | The coordinator's delegation and verification guidance for one model family, emitted as an output style |
+| Status | A plain-language label computed from events, with optional skin flavour |
 
 ## Sources
 
@@ -544,8 +610,9 @@ Read on 2026-10-05 unless noted. Facts about herdr come from its repository at c
 **This repository and its v3 branch**
 
 - `README.md`, the deprecation notice of 2026-08-18.
-- ADR-0005, ADR-0006, ADR-0007, ADR-0012, ADR-0014 in `docs/adrs/meta/`; `docs/process/ai-tells-catalog.md`; `docs/history/design/team-hero-sprites-16bit.md`.
-- On `claude/summon-team-v3-decomposed-jyiur2`: `docs/adrs/meta/0015-decomposed-team.md`, `docs/methodology/team-layers.md`, `docs/history/tracking/2026-09-10-first-runs.md`, `docs/history/tracking/2026-09-09-v3-handoff.md`, `team/events.json`, `team/harness/claude-code.json`, `team/views/jrpg-16bit/party.json`, `team/personas/*.md`, `team/workflows/line.workflow.mjs`. Issue #138 and its comments.
+- ADR-0005, ADR-0006, ADR-0007, ADR-0012, ADR-0014 in `docs/adrs/meta/`; ADR-0013 in `docs/adrs/`; `docs/process/ai-tells-catalog.md`; `docs/team-directives.md`; `docs/history/design/team-hero-sprites-16bit.md`; `scripts/check-css-contrast-motion.mjs`; `site/src/components/TeamGrid.astro`.
+- On `claude/summon-team-v3-decomposed-jyiur2`: `docs/adrs/meta/0015-decomposed-team.md`, `docs/methodology/team-layers.md`, `docs/history/tracking/2026-09-10-first-runs.md`, `docs/history/tracking/2026-09-09-v3-handoff.md`, `team/events.json`, `team/harness/claude-code.json`, `team/views/jrpg-16bit/party.json`, `team/personas/*.md`, `team/workflows/line.workflow.mjs`, `team/workflows/review-wave.workflow.mjs`, `scripts/dispatch.mjs`. Issue #138 and its comments.
+- The review of this PRD: `docs/history/tracking/2026-10-05-summon-live-prd-review.md`.
 
 **Anthropic**
 
@@ -560,8 +627,9 @@ Read on 2026-10-05 unless noted. Facts about herdr come from its repository at c
 **Claude Code**
 
 - Subagents (frontmatter `model`, `effort`, `color`; nesting depth 3; 20 concurrent): https://code.claude.com/docs/en/sub-agents
-- Hooks (handler types, `async`, `allowedHttpHookUrls`, `agent_type` under `--agent`, events that cannot block): https://code.claude.com/docs/en/hooks
-- Monitoring with OpenTelemetry (`claude_code.cost.usage`, `agent.name`, traces beta, `TRACEPARENT`): https://code.claude.com/docs/en/monitoring-usage
+- Hooks (handler types, `async` and its unenforced timeout, stdout as context on `SessionStart` and `PostModelSwitch`, `disableAllHooks`, `ConfigChange`, `agent_type` under `--agent`): https://code.claude.com/docs/en/hooks
+- Sandboxing (shell-only scope, write limits, Unix sockets and the seccomp filter, `credentials.envVars` scopes): https://code.claude.com/docs/en/sandboxing
+- Monitoring with OpenTelemetry: https://code.claude.com/docs/en/monitoring-usage
 - Status line and `subagentStatusLine`: https://code.claude.com/docs/en/statusline
 - Agent teams: https://code.claude.com/docs/en/agent-teams
 - CHANGELOG, versions 2.1.212, 2.1.217, 2.1.219, 2.1.224, 2.1.274, 2.1.287: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
@@ -582,7 +650,7 @@ Read on 2026-10-05 unless noted. Facts about herdr come from its repository at c
 
 - Kim, Garg, Peng, Garg, *Correlated Errors in Large Language Models*, ICML 2025: https://arxiv.org/abs/2506.07962
 - Goel et al., *Great Models Think Alike and this Undermines AI Oversight*, ICML 2025: https://arxiv.org/abs/2502.04313
-- Choi et al., *Debate or Vote: Which Yields Better Decisions in Multi-Agent Large Language Models?*, NeurIPS 2025: https://arxiv.org/abs/2508.17536
+- Choi, Zhu, Li, *Debate or Vote: Which Yields Better Decisions in Multi-Agent Large Language Models?*, NeurIPS 2025: https://arxiv.org/abs/2508.17536
 - Cemri et al., *Why Do Multi-Agent LLM Systems Fail?* (MAST), 2025: https://arxiv.org/abs/2503.13657
 - *Measuring and Exploiting Contextual Bias in LLM-Assisted Security Code Review*, 2026: https://arxiv.org/abs/2603.18740
 - *Refute-or-Promote: An Adversarial Stage-Gated Multi-Agent Review Methodology for High-Precision LLM-Assisted Defect Discovery*, 2026: https://arxiv.org/abs/2604.19049
