@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "PRD: live seats, model casting, herdr host, visual world", deps: [README.md, docs/adrs/meta/0005-behavioral-benchmark.md, docs/adrs/meta/0006-multi-runtime-install.md, docs/adrs/meta/0012-executable-canon.md, docs/adrs/meta/0014-optional-addons.md, docs/adrs/0013-design-authority.md, docs/process/team-governance.md, docs/history/design/team-hero-sprites-16bit.md, docs/history/tracking/2026-10-05-summon-live-prd-review.md, site/src/components/TeamGrid.astro], state: draft, last: "claude@2026-10-05", key: ["builds on ADR-0015 (Proposed) on branch claude/summon-team-v3-decomposed-jyiur2, issue #138", "revised after a five-persona review (46 findings, 12 blocking); G0 is the condition for lifting the deprecation notice", "spec only: ADRs and an Architecture Gate come before any code; ADR-0012 E and Pierrot's threat-model pass gate Phase 0"] }
+agent-notes: { ctx: "PRD: live seats, model casting, herdr host, visual world", deps: [README.md, docs/adrs/meta/0005-behavioral-benchmark.md, docs/adrs/meta/0006-multi-runtime-install.md, docs/adrs/meta/0012-executable-canon.md, docs/adrs/meta/0014-optional-addons.md, docs/adrs/0013-design-authority.md, docs/process/team-governance.md, docs/history/design/team-hero-sprites-16bit.md, docs/history/tracking/2026-10-05-summon-live-prd-review.md, site/src/components/TeamGrid.astro], state: draft, last: "claude@2026-10-05", key: ["builds on ADR-0015 (Proposed) on branch claude/summon-team-v3-decomposed-jyiur2, issue #138", "revised after a five-persona review (46 findings, 12 blocking); G0 is the condition for lifting the deprecation notice", "answers why the team was stopped: skipped seats, flattened voices, and unanimity read as one chain, with an instrument on every link (W-10, C-8, D-1, D-5) and maker-checker enforced at hand-off (H-7)", "spec only: ADRs and an Architecture Gate come before any code; ADR-0012 E and Pierrot's threat-model pass gate Phase 0"] }
 ---
 
 # Summon Live
@@ -11,17 +11,20 @@ agent-notes: { ctx: "PRD: live seats, model casting, herdr host, visual world", 
 | Owner | Pat (scope, acceptance). Archie owns the ADRs this PRD asks for. |
 | Drafted by | The coordinator, at the human's request, on `claude/multi-agent-coding-improvements-ip34gt` |
 | Reviewed | 2026-10-05 by Wei, Pierrot, Pat, Archie, and Dani as standalone agents: 46 findings, 12 blocking, all dispositioned in `docs/history/tracking/2026-10-05-summon-live-prd-review.md` |
+| Author's input | 2026-10-05: the team was stopped because the agents lost their voices: personas stopped speaking, agents were skipped, and reviewers agreed instead of contesting. The section *The three symptoms are one chain* answers that directly. |
 | Builds on | ADR-0015, *The Decomposed Team* (Proposed, 2026-09-09), on branch `claude/summon-team-v3-decomposed-jyiur2`, epic #138 |
 | Zone | Meta (ADR-0007 § 1). This is about building Summon; each asset it proposes is classified on its own in the Architecture Gate section. |
 | Decides | Nothing yet. Every part that changes architecture needs an ADR and an Architecture Gate before code. |
 
 ## Summary
 
+Summon was stopped because its agents lost their voices: personas stopped speaking, agents were skipped, and reviewers agreed with each other instead of contesting. *I Killed My Agent Team* (2026-08-15) traces all three to one change underneath the team, and this PRD treats them as one chain with four links, each of which it either breaks or makes visible (see *The three symptoms are one chain*).
+
 Summon v3 split the fused agent file into a role, a persona, a skin, and a fitted harness adapter, and gave the team an event log that no harness owns. That answered the structural half of the August deprecation. The operational half is still open: every seat runs on `model: inherit`, the record of what the team did is mostly the seats' own account of themselves, and nobody sees the team while it works, so dissent can decay with no one watching.
 
 Summon Live is four additions on top of v3, ordered so each is useful without the ones after it, and one goal that says when they are enough.
 
-**G0. The deprecation notice can come down.** It comes down when, on the current model, the review formation passes the negative control on presence, dissent is non-zero over a full window of ten real items, content divergence is reported for every item, and one model release has landed with changes only in fitted files.
+**G0. The deprecation notice can come down.** It comes down when, on the current model, the cascade audit (D-5) finds no seat skipped on the dispatched path, every persona it exercises distinguishable from the same seat run without its persona, and verdicts that split on its arguable fixture; the review formation passes the negative control on presence; dissent is non-zero over a full window of ten real items; content divergence is reported for every item; and one model release has landed with changes only in fitted files.
 
 1. **The wire.** Hooks and scripts write *out-of-band* events (who started, who stopped, which model actually ran) into the log beside the seats' own *testimony*, and every event says who wrote it. A verdict is *corroborated* only when out-of-band events bracket the same seat, item, and lens. A review that never ran stops passing as a completed one (#129). None of this is proof, and the PRD says where it stops holding.
 2. **Casting.** One model with effort set per station is the default. A fitted casting file holds it, expires on every model release, and changes only when the human promotes a casting that an audition did not block. A recast never edits a persona; when a new model needs a persona change to keep its voice, that is its own reviewed edit.
@@ -69,8 +72,8 @@ The README's notice of 2026-08-18 names four causes and one failure mode. ADR-00
 | Named on 2026-08-18 | What ADR-0015 does | Still open | Answered here by |
 |---|---|---|---|
 | Opus 5 guidance inverted delegation and verification | Adapter field `delegation: null`; the line runs as a workflow, not a prose mandate | Work orders no longer depend on posture; the conversational ceremonies, including the Architecture Gate that the README sells, still do | Casting (posture under `team/casting/`, C-7) and the Architecture Gate as a line (C-12) |
-| Subagent defaults churned | `dispatch` limits moved into the adapter, labelled as expiring | A seat is still a subagent. Between Claude Code 2.1.212 and 2.1.224 (July to August 2026) a session spawn cap was added and removed, a 20-agent concurrency cap arrived, and nesting was switched off and back on at depth 3 | Mostly by v3's Workflow host already; the herdr host removes the rest for the seats it runs |
-| Sessions told not to invoke agents unless asked | Named as the one thing no file in the team can counter | Answered for work orders, which a script dispatches; still open for conversational ceremonies | C-12 for the gate; posture for the rest |
+| Subagent defaults churned | `dispatch` limits moved into the adapter, labelled as expiring | A seat is still a subagent. Between Claude Code 2.1.212 and 2.1.224 (July to August 2026) a session spawn cap was added and removed, a 20-agent concurrency cap arrived, and nesting was switched off and back on at depth 3. The churn goes on: since 2.1.271 the harness's advisory default for a workflow is fewer than 10 agents, and smaller on Pro plans, where the review station's first run used 45 | Mostly by v3's Workflow host already, whose fan-out a script computes; the herdr host removes the rest for the seats it runs; the cascade audit (D-5) catches a wave that shrinks anyway |
+| Sessions told not to invoke agents unless asked | Named as the one thing no file in the team can counter | The post quotes the injected line, "Do not call the AgentTool unless the user requested it", served to Opus 5 sessions with no changelog entry, and records a session in this repository that named it as the reason it worked solo. Answered for work orders, which the human requests and a script dispatches; still open for conversational ceremonies | C-12 for the gate and posture for the rest; skip events (W-10) and the cascade audit (D-5) show a skipped seat the same day |
 | `maxTurns` and `model: inherit` hard-coded | Moved into the fitted adapter | `inherit` is still the only model value in `team/`; two of this PRD's five reviewers (Pierrot at 20 turns, Archie at 25) hit their v2 `maxTurns` cap mid-review on 2026-10-05 | Casting |
 | Stale tuning degrades into unanimous approval | `disagreement-rate` over ten real items; negative control split into presence and spread | Verdict-level only; most of the log is testimony; nobody sees the rate unless they run a command | The wire, dissent instruments (D-1 to D-4), the world |
 
@@ -94,11 +97,34 @@ Summon's promise is a team whose disagreement carries information. After v3, thr
 
 Underneath all three sits a plainer problem. The team works where the human cannot see it, so dissent decays quietly, and the instruments that would show the decay are commands nobody runs at 23:30.
 
+## The three symptoms are one chain
+
+The human stopped the team because its agents lost their voices: personas stopped speaking, agents were skipped, and reviewers agreed instead of contesting. *I Killed My Agent Team* records the order in which those showed. First the voices flattened, until the reviews "read like they'd been written by one careful, forgettable author". Then the disputes thinned, and then every review came back unanimous. The post also records a cause underneath. On the day Opus 5 shipped, Claude Code began injecting a server-gated section into Opus 5 sessions that said "Do not call the AgentTool unless the user requested it" (claude-code issue #80988, as the post cites it), with no changelog entry and no opt-out. A session doing the deprecation work in this repository named that line as its reason for working solo instead of spawning the personas CLAUDE.md mandates. The post's own summary is this section's thesis: "A reviewer that stops being spawned as its own agent stops speaking in its own voice."
+
+Read that way, the three symptoms are four links of one chain. The human saw them in the order they become visible, which is not the order they happen. A skipped seat is invisible while a verdict still carries its name, so the first thing anyone can see is the voice.
+
+| Link | What happens | What this PRD does | Effect |
+|---|---|---|---|
+| 1. A model the harness can instruct decides whether seats run | The coordinator reads CLAUDE.md's mandate to spawn and an injected line that countermands it; the line renders after everything the user wrote | A work order or a line decides which seats run, and a script starts them. A work order is the human's own request, so it meets even the injected line's condition. The Architecture Gate becomes a line (C-12), and posture blocks (C-7) cover what stays conversational | Breaks the link on the dispatched path |
+| 2. A skipped seat still leaves a verdict under its name | The coordinator writes the review itself and labels each part with a lens, so the record looks complete | Ceremonies declare the seats they must start, and the wire writes a `skip` for each one that never started (W-10). A verdict with no bracketing out-of-band events is *Uncorroborated* (W-4, D-3) | Detects it the same day |
+| 3. One context writes every lens, and the voices flatten | v2's composite reviewer described itself as "an invocation pattern combining four core review lenses". When nesting was off it could not fan out, and when it was never spawned the coordinator wrote the lenses; either way one context wrote all four, and each persona became a paragraph in someone else's prompt | Every lens is its own agent type in its own context (Part 1), and lens prompts carry the spec and the diff, never the coder's framing (C-11). The voice probe compares each seat with and without its persona (C-8) | Prevents it on the dispatched path; detects it everywhere |
+| 4. One context cannot contest itself, and fitted dissent decays | Lenses written by one context, or by one model, agree for reasons that have nothing to do with the code. In the post's words, dissent tuned against an older model's temperament "decayed into consensus rather than noise" | Content divergence beside the verdict rate (D-1); a unanimous, overlapping window stops the order (D-4); H1 tests whether lenses on different models disagree more usefully | Detects it and stops the work |
+
+**The chain has more than one way in.** The injected line explains the skipping from late July. It does not explain everything, because the post dates the last review with a real dissent to May 15, more than two months before the line appeared. Anthropic's migration notes say an earlier model, Opus 4.8, under-reached for subagents, so a model can skip seats with no injected line at all. Claude Code 2.1.217 switched nested subagents off for two releases, which is enough to stop a composite reviewer from fanning out. And the post's fitted-dissent reading needs no harness change. So the chain can be entered at any link, and this PRD puts an instrument on every link rather than a fix on the first. The cascade audit (D-5) runs all of them together on every model release, every Claude Code release, and on a calendar, because the line that silenced the team arrived from a server with no release to trigger a check.
+
+**Voice is the earliest sensor.** The voice went first, so the voice probe (C-8) is the earliest warning this PRD has. That is why it runs with and without the persona, on prompts that say nothing about format: it should fail on the day a persona stops adding anything, not on the day the verdicts go unanimous.
+
+**What today's evidence says.** It is thin, and it points one way. The five reviews of this PRD on 2026-10-05 ran as v2 subagents on `model: inherit`, spawned under this repository's CLAUDE.md mandate. Every seat named was spawned, all five returned (two after hitting their turn caps and being resumed), none approved the draft, and their 46 findings differ in content, with five concerns reached independently. Three caveats keep that from counting toward G0. The briefs asked for numbered findings graded blocking, amend, or note, so the format was primed, and Wei's review says so of itself. The session ran in Claude Code's cloud environment rather than the CLI on the human's machine, and its system prompt carried no such line, so it says nothing about whether the line still reaches the human's own sessions. And it is one run. D-5 is what would turn it into evidence.
+
+**The post's two hypotheses get instruments.** The post kept two ideas from the wreckage as hypotheses for its bake-off: per-role context isolation, and enforced separation of duties. Context isolation is link 3's fix, and corroboration (D-3) measures it, because a corroborated verdict is one whose lens started and stopped as its own agent. Separation of duties has a gap the post could not see from inside it. ADR-0015 records Wei's correction that the v2 boundary was prose too: Tara's file carried `Write` and `Edit` with no `disallowedTools`, because on Claude Code writing source and writing tests use the same tools. The hypothesis has never been tested with enforcement, so Part 3 adds it, as a hand-off check that refuses a station's return when the station touched paths its role must not (H-7, every host) and as per-seat permission rules that block the write where a seat is its own session (H-8). The post's six-month audit asks "whether the context boundaries and the maker-checker split survived contact with harnesses I don't tune, and whether my reviewers, whatever they're running on by then, still argue with me". D-5 and H-7 are built to be that audit's instruments. H-7 and the content-divergence report read git and the ledger rather than the harness, so they run unchanged on Codex.
+
+**What this does not fix.** The conversational path stays exposed. A human who types "review this" into their own session is asking a model whether to spawn, and the harness can tell that model no. This PRD does not fight the harness there with stronger prose, which is the fitted-curve move the post warns against. It makes the skip visible the same day (W-10), moves the gate onto a line (C-12), and asks the human whether ceremonies that declare seats should run as work orders by default (open question 8).
+
 ## Goals and non-goals
 
 | ID | Goal | Measured by |
 |---|---|---|
-| G0 | The deprecation notice can come down | All four conditions in the Summary hold on the current model, recorded in one tracking doc the human signs |
+| G0 | The deprecation notice can come down | Every condition in the Summary holds on the current model, recorded in one tracking doc the human signs |
 | G1 | Every event in the log says who wrote it, and every verdict says whether it is corroborated | The corroboration report (D-3) runs on every item |
 | G2 | Each seat and station gets its model and effort from one fitted file that a model release invalidates and only the human's promotion changes | No item runs on an unaudited model without a recorded acknowledgement |
 | G3 | A work order produces the same team shape on any coordinating model | The same order on two coordinating models produces identical spawn sequences |
@@ -156,7 +182,7 @@ Every new ledger event carries `by`. Lines written before this change read as `u
 |---|---|---|---|
 | `dispatch` | `scripts/dispatch.mjs` | `spawn`, `claim` (the dispatcher claims before it prompts, so `claim` has one writer) | out-of-band |
 | `runner` | `scripts/run-checks.mjs` | `check` with a tree-bound receipt | out-of-band |
-| `wire` | `scripts/wire.mjs` from harness hooks | `start`, `stop`, `cast`, `block`, `unblock`, `compact` (new) | out-of-band |
+| `wire` | `scripts/wire.mjs` from harness hooks | `start`, `stop`, `cast`, `block`, `unblock`, `compact`, `expect`, `skip` (new) | out-of-band |
 | `host` | the herdr host | pane state from herdr's screen detection (new) | out-of-band, excluded from corroboration because herdr reads it off the screen and any socket client can overwrite it |
 | `ingest` | `scripts/review-wave.mjs ingest` | `finding`, `verdict`, `return` relayed from a workflow's return | testimony, because the content is a model's |
 | `audition` | `scripts/audition.mjs` (new) | `audition` | out-of-band |
@@ -169,15 +195,18 @@ A verdict is *corroborated* when out-of-band `start` and `stop` events for the s
 
 That needs one change to v3. Today `review-wave.workflow.mjs` spawns every lens without an `agentType`, so `SubagentStart` cannot name the lens. The composer emits one agent type per formation lens and one for the skeptic chorus, and the workflow passes it, so every `start` and `stop` names its lens. A long-lived session that handles several items brackets all of them, so corroboration is per turn (claim to return), never per session.
 
+Corroboration catches a verdict that no seat wrote. It cannot catch a seat nobody asked for, which is how the team actually went quiet (see *The three symptoms are one chain*). So a ceremony that must start seats declares them, beginning with the review formation's lenses and the gate's author and challenger, in a canon file the composer reads. When one starts, typed by the human or invoked by the model, the wire writes `expect` with the declared seats. When the ceremony ends (the turn's `Stop`, or `SessionEnd` for a ceremony that spans turns), it writes a `skip` for every declared seat that has no `start`. A skip is out-of-band, raises *Seat skipped* on the ceremony's item, and is the same-day signal for the chain's first link.
+
 ### The hook set
 
-Every wire hook is `async: true` and is wired as `node <absolute path> >/dev/null 2>&1`. The script carries its own two-second exit timer, because Claude Code enforces no timeout on async hooks. It never prints anything and never emits JSON, because `SessionStart` and `PostModelSwitch` stdout reaches the model as context. It opens the log with `O_NOFOLLOW` and refuses anything that is not a regular file, so a planted FIFO or symlink cannot hang it or redirect it.
+Every wire hook is `async: true` and is wired as `node <absolute path> >/dev/null 2>&1`. The script carries its own two-second exit timer, because Claude Code enforces no timeout on async hooks. It never prints anything and never emits JSON, because stdout from `SessionStart`, `UserPromptSubmit`, `UserPromptExpansion`, and `PostModelSwitch` reaches the model as context. It opens the log with `O_NOFOLLOW` and refuses anything that is not a regular file, so a planted FIFO or symlink cannot hang it or redirect it.
 
 | Claude Code event | Stream | Becomes | Note |
 |---|---|---|---|
 | `SessionStart` | ledger | `start`, `cast` | `cast` records the model the session reports; the status-line payload's `model.id` is the fallback source |
+| `UserPromptExpansion`; `PreToolUse` on the `Skill` tool | ledger | `expect` | a ceremony that declares seats has started, typed by the human or invoked by the model (W-10) |
 | `SubagentStart` / `SubagentStop` | ledger | `start` / `stop` | `agent_type` names the composed seat or lens |
-| `SessionEnd`, `Stop`, `StopFailure` | ledger | `stop` | carries `ok: false` on `StopFailure` |
+| `SessionEnd`, `Stop`, `StopFailure` | ledger | `stop`, `skip` | carries `ok: false` on `StopFailure`; one `skip` per seat an open `expect` named that never started (W-10) |
 | `PermissionRequest`, `Notification` | ledger | `block` | the human is now the bottleneck |
 | `PreCompact` | ledger | `compact` | context pressure inside one seat |
 | `PreModelSwitch` / `PostModelSwitch` | ledger | `cast` | a mid-session recast is still a recast |
@@ -200,7 +229,7 @@ The v3 ledger stays what it is: low volume, schema-validated, git-tracked so CI 
 
 | Stream | Path | Holds | Tracked | Read by |
 |---|---|---|---|---|
-| Ledger | `.summon/team-log.jsonl` (v3) | Semantic events in `team/events.json`, plus `start`, `stop`, `cast`, `block`, `unblock`, `compact`, `audition`, `ack` | yes | checks, renderers |
+| Ledger | `.summon/team-log.jsonl` (v3) | Semantic events in `team/events.json`, plus `start`, `stop`, `cast`, `block`, `unblock`, `compact`, `expect`, `skip`, `audition`, `ack` | yes | checks, renderers |
 | Telemetry | `.summon/telemetry/<date>.jsonl` | Tool calls, durations, pane states, token and cost samples | no (gitignored, rotated after 14 days) | renderers only |
 
 Every writer resolves the log through one function in `team-log.mjs`: `SUMMON_LOG` when the dispatcher set it, otherwise the `.summon/` directory of the checkout that owns the repository's shared git directory (`git rev-parse --git-common-dir`), which is the main checkout from every worktree. Today dispatch, `ingest`, the runner, and the seats' Log section each resolve it from their working directory, which is how the first-runs report found a worktree writing to its own copy. Each event is one line written by one `O_APPEND` write call, which does not interleave with another writer's line on a local filesystem; network filesystems are out of scope.
@@ -226,6 +255,7 @@ Secrets reach the log by two routes, and both are closed at append time. The tel
 | W-7 | The wire runs from a pinned, hashed path outside every worktree | P0 | `doctor` reports the wire's source, version, and hash, and refuses to report it present from a project or local settings file |
 | W-8 | Optional local OTLP/HTTP receiver for cost and token data | P2 | It keeps an allowlist of fields and never stores tool arguments, even when `OTEL_LOG_TOOL_DETAILS=1` is set |
 | W-9 | Guards on the enforcement surface during work orders | P1 | A seat's settings edit is refused by `ConfigChange`; a seat cast with `bypassPermissions` is refused by `plan`; a diff touching `.claude/**` fails `check --line` |
+| W-10 | Skip events: ceremonies declare the seats they must start; the wire writes `expect` when one starts and a `skip` for each declared seat with no `start` by the end of the ceremony | P0 | Two fixtures: a review ceremony in which the coordinator writes four lens verdicts itself, which must yield four `skip` events and four uncorroborated verdicts; and one in which every lens starts, which must yield none |
 
 ## Part 2: Casting
 
@@ -274,7 +304,7 @@ The first run's 45 agents were 5 lenses and 40 skeptics. The default casting low
 
 Two cheaper changes come first, both from the research above. The review station's prompt carries the item's spec and the diff and nothing that frames the change: never the coder's own summary of what it did, never PR titles or descriptions (C-11). v3's `review-wave.mjs prepare` already builds lens prompts from the diff alone; this makes that a tested rule. And a veto backed by an out-of-band check, such as a failing test the runner executed, is recorded as stronger than a veto backed by prose, which is the lesson of the unanimous padding oracle.
 
-Mixed-model lenses are the open question. Lenses on the same base model share blind spots, so their agreement is weaker evidence than it looks. Summon Live tests this as hypothesis **H1**: at equal cost, a review formation whose lenses run on different models has lower finding overlap and higher union recall on the control and the replay set than a single-model formation. H1 runs in two arms. Arm A uses Anthropic's own models and sends no code anywhere new. Arm B, with a second vendor, runs only after arm A reports, and only through the separate cross-vendor decision in Part 3. Both are pre-registered in ADR-0005's style, and a null result is published like any other. The correlation papers above suggest arm A may well come back null, and the default casting does not wait on it.
+Mixed-model lenses are the open question. Lenses on the same base model share blind spots, so their agreement is weaker evidence than it looks. Summon Live tests this as hypothesis **H1**: at equal cost, a review formation whose lenses run on different models has lower finding overlap and higher union recall on the control and the replay set than a single-model formation. H1 runs in two arms. Arm A uses Anthropic's own models and sends no code anywhere new. Arm B, with a second vendor, runs only after arm A reports, and only through the separate cross-vendor decision in Part 3. The post describes a bake-off the human began in August, Claude against Codex on the same real work with GitHub Copilot's agent mode queued behind it, so arm B uses that bake-off's items rather than building a second corpus. Both arms are pre-registered in ADR-0005's style, and a null result is published like any other. The correlation papers above suggest arm A may well come back null, and the default casting does not wait on it.
 
 ### Escalation
 
@@ -331,7 +361,7 @@ The state goes into the display name in words, so the sidebar says who is waitin
 
 ### Step 2: the herdr host (Phase 3, gated)
 
-**The need gate.** The host is built only after a real work order where the human needed to step into a running seat, needed a run to survive a disconnect, or saw the Workflow host fail in a way separate sessions would fix. The order and what went wrong are recorded in the tracking doc that opens the host ADR.
+**The need gate.** The host is built only after a real work order where the human needed to step into a running seat, needed a run to survive a disconnect, or saw the Workflow host fail in a way separate sessions would fix. A cascade audit (D-5) that finds a seat skipped on the Workflow host counts as that last case, because a seat the dispatcher starts as its own process is one that no model decided to spawn. The order and what went wrong are recorded in the tracking doc that opens the host ADR.
 
 **Containment comes first.** herdr's socket has no authentication beyond its `0600` file mode, and herdr exports `HERDR_SOCKET_PATH` and `HERDR_BIN_PATH` into every process it starts, with its own values winning. With the socket, a seat can press Enter on another seat's permission prompt with `agent send-keys` and so borrow its tools, read every pane, overwrite the pane state that the host reports, and install persistent plugin code. A seat does not need the herdr binary or the variable to do it: five lines of Node opening `~/.config/herdr/herdr.sock` are enough, so a string-matching hook cannot stop it. The host therefore requires all of the following before it runs a seat, and `doctor` refuses the host when any is missing:
 
@@ -360,9 +390,19 @@ The review formation stays inside one pane, whose session runs v3's review-wave 
 
 **One runner, not two.** The herdr loop above and v3's `line.workflow.mjs` must not become two implementations of the line. Both run over one host interface (start, prompt, wait, stop), and a parity test feeds the same plan to both and requires the same claims and returns. The dispatcher is not the supervisor ADR-0012 A rejected: it is a foreground command the human runs, it holds nothing the human's shell does not, it keeps no state outside the repository's log, it exits when the order ends, and it claims no tamper resistance.
 
+### Separation of duties, enforced
+
+The post kept enforced separation of duties as a hypothesis: a coder that cannot edit the tests cannot make a failing test pass by weakening it. As *The three symptoms are one chain* notes, the boundary was prose in v2, and v3's enforcement report still marks the tester's boundary as prose, because on Claude Code writing source and writing tests use the same tools. Two layers change that. The first does not wait for herdr.
+
+**Refused at hand-off, on every host (H-7).** When a station returns, the dispatcher lists the paths that changed between the tree recorded at its claim and the tree at its return, and matches them against the adapter's `paths` globs for the seat's `must-not`. If any path falls inside, it writes a failed `check` event naming the path and the boundary, and the next station cannot claim the item until the station re-runs inside its boundary. This reads git, not the harness, so it holds on the Workflow host today, on the herdr host, and on another vendor's agent in a bake-off. It catches the crossing after the fact, before anything downstream builds on it.
+
+**Blocked at the tool, where a seat is its own session (H-8).** On a host that starts each seat as its own Claude Code session, the dispatcher's `--settings` for each seat carries `Edit()` deny rules composed from its `must-not` globs. Claude Code applies deny rules to every built-in edit tool in every permission mode, and copies `Edit` rules into the sandbox's write lists for shell commands. Two limits are stated rather than hidden. A deny rule names the paths it blocks, so it cannot say "everything except tests"; the tester's seat instead runs in `dontAsk`, where an edit that no allow rule covers is refused, with `Edit()` allow rules for its own globs. And on Linux and WSL2 the sandbox skips write entries that contain wildcards, so there a shell command is stopped only at boundaries drawn as whole directories, and H-7 is what holds for test files that sit beside the source.
+
+The enforcement report gains both levels beside v3's `tool` and `prose`, per boundary and per host, so whether the maker-checker split is enforced on a given install is answered before the run rather than after it.
+
 ### Cross-vendor seats are a separate decision
 
-A seat held by another vendor's agent sends the project's code to that vendor, and Claude Code's hooks and sandbox do not exist in that agent's terminal. Cross-vendor seats are therefore split out of this PRD's host ADR into their own decision, taken only after H1's arm A reports, only with an equivalent sandbox for the other agent, and only as a recorded human decision per project. The persona would travel as the `AGENTS.md` that most other harnesses read, emitted by a new adapter. Identity lives in the persona file, never in the skin, which no model sees; whether the persona survived the other model is the voice probe's call.
+A seat held by another vendor's agent sends the project's code to that vendor, and Claude Code's hooks and sandbox do not exist in that agent's terminal. Cross-vendor seats are therefore split out of this PRD's host ADR into their own decision, taken only after H1's arm A reports, only with an equivalent sandbox for the other agent, and only as a recorded human decision per project. The human's own bake-off is the natural place to gather the evidence, and H-7 runs there unchanged because it reads git rather than the harness. The persona would travel as the `AGENTS.md` that most other harnesses read, emitted by a new adapter. Identity lives in the persona file, never in the skin, which no model sees; whether the persona survived the other model is the voice probe's call.
 
 ### What was cut
 
@@ -378,6 +418,8 @@ The draft proposed a Summon plugin for herdr. It is cut. The CLI calls above cov
 | H-4 | One branch per item with commit hand-off at each claim | P1 | On the `first-run` order, the coder's worktree contains the tester's commit, and the line check reads it from the returns |
 | H-5 | One runner over a host interface | P1 | The parity test yields identical claims and returns from the Workflow and herdr hosts for the same plan |
 | H-6 | Long-lived instances across items | P2 | An instance that handles two items logs both claims, both corroborated, and shows cache reads on the second |
+| H-7 | Separation of duties refused at hand-off on every host, from the changed paths between claim and return | P0 | On the Workflow host, a coder station that edits a test file and a tester station that edits a source file each get a failed `check` naming the path, and the next station's claim is refused |
+| H-8 | Separation of duties blocked per seat on hosts that start sessions: `Edit()` deny rules from `must-not`, and `dontAsk` with allow rules where the boundary is a complement | P1 | On the herdr host, the coder's edit of a test file and the tester's edit of a source file are both refused by the tool; the enforcement report shows each boundary's level per host, the Linux shell limit included |
 
 ## Part 4: The world
 
@@ -423,6 +465,8 @@ Each status leads with plain words and is computed from events. The JRPG name is
 |---|---|---|---|
 | Agreeing without diverging (10 items) | *Echo* | A full window of ten real items whose verdicts were unanimous **and** whose findings overlapped above the D-1 threshold | the formation; the order stops until acknowledged (D-4) |
 | Uncorroborated verdict | none | Testimony with no bracketing out-of-band events (W-4) | the item |
+| Seat skipped | none | A `skip` event: a declared seat that never started (W-10) | the item, never the persona, since the coordinator or the harness skipped it |
+| Crossed its boundary | none | A failed hand-off check (H-7) | the item |
 | Out of order | none | `check --line` reports an out-of-order or same-instance station | the item |
 | Waiting on you, 3 min | the seat holds up a card | A `block` with no `unblock` | the seat |
 | Context compacted | *Fatigue* | A `compact` in the seat's current session | the seat |
@@ -451,7 +495,7 @@ The hall has a visible pause control (WCAG 2.2.2) as well as honouring reduced m
 
 ## Part 5: Dissent instruments
 
-v3's `disagreement-rate` reads verdicts. The first run showed the gap: five lenses each vetoing a diff with four critical defects is unanimity on the scale and disagreement on the content. Four instruments widen what Summon measures and make one of them stop the work.
+v3's `disagreement-rate` reads verdicts. The first run showed the gap: five lenses each vetoing a diff with four critical defects is unanimity on the scale and disagreement on the content. Five instruments widen what Summon measures, make one of them stop the work, and run the whole chain on demand.
 
 | ID | Instrument | Priority | Phase |
 |---|---|---|---|
@@ -459,6 +503,9 @@ v3's `disagreement-rate` reads verdicts. The first run showed the gap: five lens
 | D-2 | **Independence weighting.** Agreement between two lenses on the same model counts less than agreement across models; the report shows both numbers. | P2 | after H1 arm A |
 | D-3 | **Corroboration report.** The share of verdicts and returns that are corroborated, per host. Pane state from herdr never counts toward it. Below the target set after the Phase 0 baseline, the report says the dissent rate itself is untrustworthy before it says anything else. | P0 | 0 |
 | D-4 | **Fail closed.** When a full window is unanimous and overlapping, the dispatcher refuses to close the order until the human writes an `ack` event naming what they checked. | P1 | 1 |
+| D-5 | **The cascade audit.** One run checks every link of the chain on two paths: a ceremony started the way a human starts it in conversation, and the same work dispatched as a work order. It reports skips (W-10), voice (the C-8 probe with and without each persona that ran), and contest (the arguable fixture, below). It runs on every model release, every Claude Code release, and on a calendar the human sets, and its report is the evidence G0 asks for. | P0 | 0 for skips; 1 in full |
+
+The arguable fixture is the third option the first-runs report put to the human on 2026-09-10 and the human did not take: a diff that a careful team should split on, where each floor lens has something true to say and the verdict turns on how it is weighed. It does not reopen that decision. The negative control still measures presence, and the dissent rate over ten real items still measures spread on real work. The fixture exists so that a release can be checked on the day it lands, rather than after ten real items, which by the post's own timeline can take months. Its run count and pass bar are pre-registered with the fixture. It is held out like a test set: no persona is ever edited against it, and a failure is read under ADR-0015's reversal trigger 1, never fixed by tuning a persona until it passes, which would be the curve-fitting the post warns about.
 
 The negative control also gets a schedule: every audition runs it, and the human can opt into a weekly run.
 
@@ -486,10 +533,10 @@ Three prerequisites come before Phase 0. ADR-0012 E's capability registry has no
 
 | Phase | Builds | Earn-gate before the next phase |
 |---|---|---|
-| 0. The wire, visible | W-1 to W-7, D-3, V-1 read-only, V-4 for *Uncorroborated verdict*, the threat-model entry, and a baseline run: Phase 0's own items through the v3 line on all-inherit | Both W-4 fixtures caught; the hook contract tests pass; Pierrot's gate passes; the baseline records cost per item, a first recall corpus, and the first dissent samples |
-| 1. Casting and dissent | C-1 to C-5, C-8, C-10, C-11, D-1, D-4, V-4 in full, V-7, V-8, W-9, H-1 | The first audition blocks a deliberately broken candidate and passes the default; the human promotes a casting; cost per item is reported against the baseline |
+| 0. The wire, visible | W-1 to W-7, W-10, D-3, D-5's skip probe, V-1 read-only, V-4 for *Uncorroborated verdict* and *Seat skipped*, the threat-model entry, and a baseline run: Phase 0's own items through the v3 line on all-inherit, plus the skip probe on both paths | Both W-4 fixtures and both W-10 fixtures caught; the hook contract tests pass; Pierrot's gate passes; the baseline records cost per item, a first recall corpus, the first dissent samples, and how often the conversational path skipped a declared seat on today's model and harness |
+| 1. Casting and dissent | C-1 to C-5, C-8, C-10, C-11, D-1, D-4, D-5 in full, V-4 in full, V-7, V-8, W-9, H-1, H-7 | The first audition blocks a deliberately broken candidate and passes the default; the human promotes a casting; cost per item is reported against the baseline; the first full cascade audit is filed |
 | 2. Replays, the gate line, and H1 arm A | V-1 full, V-5, V-6, C-6, C-7, C-9 arm A, C-12 | The battle beats the table on "who vetoed and why"; H1 arm A reports, null allowed; a gate order runs clean |
-| 3. The herdr host | H-2 to H-5, after the need gate | The raw-socket test fails from a seat; the parity test passes; the `first-run` order runs with zero line violations, every return corroborated, and the tester's commit in the coder's worktree |
+| 3. The herdr host | H-2 to H-5 and H-8, after the need gate | The raw-socket test fails from a seat; the parity test passes; the `first-run` order runs with zero line violations, every return corroborated, the tester's commit in the coder's worktree, and both of H-8's refusals made by the tool |
 | 4. The hall and what H1 earns | V-2, V-3, H-6, W-8, D-2, the minimum art, and the cross-vendor decision if arm A justified it | The quest board beats the table on "who is waiting on me"; `serve` launches show the hall in use |
 
 If the hall is not opened in most work-order sessions sixty days after it ships, counted by local `serve` launches, it is deleted, and the party bar and replays stay. ADR-0014 used the same kind of trigger for an unused prompt.
@@ -500,13 +547,17 @@ Targets are set from the Phase 0 baseline; the draft's 40 percent cost cut and t
 
 | Measure | Target | Source |
 |---|---|---|
-| G0: the notice can come down | All four conditions on the current model | the G0 tracking doc |
+| G0: the notice can come down | Every G0 condition on the current model | the G0 tracking doc |
 | Corroboration, per host | Set after the baseline, reported from Phase 0 | D-3 |
 | Files changed outside the fitted list on the next model release | zero | ADR-0015 reversal trigger 3, read against the list |
 | Items run on an unaudited model without an acknowledgement | zero | C-3 |
 | Review cost per item against the Phase 0 baseline | lower, by a margin set after the baseline | wire cost samples |
 | Planted defects refuted by skeptics | zero | auditions |
-| Voice probe on every seat an audition exercises | passes with the persona, and differs from the run without it | auditions |
+| Voice probe on every seat an audition or cascade audit exercises | passes with the persona, and differs from the run without it | auditions, D-5 |
+| Declared seats skipped on the dispatched path | zero | D-5, W-10 |
+| Declared seats skipped on the conversational path | reported per release against the Phase 0 baseline | D-5, W-10 |
+| The arguable fixture | verdicts split at the pre-registered rate | D-5 |
+| Station returns that crossed a separation boundary and were built on | zero | H-7 |
 | Same work order on two coordinating models | identical spawn sequences | G3 fixture |
 | Timed tasks against `team-log.mjs render` | faster for the battle and the hall | Phase 2 and Phase 4 gates |
 
@@ -558,6 +609,9 @@ The ADRs below are meta, because they are about building Summon; each asset they
 | herdr changes fast: v0.7.0 to v0.9.3 between June and September 2026, with a breaking removal in v0.9.2 | High | Fitted host adapter, version pin, cooldown, `doctor` probe, and two other hosts |
 | Claude Code changes hook payloads | Medium | The wire is fitted to the harness, tested against recorded payloads, and fail-open |
 | Scope: a solo developer drowns in panes and pages | Medium | Every phase stands alone; Phase 0 is a status line and a report |
+| The conversational path keeps skipping seats on instructions the harness injects | High | Not fought with prose: skips are visible the same day (W-10), the gate moves onto a line (C-12), and open question 8 asks whether ceremonies default to work orders |
+| The arguable fixture becomes a target that personas are tuned to pass | Medium | Held out like a test set; a failure is read under ADR-0015's reversal trigger 1 and never fixed by a persona edit made against it |
+| Read as a single-cause story, the chain hides a decay that enters lower down | Medium | Every link has its own instrument, and D-5 runs them together on a calendar as well as on releases |
 
 ## Open questions
 
@@ -570,6 +624,8 @@ These are live, and the human decides each one. Where a reviewer recommended an 
 5. Which of Dani's three hall concepts does the human want mocked first: the quest board (recommended), the room, or the diff as a map? Dani asks which one the human hates.
 6. Summon has no design profile (`docs/design-profile.md` is still a scaffold stub), which ADR-0013 makes the human's to write. Dani recommends filling it before the hall is designed.
 7. Is a generated output style the right place for the coordinator's posture, or should the coordinator become a composed seat run through Claude Code's `agent` setting?
+8. Should a ceremony that declares seats run as a work order by default, so that the conversational path, where a harness instruction can still skip a seat, becomes the exception? This PRD leans yes for the review formation and the gate, and leaves the rest to the human.
+9. What calendar should D-5 keep? The post's own audit runs every six months; the server-side line argues for something shorter, such as monthly, since it arrived with no release to trigger a check.
 
 ## Related in-flight work
 
@@ -602,6 +658,10 @@ When an ADR adopts one of these, the definition moves to `docs/methodology/team-
 | herdr-aware | Summon labelling the herdr panes it already runs in, without starting seats in panes |
 | Posture block | The coordinator's delegation and verification guidance for one model family, emitted as an output style |
 | Status | A plain-language label computed from events, with optional skin flavour |
+| Skip | An out-of-band event for a seat that a ceremony declared and that never started |
+| Cascade audit | D-5: one run that checks skips, voice, and contest on the conversational and dispatched paths |
+| Arguable fixture | A held-out diff that a careful team should split on; it measures contest on the day of a release |
+| Hand-off check | H-7: the dispatcher's refusal of a station that changed paths its role must not touch |
 
 ## Sources
 
@@ -613,6 +673,11 @@ Read on 2026-10-05 unless noted. Facts about herdr come from its repository at c
 - ADR-0005, ADR-0006, ADR-0007, ADR-0012, ADR-0014 in `docs/adrs/meta/`; ADR-0013 in `docs/adrs/`; `docs/process/ai-tells-catalog.md`; `docs/team-directives.md`; `docs/history/design/team-hero-sprites-16bit.md`; `scripts/check-css-contrast-motion.mjs`; `site/src/components/TeamGrid.astro`.
 - On `claude/summon-team-v3-decomposed-jyiur2`: `docs/adrs/meta/0015-decomposed-team.md`, `docs/methodology/team-layers.md`, `docs/history/tracking/2026-09-10-first-runs.md`, `docs/history/tracking/2026-09-09-v3-handoff.md`, `team/events.json`, `team/harness/claude-code.json`, `team/views/jrpg-16bit/party.json`, `team/personas/*.md`, `team/workflows/line.workflow.mjs`, `team/workflows/review-wave.workflow.mjs`, `scripts/dispatch.mjs`. Issue #138 and its comments.
 - The review of this PRD: `docs/history/tracking/2026-10-05-summon-live-prd-review.md`.
+
+**The post**
+
+- *I Killed My Agent Team*, 2026-08-15: https://innerloopai.substack.com/p/i-killed-my-agent-team. Read from its published source; the quotations about the injected line, the order of the symptoms, the May 15 date, the two hypotheses, the bake-off, and the six-month audit come from it.
+- claude-code issue #80988, the injected section, as the post cites it: https://github.com/anthropics/claude-code/issues/80988
 
 **Anthropic**
 
@@ -627,12 +692,14 @@ Read on 2026-10-05 unless noted. Facts about herdr come from its repository at c
 **Claude Code**
 
 - Subagents (frontmatter `model`, `effort`, `color`; nesting depth 3; 20 concurrent): https://code.claude.com/docs/en/sub-agents
-- Hooks (handler types, `async` and its unenforced timeout, stdout as context on `SessionStart` and `PostModelSwitch`, `disableAllHooks`, `ConfigChange`, `agent_type` under `--agent`): https://code.claude.com/docs/en/hooks
+- Hooks (handler types, `async` and its unenforced timeout, stdout as context on `SessionStart`, `UserPromptSubmit`, `UserPromptExpansion`, and `PostModelSwitch`, `UserPromptExpansion` matching on `command_name`, `disableAllHooks`, `ConfigChange`, `agent_type` under `--agent`): https://code.claude.com/docs/en/hooks
+- Permissions and permission modes (`Edit()` rules, deny rules in every mode, `dontAsk`): https://code.claude.com/docs/en/permissions, https://code.claude.com/docs/en/permission-modes
+- Settings reference (`Edit` rules copied into the sandbox's write lists; wildcard write entries skipped on Linux and WSL2; `workflowSizeGuideline`): https://code.claude.com/docs/en/settings-reference
 - Sandboxing (shell-only scope, write limits, Unix sockets and the seccomp filter, `credentials.envVars` scopes): https://code.claude.com/docs/en/sandboxing
 - Monitoring with OpenTelemetry: https://code.claude.com/docs/en/monitoring-usage
 - Status line and `subagentStatusLine`: https://code.claude.com/docs/en/statusline
 - Agent teams: https://code.claude.com/docs/en/agent-teams
-- CHANGELOG, versions 2.1.212, 2.1.217, 2.1.219, 2.1.224, 2.1.274, 2.1.287: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
+- CHANGELOG, versions 2.1.202, 2.1.212, 2.1.217, 2.1.219, 2.1.224, 2.1.271, 2.1.274, 2.1.287: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
 
 **herdr**
 
