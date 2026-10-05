@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "persona review of the Summon Live PRD draft", deps: [docs/history/design/summon-live-prd.md], state: active, last: "claude@2026-10-05", key: ["five standalone reviewers: Wei, Pierrot, Pat, Archie, Dani; 46 findings, 12 blocking", "reviewers returned messages; the coordinator wrote this record and revised the PRD", "every finding has a disposition; the reviews are reproduced verbatim at the end"] }
+agent-notes: { ctx: "persona review of the Summon Live PRD draft", deps: [docs/history/design/summon-live-prd.md], state: active, last: "claude@2026-10-05", key: ["five standalone reviewers: Wei, Pierrot, Pat, Archie, Dani; 46 findings, 12 blocking", "reviewers returned messages; the coordinator wrote this record and revised the PRD", "every finding has a disposition; the reviews are reproduced verbatim at the end", "round 2 reviews commit 9888dd0, the chain revision made after the author said why the team was stopped"] }
 ---
 
 # Review: the Summon Live PRD draft
@@ -275,3 +275,234 @@ This project has no design profile; findings below are accessibility and interna
 I'd test A first, on paper with the first-run order. It's a day's work, it answers the hall's own question, and it sets the time B has to beat. Which do you hate?
 
 Sentinel as returned: 10 findings (2 blocking, 7 amend, 1 note).
+
+## Round 2: the revision after the author's input
+
+**Date:** 2026-10-05
+**Subject:** commit `9888dd0`, which added *The three symptoms are one chain*, W-10, D-5, H-7, and H-8 after the human said why the team was stopped
+**Reviewers:** Archie (architecture and feasibility), spawned as a standalone agent with instructions not to write files. The first attempt was lost to a container restart and re-spawned with the same brief.
+**Method:** As in round 1. The brief named the changed lines, the v3 code, and the saved Claude Code documentation, and asked five questions.
+
+### Sentinel check, round 2
+
+| Reviewer | Sentinel as returned | Findings present | Matches | Note |
+|---|---|---|---|---|
+| Archie | 13 findings (3 blocking, 9 amend, 1 note) | 13 | yes | Re-spawned once after the restart |
+
+### Claims the coordinator verified, round 2
+
+- **Hooks:** `Stop` carries `background_tasks` to tell "done" from "paused waiting for background work"; `SessionEnd` hooks get 1.5 seconds by default and a plugin's own timeout does not raise that; `-p` runs kill async hooks at teardown; `SubagentStart` is documented for the Agent tool, resumed subagents, and agent-team teammates, not for agents a Workflow script spawns; `PreToolUse` matches `Workflow`; `prompt_id` is a common input field.
+- **Sandbox and permissions:** `autoAllowBashIfSandboxed` defaults to true; a sandbox in a linked worktree may write the shared `.git` directory. One correction runs the other way: the settings reference says `Read` and `Edit` deny rules also apply to the shell commands Claude Code recognises as file commands (`cat`, `sed`, `tee`) and to redirection targets, though not to arbitrary subprocesses. H-8 now says so.
+- **v3 code:** `open` runs `git worktree add --detach`; `claim` checks only `order` and `distinct-instance` and records no tree; `dispatch.mjs` takes only `plan`, `open`, and `claim`; `appendEvent` throws on an undeclared event; `line.workflow.mjs` has no filesystem and each seat runs its own claim.
+
+### Archie, round 2
+
+| # | Grade | Finding | Disposition | Where |
+|---|---|---|---|---|
+| 1 | blocking | W-10 never writes `expect` on the dispatched path | Sustained. The plan is the expectation: `dispatch.mjs claim` and `review-wave.mjs prepare` write `expect`; the hooks cover conversation only; a dispatched fixture in which four of five lenses start must yield one `absent`. `PreToolUse` on `Workflow` is not adopted, because the plan already covers that path. | Part 1, W-10; chain link 2 |
+| 2 | amend | `Stop` closes too early; `SessionEnd` may never run | Sustained. `Stop` closes only when `background_tasks` is clear; a synchronous `SessionEnd` handler through `--settings`; `corroborate` derives absences; the binding declares where a ceremony closes; an interrupted ceremony reads as unclosed. | Part 1 |
+| 3 | amend | `expect` and the absence event need schema entries; `seat` must not be the persona | Sustained. Both are declared in `team/events.json`; a reserved writer `seat` with the missing seat in `missing`; session and prompt ids as the item fallback; W-10's acceptance validates every wire line. | Part 1, W-10 |
+| 4 | amend | Seat declarations already have homes | Sustained. Seats stay in the formation, the line, and the gate line; a ceremony binding in the party and harness names in the adapter are compiled into a pinned, hashed expectations table. | Part 1; ADR table |
+| 5 | amend | The model-invoked trigger fires before permission | Sustained. `PostToolUse` on `Skill`, withdrawn on `PermissionDenied` or `PostToolUseFailure`; the field name goes in the adapter behind a `doctor` probe. | Part 1 |
+| 6 | amend | `SubagentStart` for Workflow agents is undocumented | Sustained. The live probe is Phase 0's first item; if it fails, the Workflow host reports corroboration and absences as unavailable, never as zero. | Part 1; Phasing |
+| 7 | blocking | H-7 cannot compute changed paths on the Workflow host | Sustained. Object-id snapshots through a temporary index, `diff-tree --no-renames`, the check inside the next claim and a `handoff` command, a return counted only after a passing check, `tree` on `claim`, `station` and `instance` on `check`, and one item in flight under isolation none until H-4 reaches that host. "Refused" is reworded as a guard on an honest run there. Pulling H-4 into Phase 1 was the alternative and is not taken. | Part 3, H-7 |
+| 8 | blocking | Re-running a station launders the crossing | Sustained. The base is fixed per item and station; the herdr host resets to it before a re-run; the re-claim fixture is in H-7. | Part 3, H-7 |
+| 9 | amend | `write:src` is a complement, and the globs sit in a Claude-specific file | Sustained. The globs move to a per-project binding beside `team/checks.json`; writing source is the complement; the defaults widen; the `mod tests` limit is stated. | Part 3; ADR table |
+| 10 | amend | H-8 overstates the shell | Sustained, with the correction above: recognised file commands and redirections are covered on every OS, arbitrary subprocesses are not, the sandbox takes glob rules only on macOS, and the tester's complement is not covered on the shell at all. The acceptance adds `Write`, `NotebookEdit`, and a shell write. | Part 3, H-8 |
+| 11 | amend | D-5 needs a planted positive; the trigger-1 reading reopens a decision | Sustained. Every D-5 run plants one absence per path; whether the arguable fixture counts under trigger 1 goes to the human in the ADR-0015 fold-in. | Part 5; G0 |
+| 12 | amend | The gate table cannot carry H-7 in Phase 1 | Sustained. The ADR-0015 fold-in row carries H-7, the ceremony binding, the `paths` binding, and the trigger-1 question; the wire row names `expect` and `absent`; casting takes D-5's voice half; host adapters take H-8; H-7 and H-8 get ADR-0012 E registry entries. | ADR table |
+| 13 | note | "skip" already means something in v3 | Adopted. The event is `absent` and the status *Seat never started*; v3's `skipped` keeps its meaning. The review below says `skip` because it reviewed the earlier wording. | Throughout |
+
+### Archie, round 2, verbatim
+
+Archie: architecture review of commit 9888dd0 (W-10, H-7, H-8, D-5, phasing, gate)
+
+PRD: /home/user/summon/docs/history/design/summon-live-prd.md. v3 sources were read from origin/claude/summon-team-v3-decomposed-jyiur2. Claude Code docs are in /tmp/claude-0/-home-user-summon/19f58b4c-ab90-5f99-8a34-13722f4112b6/scratchpad/.
+
+The direction is right. Making a skipped seat an out-of-band fact (W-10) is the right instrument for link 2. Checking separation of duties by reading git instead of the harness (H-7) is the right move for portability, and as a script it fits ADR-0012 B's rule that a script wins over a hook. But three defects would produce false greens in P0 requirements, and H-8 claims more for the shell than it delivers.
+
+Short answers to the five checks:
+1. **W-10 hooks.** `UserPromptExpansion` carries enough (`command_name`, `command_args`). `PreToolUse` on `Skill` does fire, but its input fields are undocumented and it fires before the permission check. `Stop` works only if the wire reads `background_tasks`. `SessionEnd` is a 1.5 s hook that may be killed before it writes. Neither trigger fires on the dispatched path (findings 1–6).
+2. **Where declarations live.** The party and the line already hold the seats. The harness's command names belong in the adapter. A new seat list is the wrong home (finding 4).
+3. **events.json.** Yes, `expect` and `skip` need entries (finding 3).
+4. **H-7.** It cannot be computed as specified on the Workflow host, and the re-run remedy launders the crossing. The claim refusal fits v3's claim logic with small changes. `write:src` can only be matched as a complement (findings 7–9).
+5. **H-8.** All four doc claims hold as stated. What they add up to for the shell is overstated (finding 10).
+6. **D-5 phasing.** Coherent, but the Phase 0 dispatched probe is vacuous. H-7 has no ADR row that can carry it in Phase 1 (findings 11–12).
+7. **ADR conflicts.** See findings 4, 7, 9, 11 and 12.
+
+---
+
+**1. [Blocking] W-10 never writes `expect` on the dispatched path, so G0's "no seat skipped on the dispatched path" passes by construction.**
+- **PRD:** 27, 198, 207, 506, 536, 557.
+- **Sources:**
+  - v3 `team/workflows/line.workflow.mjs` 42–44: each station is started by `agent(prompt, {agentType: st.seat})`.
+  - v3 `team/workflows/review-wave.workflow.mjs` 83: each lens is started by `agent(reviewPrompt(l), …)`.
+  - cc-hooks.md 1396–1402: `UserPromptExpansion` fires only for a command the user types. `PreToolUse` on `Skill` fires only when Claude calls the Skill tool.
+- **Problem:** On the Workflow host, seats are started by a Workflow script. On the herdr host they are started by the `herdr agent prompt` text at line 384, which is a slash command only if Summon makes it one. Neither of W-10's triggers fires on that path. With no `expect` there can be no `skip`, so success measure 557 and G0 read zero whether or not a lens ran. That is the false green this revision exists to prevent.
+- **Fix:**
+  - On the dispatched path, the plan is the expectation, written out-of-band before any seat starts. `dispatch.mjs claim` writes `expect` for the station's seats (`by: dispatch`). `review-wave.mjs prepare` writes `expect` for the roster it computed from the diff.
+  - Keep the hook triggers for the conversational path only.
+  - Consider `PreToolUse` on `Workflow` as a third trigger. cc-hooks.md 1580 lists `Workflow` as matchable, though its input fields are also undocumented.
+  - Add a dispatched-path fixture: a review station that starts four of five lenses must yield exactly one `skip`.
+
+**2. [Amend] `Stop` closes a ceremony too early, and `SessionEnd` may never run the wire.**
+- **PRD:** 198, 209, 251 (W-3's two-second timer), 220 (plugin install).
+- **Sources:**
+  - cc-hooks.md 2575–2600: `Stop` carries `background_tasks`, with `workflow` and `subagent` types, "to distinguish session is done from paused waiting for background work". `Stop` "does not run if the stoppage occurred due to a user interrupt".
+  - cc-hooks.md 3389–3392: `SessionEnd` hooks share a 1.5 s budget, and timeouts set on plugin-provided hooks don't raise it.
+  - cc-hooks.md 3732–3735: in `-p`, async hooks still running at teardown are killed. Their fate at an interactive exit is not documented.
+- **Problems:**
+  - A review running as a background workflow or background subagents is still in flight at the turn's `Stop`. Every lens that hasn't started yet gets a false `skip`. That contaminates the Phase 0 baseline of conversational skips (536) and the *Seat skipped* status.
+  - An interrupted ceremony leaves its `expect` open, because no `Stop` fires.
+  - On `SessionEnd`, the wire's 2 s timer exceeds the 1.5 s budget. The PRD's preferred plugin install can't raise that budget, and `-p`/SDK runs kill async hooks. So the skips of multi-turn ceremonies are the ones most likely to be lost, and silently, because W-3 forbids output.
+- **Fix:**
+  - At `Stop`, write skips only when `background_tasks` holds no `workflow` or `subagent` entry; otherwise leave the `expect` open.
+  - Run the `SessionEnd` handler synchronously with a timeout under the budget, wired via `--settings` (which can raise it).
+  - Make `skip` derivable: W-4's `corroborate` computes "declared, never started" from `expect`, `start`, and the session's last `stop`, so a written `skip` is a cache, not the only record.
+  - The declaration must state whether the ceremony closes at `Stop` or at `SessionEnd`. Line 198 assumes the wire knows, but nothing declares it.
+
+**3. [Amend] `expect` and `skip` must be in team/events.json, and a skip's `seat` must not be the persona.**
+- **PRD:** 185, 232, 249, 468.
+- **Sources:**
+  - v3 `scripts/team-log.mjs` 55–65 and 88–90: `validateEvent` rejects any event not in `schema.events`, and `appendEvent` throws.
+  - v3 `team/events.json`: `common` is `[t, seat, event]`.
+- **Problem:** Line 232's "Semantic events in team/events.json, plus … expect, skip" reads as if these sit outside the schema. In v3, such an append throws. Because the wire is silent (W-3), a rejected `skip` vanishes without a trace, which is the worst failure for a skip detector.
+- **Fix:**
+  - Add `expect` (required: `ceremony`, `seats`; optional: `item`, `session`, `prompt`, `closes`) and `skip` (required: `ceremony`, `missing`; optional: `item`, `session`).
+  - Set `seat` on both to a reserved writer name, with the absent seat in `missing`. `render` groups by seat instance, so this keeps the status off the persona, as line 468 requires.
+  - The conversational path usually has no `SUMMON_ITEM`, so "the ceremony's item" (198) needs a fallback key: `session_id` plus `prompt_id` (cc-hooks.md 724–735).
+  - Add to W-10's acceptance that the wire's lines validate under check-canon.
+
+**4. [Amend] Seat declarations already have homes in ADR-0015's layers. A new seat list would drift, and a seat could edit it.**
+- **PRD:** 198 ("a canon file the composer reads"), 220, 222, 532.
+- **Sources:**
+  - ADR-0015 § Composition: the party names a formation's floor and conditional lenses; the line names stations bound to seats.
+  - v3 team-layers.md 216–217: "who reviews what … the party"; "which seat works which station … the line".
+  - ADR-0012 C: the roster is "computed from the diff by the script"; "omissions are deliberate".
+  - v3 review-wave.mjs 77–94: `prepare` records each conditional lens it did not apply.
+- **Problems:**
+  - A third list of review lenses duplicates the formation and goes stale when the formation changes.
+  - A static list can only name the floor. It either expects every conditional (false skips) or none (missed skips).
+  - If the wire reads the declarations from the seat's worktree at hook time, a coder seat can declare zero seats. The file is not on W-9's `check --line` list (222).
+- **Fix:**
+  - Seats stay where they are: the party's formation, the line's stations, and C-12's gate line for author and challenger.
+  - The new data are (a) a portable ceremony → formation/line binding in the party, and (b) the harness's names for each ceremony in the adapter, because they are fitted. That covers `command_name`, the Skill tool's name, and plugin-scoped names such as `summon:review`.
+  - The composer compiles both into an expectations table. The wire reads it from its pinned location, hashed into the manifest (W-7).
+  - This also avoids adding a layer before ratification, which matters because Phase 0 precedes ratification (532).
+
+**5. [Amend] The model-invoked trigger rests on undocumented fields and fires before permission.**
+- **PRD:** 207.
+- **Sources:**
+  - cc-hooks.md 1594–1800: the reference documents `tool_input` for Bash, Write, Edit, Read, Glob, Grep, WebFetch, WebSearch, Agent, AskUserQuestion and ExitPlanMode. It does not document Skill or Workflow.
+  - `PreToolUse` runs before the call is allowed.
+  - cc-hooks.md 861: a `UserPromptExpansion` hook can block the expansion.
+- **Problem:** A Skill call refused by a deny rule, the user, or another hook still yields an `expect`, and then a false skip for every declared seat.
+- **Fix:**
+  - Take the model path from `PostToolUse` on `Skill`, and drop the `expect` on `PermissionDenied` or `PostToolUseFailure`.
+  - Put the Skill tool's input field name in the adapter, with an ADR-0012 E registry entry and a `doctor` probe. Then a renamed field shows as a failed probe, not as zero skips (see finding 11).
+
+**6. [Amend] It is undocumented whether `SubagentStart` fires for agents a Workflow script spawns. W-10's no-skip fixture depends on it.**
+- **PRD:** 196, 208, 258.
+- **Sources:**
+  - cc-hooks.md 2382–2384: `SubagentStart` runs "when Claude spawns a subagent with the Agent tool", when it resumes one, and for agent-team teammates. Workflow-spawned agents are not listed.
+  - cc-hooks.md 2590: `background_tasks` types `workflow` separately from `subagent`.
+- **Problem:** Every lens is Workflow-spawned (review-wave.workflow.mjs 83). If they don't fire `SubagentStart`, every lens yields a false `skip`. W-2 and W-10's recorded-payload fixtures cannot detect this.
+- **Fix:** Make a live probe a Phase 0 entry criterion: one Workflow agent with an `agentType`, checking that `start` and `stop` are observed. Register it under ADR-0012 E and name the fallback. This also touches W-4, which I'm not re-reviewing; W-10 inherits it.
+
+**7. [Blocking] H-7 cannot compute "the paths a station changed" on the Workflow host, where it ships first.**
+- **PRD:** 397, 421, 537.
+- **Sources (v3 unless noted):**
+  - `scripts/dispatch.mjs` 162–165: `open` runs `git worktree add --detach` at one head.
+  - `scripts/dispatch.mjs` 212–240: the claim event has no tree.
+  - `scripts/dispatch.mjs` 256: the only commands are plan, open and claim; nothing runs at return.
+  - `scripts/run-checks.mjs` 37–40: `treeState` is `{head, dirty}` with `dirty` a boolean, which cannot reproduce a dirty tree.
+  - `team/workflows/line.workflow.mjs` 31–33: the seat's own shell runs `dispatch.mjs claim` as its first command.
+  - `team/workflows/line.workflow.mjs` 43: under worktree isolation, the Workflow tool's `agent()` gets its own harness worktree, not `.summon/worktrees/<instance>`.
+  - `team/workflows/line.workflow.mjs` 14: "a workflow has no filesystem".
+  - `team/events.json`: `check` has no `station` or `instance` field.
+- **Problems:**
+  - With isolation none, as in the first run, every item shares one tree. The adapter allows concurrency of 10, so a tester's diff includes another item's coder's source edits. The result is false failures, and crossings attributed to the wrong station.
+  - With worktree isolation, the edits sit in a harness worktree the dispatcher didn't create. The coder never gets the tester's commit until H-4, which is Phase 3.
+  - There is no "when a station returns" step on this host. The refusal is an exit code handed to a model. That is ADR-0012's drift-not-adversary boundary, so "refused" overstates it here.
+- **Fix:**
+  - At each claim, record a reproducible snapshot as an object id, never a ref: `GIT_INDEX_FILE=<tmp> git add -A && git write-tree`. Sandboxed seats in a linked worktree can write the shared `.git` refs (cc-sandbox.md 525).
+  - Diff with `git diff-tree -r --no-renames --name-only`, so a rename out of a test path shows both sides. Untracked files come in through the temporary index. State that gitignored paths are invisible.
+  - Run the boundary check inside the next `claim`, plus a `dispatch.mjs handoff` command the herdr dispatcher calls.
+  - Extend `returnedStations` so a station counts as returned only when its latest boundary check passed. This fits v3's read-decide-append claim in a few lines.
+  - Add `tree` to `claim`, and `station`/`instance` to `check`.
+  - Have `plan` refuse an H-7 line under isolation none with more than one item in flight, or pull H-4's per-item branches into Phase 1.
+  - Add a fixture with two items in parallel.
+
+**8. [Blocking] Re-running the station launders the crossing.**
+- **PRD:** 397 ("between the tree recorded at its claim and the tree at its return"; "until the station re-runs inside its boundary"), 560.
+- **Source:** v3 dispatch.mjs 225–235: a same-instance re-claim of a station is allowed, because only `order` and `distinct-instance` are checked.
+- **Problem:** A re-run's claim tree already contains the offending edit. A re-run that changes nothing therefore passes, and the next station builds on the crossing. Measure 560 counts exactly that case as zero.
+- **Fix:**
+  - Fix the diff's base per item and station: the previous station's hand-off tree, or the order's head for the first station. Never use the latest claim's tree.
+  - On the herdr host, reset to that base before a re-run.
+  - Add a fixture: the coder edits a test, fails, re-claims, and returns with no change. The result must still be a failure.
+
+**9. [Amend] `write:src` is a complement, and H-7 matches against globs in a fitted, Claude-specific file.**
+- **PRD:** 397, 405, 421.
+- **Sources:**
+  - `team/harness/claude-code.json` `paths`: write:tests, write:docs and write:infra only; no write:src.
+  - ADR-0015 § Harness adapter: the adapter is "the only file allowed to be fitted", and its two-adapter test varies "every fitted value".
+- **Problems:**
+  - The tester's must-not can only be matched as "changed, in no declared class, and not under `.summon/`". That flags a `package.json` test script or a `vitest.config.ts`.
+  - Which files are tests is a fact about the project, not the harness. Yet H-7, which claims to run unchanged on a Codex bake-off, reads it from `claude-code.json`.
+  - The default globs miss `*.spec.ts`, `foo_test.go`, and `test_foo.py` outside `tests/`. A coder editing `foo.spec.ts` passes, and a tester editing it fails.
+- **Fix:**
+  - Move `paths` into a portable per-project binding beside `team/checks.json`. H-7, H-8 and the composer all read it from there.
+  - Define write:src as the complement in team-layers.md.
+  - Widen the default globs.
+  - State that tests inside source files (Rust `mod tests`) cannot be separated by path.
+
+**10. [Amend] H-8 overstates the shell layer.**
+- **PRD:** 399, 422, 539.
+- **What holds (each claim checked against the saved docs):**
+  - Deny rules apply in every mode, including `bypassPermissions` (cc-permmodes.md 30).
+  - `Edit` allow and deny rules are copied into `allowWrite`/`denyWrite` (cc-settingsref.md 1929; cc-sandbox.md 649, 655).
+  - On Linux and WSL2, write entries containing `*`, `?` or `[` are skipped, and this includes `Edit` rules (cc-settingsref.md 1951).
+  - `dontAsk` refuses a file-tool edit that no allow rule covers (cc-permmodes.md 549).
+- **What is overstated:**
+  - The sandbox can already write the whole working directory by default (cc-sandbox.md 31, 246, 522). `Edit` allow rules only add to `allowWrite`.
+  - So the tester's allow rules narrow the file tools and nothing else. Sandboxed Bash runs without approval (`autoAllowBashIfSandboxed` defaults to true, cc-sandbox.md 381), so it still runs under `dontAsk` and can write any source file, on every OS, not just Linux. Running the test suite also executes project code.
+  - On Linux, every write:tests glob (`**/*.test.*`, `**/test/**`, `**/tests/**`, `**/__tests__/**`) still contains `*` once the trailing `/**` is stripped. So the coder's shell is stopped at no test path at all, not only at "test files that sit beside the source".
+- **Fix:**
+  - State it plainly: H-8 blocks the file tools. On the shell it covers only the coder's boundary, and only on macOS, or on Linux where the composer expands globs into concrete directories at seat start (new directories escape). It never covers the tester's complement.
+  - Have `doctor` compute the level per tool and per OS, as ADR-0015 already does for install-dependent levels.
+  - In the acceptance test, add a shell write by each seat, and `Write` and `NotebookEdit` cases. The saved docs confirm `Edit` rules cover Edit and Write (cc-settingsref.md 1567), but I found nothing covering NotebookEdit.
+
+**11. [Amend] D-5's phasing is coherent, but its skip half needs a planted positive, and its fixture reading reopens the 2026-09-10 decision.**
+- **PRD:** 27, 506–508, 536–537.
+- **Phasing:** "0 for skips; 1 in full" lines up with W-10 in Phase 0, and with C-8, D-1 and the arguable fixture in Phase 1.
+- **Problems:**
+  - The Phase 0 dispatched probe is vacuous until finding 1 is fixed.
+  - A skip count of zero after a Claude Code release cannot tell "no seat skipped" from "the wire went blind".
+  - Line 508 says the fixture "does not reopen that decision", then reads a failure "under ADR-0015's reversal trigger 1". The human took option 2 (v3 docs/history/tracking/2026-09-10-first-runs.md 33). Trigger 1 now keys only on presence and on spread over ten real items (ADR-0015 97). Feeding the declined option 3 into it amends the trigger.
+- **Fix:**
+  - Each D-5 run plants one skip per path, which must yield exactly one `skip`.
+  - Either put the trigger-1 reading to the human in the ADR-0015 fold-in, or reword it: the fixture is a G0 condition and evidence the human weighs, not a trigger input.
+
+**12. [Amend] Gate table: no ADR can carry H-7 in Phase 1, and W-10's declarations and D-5's trigger reading need rows.**
+- **PRD:** 537, 539, 564–575.
+- **Problem:** H-7 changes several things ADR-0015 owns:
+  - the claim semantics;
+  - the event schema;
+  - the enforcement report: ADR-0015 reserves its third level, `hook`, for a hook composed from `paths`, and the PRD adds hand-off and permission-rule levels instead;
+  - where `paths` lives (finding 9).
+
+  The only candidate row, "Host adapters", is "opened only with the need-gate record" and serves Phase 3. H-7 is P0 in Phase 1.
+- **Fix:**
+  - Extend the ADR-0015 fold-in row with H-7, the ceremony binding (finding 4), and the trigger-1 decision (finding 11).
+  - Name `expect` and `skip` in the wire ADR's row.
+  - H-8 fits the host-adapters ADR, which should record that it fills the reserved level with permission rules rather than a hook.
+  - D-5's voice half fits the casting ADR.
+  - Under ADR-0012 E, H-7's script and H-8's composed settings are enforcement adapters too. Each needs a registry entry with its canon source and minimum versions (`dontAsk`, the `Edit`→sandbox merge, `Stop`'s `background_tasks`), not only the wire.
+
+**13. [Note] "skip" already means something else in v3.**
+- **Source:** v3 review-wave.mjs 77–94 and review-wave.workflow.mjs 101: `skipped` lists conditional lenses deliberately not applied, each with a reason.
+- **Problem:** W-10's `skip` is a fault. One word with two meanings in one ledger and one renderer is what the glossary rule exists to stop.
+- **Fix:** Rename one of them (for example, `absent` for the event, or `not-applied` for the conditionals). W-10 then treats a not-applied lens as not expected.
+
+Sentinel as returned: 13 findings (3 blocking, 9 amend, 1 note).
